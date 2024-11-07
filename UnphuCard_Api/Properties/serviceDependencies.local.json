@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "mssql1": {
+      "serviceConnectorResourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.ServiceLinker/locations/eastus2/connectors/ConnectionStringsUnphuCard_9A80BD6E9B",
+      "secretStore": null,
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Sql/servers/unphucard/databases/UnphuCard",
+      "type": "mssql.azure",
+      "connectionId": "ConnectionStrings:UnphuCard"
+    }
+  }
+}
