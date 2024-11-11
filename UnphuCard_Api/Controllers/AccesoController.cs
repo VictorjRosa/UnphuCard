@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UnphuCard.DTOS;
+using UnphuCard_Api.DTOS;
 using UnphuCard_Api.Models;
 
 namespace UnphuCard.Controllers
@@ -59,11 +60,11 @@ namespace UnphuCard.Controllers
         }
 
         [HttpPost("api/ValidarAcceso")]
-        public async Task<ActionResult> ValidarAcceso(int tarjetaId, string aulaSensor)
+        public async Task<ActionResult> ValidarAcceso([FromBody] ValidarAcceso validarAcceso)
         {
             try
             {
-                var AulaId = await _context.Aulas.Where(a => a.AulaSensor == aulaSensor).Select(a => a.AulaId).FirstOrDefaultAsync();
+                var AulaId = await _context.Aulas.Where(a => a.AulaSensor == validarAcceso.aulaSensor).Select(a => a.AulaId).FirstOrDefaultAsync();
 
                 // Obtener la zona horaria de República Dominicana (GMT-4)
                 TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
@@ -72,8 +73,8 @@ namespace UnphuCard.Controllers
                 // Convertir la fecha a la zona horaria de República Dominicana
                 DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
 
-                var tarjeta = await _context.Tarjetas.FirstOrDefaultAsync(t => t.TarjId == tarjetaId);
-                var usuarioTarjeta = await _context.Tarjetas.Where(u => u.TarjId == tarjetaId).Select(u => u.UsuId).FirstOrDefaultAsync();
+                var tarjeta = await _context.Tarjetas.FirstOrDefaultAsync(t => t.TarjId == validarAcceso.tarjetaId);
+                var usuarioTarjeta = await _context.Tarjetas.Where(u => u.TarjId == validarAcceso.tarjetaId).Select(u => u.UsuId).FirstOrDefaultAsync();
                 if (tarjeta == null || tarjeta.StatusId == 4)
                 {
                     var accesoFallido = new InsertAcceso()

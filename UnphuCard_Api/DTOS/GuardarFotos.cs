@@ -3,8 +3,8 @@
     public class GuardarFotos
     {
 
-        public IFormFile Archivo { get; set; }
+        public IFormFile? Archivo { get; set; }
         
-        public string ruta { get; set; }
+        public string? ruta { get; set; }
     }
 }
