@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
+using UnphuCard_Api.DTOS;
 using UnphuCard_Api.Models;
 
 namespace UnphuCard.Controllers
@@ -28,34 +29,33 @@ namespace UnphuCard.Controllers
 
         
         [HttpGet("CheckCardStatus/{codigo}")]
-        public async Task<IActionResult> CheckCardStatus(string codigo)
+        public async Task<IActionResult> CheckCardStatus(int codigo)
         {
             
             var tarjeta = await _context.Tarjetas
-                .Where(t => t.Codigo == codigo)
+                .Where(t => t.TarjId == codigo)
                 .FirstOrDefaultAsync();
+            var tarjetaProv = new TarjetasProvisionale();
 
-            
+
             if (tarjeta == null)
             {
-                tarjeta = await _context.TarjetasProvisionales
-                    .Where(t => t.Codigo == codigo)
+                tarjetaProv = await _context.TarjetasProvisionales
+                    .Where(t => t.TarjProvId == codigo)
                     .FirstOrDefaultAsync();
+                if (tarjetaProv == null)
+                {
+                    return NotFound(new { message = "Tarjeta no encontrada" });
+                }
+                return Ok(new { tarjetaProv.TarjProvId, tarjetaProv.StatusId });
             }
 
-            
-            if (tarjeta == null)
-            {
-                return NotFound(new { message = "Tarjeta no encontrada" });
-            }
-
-            
-            return Ok(new { tarjeta.Codigo, tarjeta.Status });
+            return Ok(new { tarjeta.TarjId, tarjeta.StatusId });
         }
 
-        
+
         [HttpPut("EnableDisableCard/{codigo}")]
-        public async Task<IActionResult> EnableDisableCard(string codigo, [FromBody] bool habilitar)
+        public async Task<IActionResult> EnableDisableCard(string codigo, [FromBody] UpdateTarjeta updateTarjeta)
         {
             
             var tarjeta = await _context.Tarjetas
