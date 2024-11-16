@@ -6,49 +6,31 @@ using UnphuCard_Api.Models;
 
 namespace UnphuCard.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
     public class HorariosController : ControllerBase
     {
         private readonly UnphuCardContext _context;
 
-        
+
         public HorariosController(UnphuCardContext context)
         {
             _context = context;
         }
 
-        
-        [HttpGet("CheckClassSchedule")]
-        public async Task<IActionResult> CheckClassSchedule([FromQuery] string aula, [FromQuery] DateTime fechaHora, [FromQuery] int? estudianteId, [FromQuery] int? profesorId)
+        [HttpGet("api/ObtenerHorarios")]
+        public async Task<ActionResult<IEnumerable<Horario>>> GetHorarios()
         {
-            
-            if (!estudianteId.HasValue && !profesorId.HasValue)
-            {
-                return BadRequest(new { message = "Debe especificar el ID de un estudiante o un profesor." });
-            }
+            return await _context.Horarios.ToListAsync();
+        }
 
-            
-            var horario = await _context.Horarios
-                .Where(h => h.Aula == aula && h.FechaHora == fechaHora)
-                .Where(h => (estudianteId.HasValue && h.EstudianteId == estudianteId.Value) || (profesorId.HasValue && h.ProfesorId == profesorId.Value))
-                .FirstOrDefaultAsync();
-
-            
+        [HttpGet("api/ObtenerHorario/{id}")]
+        public async Task<ActionResult<Horario>> GetHorario(int id)
+        {
+            var horario = await _context.Horarios.FirstOrDefaultAsync(p => p.HorId == id);
             if (horario == null)
             {
-                return NotFound(new { message = "No se encontró clase para el estudiante/profesor en el aula y horario especificado." });
+                return BadRequest("Horario no encontrado");
             }
-
-            
-            return Ok(new
-            {
-                horario.Materia,
-                horario.EstudianteId,
-                horario.ProfesorId,
-                horario.Aula,
-                horario.FechaHora
-            });
+            return horario;
         }
     }
 }

@@ -7,8 +7,6 @@ using UnphuCard_Api.Models;
 
 namespace UnphuCard.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
     public class TarjetasController : Controller
     {
         private readonly UnphuCardContext _context;
@@ -20,70 +18,136 @@ namespace UnphuCard.Controllers
         }
 
         
-        [HttpGet]
-        public async Task<IActionResult> GetAllCards()
+        [HttpGet("api/ObtenerTarjetas")]
+        public async Task<ActionResult<IEnumerable<Tarjeta>>> GetTarjetas()
         {
-            var tarjetas = await _context.Tarjetas.ToListAsync();
-            return Ok(tarjetas); 
+            return await _context.Tarjetas.ToListAsync();
         }
 
-        
-        [HttpGet("CheckCardStatus/{codigo}")]
-        public async Task<IActionResult> CheckCardStatus(int codigo)
+        [HttpGet("api/ObtenerTarjetasProvs")]
+        public async Task<ActionResult<IEnumerable<TarjetasProvisionale>>> GetTarjetasProv()
         {
-            
-            var tarjeta = await _context.Tarjetas
-                .Where(t => t.TarjId == codigo)
-                .FirstOrDefaultAsync();
-            var tarjetaProv = new TarjetasProvisionale();
+            return await _context.TarjetasProvisionales.ToListAsync();
+        }
 
-
+        [HttpGet("api/Obtenertarjeta/{id}")]
+        public async Task<ActionResult<Tarjeta>> GetTarjeta(int id)
+        {
+            var tarjeta = await _context.Tarjetas.FirstOrDefaultAsync(p => p.TarjId == id);
             if (tarjeta == null)
             {
-                tarjetaProv = await _context.TarjetasProvisionales
-                    .Where(t => t.TarjProvId == codigo)
-                    .FirstOrDefaultAsync();
+                return BadRequest("Tarjeta no encontrada");
+            }
+            return tarjeta;
+        }
+
+        [HttpGet("api/ObtenertarjetaProv/{id}")]
+        public async Task<ActionResult<TarjetasProvisionale>> GetTarjetaProv(int id)
+        {
+            var tarjetaProv = await _context.TarjetasProvisionales.FirstOrDefaultAsync(p => p.TarjProvId == id);
+            if (tarjetaProv == null)
+            {
+                return BadRequest("Tarjeta provisional no encontrada");
+            }
+            return tarjetaProv;
+        }
+
+        [HttpPut("api/EditarTarjeta")]
+        public async Task<IActionResult> PutTarjeta(int id, [FromBody] UpdateTarjeta updateTarjeta)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Tarjeta no válida");
+            }
+            try
+            {
+                // Obtener la zona horaria de República Dominicana (GMT-4)
+                TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
+                // Obtener la fecha y hora actual en UTC
+                DateTime fechaActualUtc = DateTime.UtcNow;
+                // Convertir la fecha a la zona horaria de República Dominicana
+                DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
+                var tarjeta = await _context.Tarjetas.FirstOrDefaultAsync(t => t.TarjId == id);
+                if (tarjeta == null)
+                {
+                    return NotFound("Tarjeta no encontrada");
+                }
+                tarjeta.TarjFecha = fechaEnRD;
+                tarjeta.StatusId = updateTarjeta.StatusId;
+
+                _context.Entry(tarjeta).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+                return Ok(tarjeta);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (TarjetaExists(id))
+                {
+                    return NotFound("Tarjeta no encontrada");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        [HttpPut("api/EditarTarjetaProv")]
+        public async Task<IActionResult> PutTarjetaProv(int id, [FromBody] UpdateTarjetaProv updateTarjetaProv)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Tarjeta provisional no válida");
+            }
+            try
+            {
+                // Obtener la zona horaria de República Dominicana (GMT-4)
+                TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
+                // Obtener la fecha y hora actual en UTC
+                DateTime fechaActualUtc = DateTime.UtcNow;
+                // Convertir la fecha a la zona horaria de República Dominicana
+                DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
+                var tarjetaProv = await _context.TarjetasProvisionales.FirstOrDefaultAsync(t => t.TarjProvId == id);
                 if (tarjetaProv == null)
                 {
-                    return NotFound(new { message = "Tarjeta no encontrada" });
+                    return NotFound("Tarjeta provisional no encontrada");
                 }
-                return Ok(new { tarjetaProv.TarjProvId, tarjetaProv.StatusId });
-            }
+                tarjetaProv.TarjProvFecha = fechaEnRD;
+                tarjetaProv.StatusId = updateTarjetaProv.StatusId;
 
-            return Ok(new { tarjeta.TarjId, tarjeta.StatusId });
+                _context.Entry(tarjetaProv).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+                return Ok(tarjetaProv);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (TarjetaProvExists(id))
+                {
+                    return NotFound("Tarjeta provisional no encontrada");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
         }
 
-
-        [HttpPut("EnableDisableCard/{codigo}")]
-        public async Task<IActionResult> EnableDisableCard(string codigo, [FromBody] UpdateTarjeta updateTarjeta)
+        private bool TarjetaExists(int id)
         {
-            
-            var tarjeta = await _context.Tarjetas
-                .Where(t => t.Codigo == codigo)
-                .FirstOrDefaultAsync();
+            return _context.Tarjetas.Any(p => p.TarjId == id);
+        }
 
-            
-            if (tarjeta == null)
-            {
-                tarjeta = await _context.TarjetasProvisionales
-                    .Where(t => t.Codigo == codigo)
-                    .FirstOrDefaultAsync();
-            }
-
-            
-            if (tarjeta == null)
-            {
-                return NotFound(new { message = "Tarjeta no encontrada" });
-            }
-
-            
-            tarjeta.Status = habilitar ? "Habilitada" : "Deshabilitada";
-            tarjeta.StatusId = habilitar ? 1 : 0;  
-
-            
-            await _context.SaveChangesAsync();
-
-            return Ok(new { mensaje = "Estado de la tarjeta actualizado", tarjeta.Codigo, tarjeta.Status });
+        private bool TarjetaProvExists(int id)
+        {
+            return _context.TarjetasProvisionales.Any(p => p.TarjProvId == id);
         }
     }
 }

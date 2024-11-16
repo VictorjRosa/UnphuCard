@@ -2,12 +2,11 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
-using UnphuCard_Api.Models;  
+using UnphuCard_Api.Models;
+using UnphuCard_Api.DTOS;
 
 namespace UnphuCard.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
     public class InscripcionesController : ControllerBase
     {
         private readonly UnphuCardContext _context;
@@ -18,48 +17,63 @@ namespace UnphuCard.Controllers
             _context = context;
         }
 
-        
-        [HttpGet("CheckEnrollmentStatus/{usuId}/{materiaId}")]
-        public async Task<IActionResult> CheckEnrollmentStatus(int usuId, int materiaId)
+        [HttpGet("api/ObtenerInscripciones")]
+        public async Task<ActionResult<IEnumerable<Inscripcione>>> GetInscripciones()
         {
-            
-            var inscripcion = await _context.Inscripciones
-                .Where(i => i.UsuId == usuId && i.MateriaId == materiaId)
-                .FirstOrDefaultAsync();
-
-            
-            if (inscripcion == null)
-            {
-                return NotFound(new { message = "Inscripción no encontrada" });
-            }
-
-            
-            return Ok(new { inscripcion.UsuId, inscripcion.MateriaId, inscripcion.Status });
+            return await _context.Inscripciones.ToListAsync();
         }
 
-        
-        [HttpPut("UpdateEnrollmentStatus/{usuId}/{materiaId}")]
-        public async Task<IActionResult> UpdateEnrollmentStatus(int usuId, int materiaId, [FromBody] int nuevoStatusId)
+        [HttpGet("api/ObtenerInscripcion/{id}")]
+        public async Task<ActionResult<Inscripcione>> GetInscripcion(int id)
         {
-            
-            var inscripcion = await _context.Inscripciones
-                .Where(i => i.UsuId == usuId && i.MateriaId == materiaId)
-                .FirstOrDefaultAsync();
-
-            
+            var inscripcion = await _context.Inscripciones.FirstOrDefaultAsync(p => p.InsId == id);
             if (inscripcion == null)
             {
-                return NotFound(new { message = "Inscripción no encontrada" });
+                return BadRequest("inscripcion no encontrada");
             }
+            return inscripcion;
+        }
 
-            
-            inscripcion.StatusId = nuevoStatusId;
-            inscripcion.Status = nuevoStatusId == 1 ? "Aprobada" : (nuevoStatusId == 2 ? "Retirada" : "Pendiente");
+        [HttpPut("api/EditarInscripcion")]
+        public async Task<IActionResult> PutInscripcion(int id, [FromBody] UpdateInscripcion updateInscripcion)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Inscripción no válida");
+            }
+            try
+            {
+                var inscripcion = await _context.Inscripciones.FirstOrDefaultAsync(t => t.InsId == id);
+                if (inscripcion == null)
+                {
+                    return NotFound("Inscripción no encontrada");
+                }
+                inscripcion.StatusId = updateInscripcion.StatusId;
 
-            
-            await _context.SaveChangesAsync();
+                _context.Entry(inscripcion).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+                return Ok(inscripcion);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (InscripcionExists(id))
+                {
+                    return NotFound("Inscripción no encontrada");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
 
-            return Ok(new { mensaje = "Estado de la inscripción actualizado", inscripcion.UsuId, inscripcion.MateriaId, inscripcion.Status });
+        private bool InscripcionExists(int id)
+        {
+            return _context.Inscripciones.Any(p => p.InsId == id);
         }
     }
 }

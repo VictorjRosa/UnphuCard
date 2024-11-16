@@ -1,13 +1,10 @@
-﻿namespace UnphuCard_Api.DTOS
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace UnphuCard_Api.DTOS
 {
     public class UpdateTarjetaProv
     {
-        public DateTime? TarjProvFecha { get; set; }
-
-        public DateTime? TarjProvFechaExpiracion { get; set; }
-
+        [Required(ErrorMessage = "El estado de la tarjeta provisional es requerido")]
         public int? StatusId { get; set; }
-
-        public int? UsuId { get; set; }
     }
 }

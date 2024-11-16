@@ -2,9 +2,9 @@
 
 namespace UnphuCard_Api.DTOS
 {
-    public class UpdateTarjeta
+    public class UpdateInscripcion
     {
-        [Required(ErrorMessage = "El estado de la tarjeta es requerido")]
+        [Required(ErrorMessage = "El estado de la inscripción es requerido")]
         public int? StatusId { get; set; }
     }
 }
