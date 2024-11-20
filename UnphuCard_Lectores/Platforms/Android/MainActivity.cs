@@ -40,6 +40,10 @@ namespace UnphuCard_Lectores
                 var id = BitConverter.ToString(tag.GetId()).Replace("-", "");
                 Console.WriteLine($"Tag ID: {id}");
 
+                // Mostrar el ID en la interfaz gráfica
+                MainPage.Instance.MostrarTagID(id);
+
+                // Llamar a la API
                 await SendTagIdToApi(id);
             }
 
@@ -49,7 +53,7 @@ namespace UnphuCard_Lectores
                 {
                     using (var httpClient = new HttpClient())
                     {
-                        string apiUrl = "https://unphucard.azurewebsites.net/api/ValidarAcceso";
+                        string apiUrl = "https://unphucard.azurewebsites.net/api/ValidarAcceso"; // Cambia por tu URL
                         var jsonContent = JsonConvert.SerializeObject(new { tarjetaId = tagId, aulaSensor = "101" });
                         var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
