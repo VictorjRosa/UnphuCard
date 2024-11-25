@@ -10,14 +10,12 @@ namespace UnphuCard_Lectores
     public class MainApplication : MauiApplication
     {
         public static NfcAdapter NfcAdapter { get; private set; }
-
         public MainApplication(IntPtr handle, JniHandleOwnership ownership)
             : base(handle, ownership)
         {
         }
 
         protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
-
         public override void OnCreate()
         {
             base.OnCreate();
@@ -31,11 +29,11 @@ namespace UnphuCard_Lectores
 
             if (NfcAdapter == null || !NfcAdapter.IsEnabled)
             {
-                Console.WriteLine("NFC no está disponible o está desactivado.");
+                // NFC no está disponible o está deshabilitado, podrías mostrar una notificación o mensaje aquí si lo deseas
             }
             else
             {
-                Console.WriteLine("NFC habilitado y listo para usarse.");
+                // NFC está disponible y habilitado, listo para usarse en la app
             }
         }
     }

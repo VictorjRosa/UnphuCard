@@ -2,7 +2,7 @@
 {
     public class ValidarAcceso
     {
-        public int? tarjetaId { get; set; }
-        public string? aulaSensor { get; set; }
+        public string? TarjCodigo { get; set; }
+        public string? AulaSensor { get; set; }
     }
 }

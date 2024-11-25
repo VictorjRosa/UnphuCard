@@ -347,7 +347,10 @@ public partial class UnphuCardContext : DbContext
 
             entity.Property(e => e.TarjId).HasColumnName("Tarj_ID");
             entity.Property(e => e.StatusId).HasColumnName("Status_ID");
-            entity.Property(e => e.TarjCodigo).HasColumnName("Tarj_Codigo");
+            entity.Property(e => e.TarjCodigo)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("Tarj_Codigo");
             entity.Property(e => e.TarjFecha)
                 .HasColumnType("datetime")
                 .HasColumnName("Tarj_Fecha");

@@ -7,7 +7,7 @@ public partial class Tarjeta
 {
     public int TarjId { get; set; }
 
-    public int TarjCodigo { get; set; }
+    public string? TarjCodigo { get; set; }
 
     public DateTime? TarjFecha { get; set; }
 

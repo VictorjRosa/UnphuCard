@@ -64,9 +64,9 @@ namespace UnphuCard.Controllers
         {
             try
             {
-                var AulaId = await _context.Aulas.Where(a => a.AulaSensor == validarAcceso.aulaSensor).Select(a => a.AulaId).FirstOrDefaultAsync();
-                var tarjeta = await _context.Tarjetas.FirstOrDefaultAsync(t => t.TarjId == validarAcceso.tarjetaId);
-                var usuarioTarjeta = await _context.Tarjetas.Where(u => u.TarjId == validarAcceso.tarjetaId).Select(u => u.UsuId).FirstOrDefaultAsync();
+                var AulaId = await _context.Aulas.Where(a => a.AulaSensor == validarAcceso.AulaSensor).Select(a => a.AulaId).FirstOrDefaultAsync();
+                var tarjeta = await _context.Tarjetas.FirstOrDefaultAsync(t => t.TarjCodigo == validarAcceso.TarjCodigo);
+                var usuarioTarjeta = await _context.Tarjetas.Where(u => u.TarjCodigo == validarAcceso.TarjCodigo).Select(u => u.UsuId).FirstOrDefaultAsync();
                 var inscrito = await _context.Inscripciones.FirstOrDefaultAsync(i => i.UsuId == tarjeta.UsuId && i.StatusId == 5);
                 var materiaInscrito = await _context.Inscripciones.Where(i => i.UsuId == usuarioTarjeta).Select(i => i.MatId).FirstOrDefaultAsync();
                 var usuarioMatProfesor = await _context.Materias.Where(m => m.MatId == Convert.ToInt16(materiaInscrito)).Select(m => m.UsuId).FirstOrDefaultAsync();

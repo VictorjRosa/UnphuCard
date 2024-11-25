@@ -7,14 +7,14 @@
         public MainPage()
         {
             InitializeComponent();
-            Instance = this; // Asignar la instancia actual
+            Instance = this; // Guarda la referencia a esta página
         }
 
-        public void MostrarTagID(string tagId)
+        public void ShowAlert(string title, string message)
         {
-            MainThread.BeginInvokeOnMainThread(() =>
+            MainThread.BeginInvokeOnMainThread(async () =>
             {
-                DisplayAlert("ID de Tarjeta Detectada", $"ID: {tagId}", "OK");
+                await DisplayAlert(title, message, "OK");
             });
         }
     }
