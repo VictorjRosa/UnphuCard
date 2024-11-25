@@ -7,7 +7,7 @@ public partial class TarjetasProvisionale
 {
     public int TarjProvId { get; set; }
 
-    public int? TarjProvCodigo { get; set; }
+    public string? TarjProvCodigo { get; set; }
 
     public DateTime? TarjProvFecha { get; set; }
 
