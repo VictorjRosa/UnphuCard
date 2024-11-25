@@ -11,7 +11,15 @@
                 Text="Validación de Acceso"
                 Style="{StaticResource Headline}"
                 SemanticProperties.HeadingLevel="Level1" />
+
+            <Button
+                Text="Modo Diagnóstico: Mostrar Tag ID"
+                Clicked="ToggleMode_Clicked" />
+
+            <Label
+                x:Name="statusLabel"
+                Text="Estado: Esperando acción..."
+                Style="{StaticResource SubHeadline}" />
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

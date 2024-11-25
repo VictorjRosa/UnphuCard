@@ -2,14 +2,11 @@
 using Android.Content.PM;
 using Android.Nfc;
 using Android.OS;
-using Plugin.NFC;
 using System;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using System.Security.Cryptography.X509Certificates;
-using Javax.Security.Auth;
 
 namespace UnphuCard_Lectores
 {
@@ -27,37 +24,41 @@ namespace UnphuCard_Lectores
             }
             else
             {
-                // Mensaje si NFC no está disponible o está desactivado
-                Console.WriteLine("NFC no disponible o desactivado.");
+                MainPage.Instance?.UpdateStatusLabel("NFC no disponible o desactivado.");
             }
         }
 
         private void SetupNfcReader()
         {
-            // Configura el lector NFC para que detecte etiquetas
             MainApplication.NfcAdapter.EnableReaderMode(this, new MyNfcReaderCallback(), NfcReaderFlags.NfcA | NfcReaderFlags.SkipNdefCheck, null);
         }
 
-        // Implementa el lector NFC
         private class MyNfcReaderCallback : Java.Lang.Object, NfcAdapter.IReaderCallback
         {
             public async void OnTagDiscovered(Tag tag)
             {
-                var id = BitConverter.ToString(tag.GetId()).Replace("-", "");
-                Console.WriteLine($"Tag ID: {id}");
+                var tagId = BitConverter.ToString(tag.GetId()).Replace("-", "");
+                Console.WriteLine($"Tag ID: {tagId}");
 
-                var isValid = await SendTagIdToApi(id);
-
-                // Usa MainPage.Instance para mostrar la alerta
                 if (MainPage.Instance != null)
                 {
-                    if (isValid)
+                    if (MainPage.Instance.IsDiagnosticMode)
                     {
-                        MainPage.Instance.ShowAlert("Acceso Permitido", "La tarjeta es válida");
+                        // Solo muestra el Tag ID
+                        MainPage.Instance.UpdateStatusLabel($"Tag ID Detectado: {tagId}");
                     }
                     else
                     {
-                        MainPage.Instance.ShowAlert("Acceso Denegado", "La tarjeta no es válida");
+                        // Realiza la validación de acceso
+                        var isValid = await SendTagIdToApi(tagId);
+                        if (isValid)
+                        {
+                            MainPage.Instance.ShowAlert("Acceso Permitido", "La tarjeta es válida.");
+                        }
+                        else
+                        {
+                            MainPage.Instance.ShowAlert("Acceso Denegado", "La tarjeta no es válida.");
+                        }
                     }
                 }
             }
@@ -73,22 +74,12 @@ namespace UnphuCard_Lectores
                         var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
                         var response = await httpClient.PostAsync(apiUrl, content);
-
-                        if (response.IsSuccessStatusCode)
-                        {
-                            Console.WriteLine("Acceso validado correctamente.");
-                            return true; // Tarjeta válida
-                        }
-                        else
-                        {
-                            Console.WriteLine("Error al validar el acceso: " + response.ReasonPhrase);
-                            return false; // Tarjeta no válida
-                        }
+                        return response.IsSuccessStatusCode;
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error al enviar el ID de la tarjeta a la API: " + ex.Message);
+                    Console.WriteLine($"Error al enviar el ID de la tarjeta a la API: {ex.Message}");
                     return false;
                 }
             }

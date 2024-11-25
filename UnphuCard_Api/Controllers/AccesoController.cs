@@ -221,8 +221,8 @@ namespace UnphuCard.Controllers
                 else
                 {
                     var AulaIdProv = await _context.Aulas.Where(a => a.AulaSensor == validarAcceso.AulaSensor).Select(a => a.AulaId).FirstOrDefaultAsync();
-                    var tarjetaProv = await _context.Tarjetas.FirstOrDefaultAsync(t => t.TarjCodigo == validarAcceso.TarjCodigo);
-                    var usuarioTarjetaProv = await _context.Tarjetas.Where(u => u.TarjCodigo == validarAcceso.TarjCodigo).Select(u => u.UsuId).FirstOrDefaultAsync();
+                    var tarjetaProv = await _context.TarjetasProvisionales.FirstOrDefaultAsync(t => t.TarjProvCodigo == validarAcceso.TarjCodigo);
+                    var usuarioTarjetaProv = await _context.TarjetasProvisionales.Where(u => u.TarjProvCodigo == validarAcceso.TarjCodigo).Select(u => u.UsuId).FirstOrDefaultAsync();
                     var inscritoProv = await _context.Inscripciones.FirstOrDefaultAsync(i => i.UsuId == tarjetaProv.UsuId && i.StatusId == 5);
                     var materiaInscritoProv = await _context.Inscripciones.Where(i => i.UsuId == usuarioTarjetaProv).Select(i => i.MatId).FirstOrDefaultAsync();
                     var usuarioMatProfesorProv = await _context.Materias.Where(m => m.MatId == Convert.ToInt16(materiaInscritoProv)).Select(m => m.UsuId).FirstOrDefaultAsync();
@@ -264,7 +264,20 @@ namespace UnphuCard.Controllers
                                 StatusId = 9,
                             };
                             await PostAcceso(accesoFallido);
-                            return BadRequest("Tarjeta deshabilitada o no encontrada.");
+                            return BadRequest("Tarjeta provisional deshabilitada o no encontrada.");
+                        }
+
+                        if (tarjetaProv.TarjProvFechaExpiracion < fechaEnRD)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjetaProv,
+                                AulaId = AulaIdProv,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("Tarjeta provisional expirada.");
                         }
 
                         if (inscritoProv == null)
@@ -314,7 +327,7 @@ namespace UnphuCard.Controllers
                             StatusId = 8,
                         };
                         await PostAcceso(accesoAprobado);
-                        return Ok("Acceso permitido. Tarjeta Estudiante.");
+                        return Ok("Acceso permitido. Tarjeta provisional Estudiante.");
                     }
                     else if (usuarioTarjetaProv == 2)
                     {
@@ -328,7 +341,20 @@ namespace UnphuCard.Controllers
                                 StatusId = 9,
                             };
                             await PostAcceso(accesoFallido);
-                            return BadRequest("Tarjeta deshabilitada o no encontrada.");
+                            return BadRequest("Tarjeta provisional deshabilitada o no encontrada.");
+                        }
+
+                        if (tarjetaProv.TarjProvFechaExpiracion < fechaEnRD)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjetaProv,
+                                AulaId = AulaIdProv,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("Tarjeta provisional expirada.");
                         }
 
                         if (horarioAccesoProfProv == null)
@@ -351,7 +377,7 @@ namespace UnphuCard.Controllers
                             StatusId = 8,
                         };
                         await PostAcceso(accesoAprobado);
-                        return Ok("Acceso permitido. Tarjeta Profesor.");
+                        return Ok("Acceso permitido. Tarjeta provisional Profesor.");
                     }
                     else if (usuarioTarjetaProv == 5)
                     {
