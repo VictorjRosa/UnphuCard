@@ -24,11 +24,19 @@ namespace UnphuCard_Lectores
             });
         }
 
-        public void UpdateStatusLabel(string message)
+        public void UpdateStatusLabelNfc(string message)
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                statusLabel2.Text = message;
+                statusLabel.Text = $"Estado NFC: {message}";
+            });
+        }
+
+        public void UpdateStatusLabelQr(string message)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                statusLabel2.Text = $"Estado QR: {message}";
             });
         }
 
@@ -41,22 +49,39 @@ namespace UnphuCard_Lectores
             if (isDiagnosticMode)
             {
                 button.Text = "Modo Validación: Validar Acceso";
-                UpdateStatusLabel("Modo Diagnóstico activado. Escanee una tarjeta para mostrar su Tag ID.");
+                UpdateStatusLabelNfc("Modo Diagnóstico activado. Escanee una tarjeta para mostrar su Tag ID.");
             }
             else
             {
                 button.Text = "Modo Diagnóstico: Mostrar Tag ID";
-                UpdateStatusLabel("Modo Validación activado. Escanee una tarjeta para validar acceso.");
+                UpdateStatusLabelNfc("Modo Validación activado. Escanee una tarjeta para validar acceso.");
             }
         }
 
-        private bool isScanning = true; // Controla si el lector está activo
+        private bool isScannerActive = false; // Controla si el escáner está activo
+
+        private void ToggleScanner_Clicked(object sender, EventArgs e)
+        {
+            isScannerActive = !isScannerActive;
+
+            var button = sender as Button;
+            if (isScannerActive)
+            {
+                button.Text = "Desactivar Escáner";
+                UpdateStatusLabelQr("Escáner activado. Listo para escanear.");
+            }
+            else
+            {
+                button.Text = "Activar Escáner";
+                UpdateStatusLabelQr("Escáner desactivado.");
+            }
+        }
 
         private async void CameraView_BarcodeDetected(object sender, BarcodeDetectionEventArgs e)
         {
-            if (!isScanning) return; // Si ya se está procesando un escaneo, no haga nada
+            if (!isScannerActive) return; // Si el escáner está desactivado, no haga nada
 
-            isScanning = false; // Desactiva el escaneo hasta que se complete el proceso
+            isScannerActive = false; // Desactiva el escáner tras un escaneo exitoso
             try
             {
                 var barcodeResult = e.Results.FirstOrDefault();
@@ -66,13 +91,11 @@ namespace UnphuCard_Lectores
 
                     if (isDiagnosticMode)
                     {
-                        // Mostrar el Tag ID en modo diagnóstico
                         await MainThread.InvokeOnMainThreadAsync(() =>
                             DisplayAlert("Modo Diagnóstico", $"Tag ID: {scannedCode}", "OK"));
                     }
                     else
                     {
-                        // Enviar el código QR a la API
                         await EnviarCodigoQR(scannedCode);
                     }
                 }
@@ -80,20 +103,27 @@ namespace UnphuCard_Lectores
             catch (Exception ex)
             {
                 await MainThread.InvokeOnMainThreadAsync(() =>
-                    DisplayAlert("Error", $"Error al procesar el código: {ex.Message}", "OK"));
+                    DisplayAlert("Error al procesar el código", $"Detalle del error: {ex.Message}", "OK"));
             }
+
             finally
             {
-                UpdateStatusLabel("Escaneo en proceso...");
+                UpdateStatusLabelQr("Escaneo en proceso...");
                 await Task.Delay(3000);
-                UpdateStatusLabel("Listo para escanear.");
-                isScanning = true; // Reactiva el escaneo
+                UpdateStatusLabelQr("Listo para escanear.");
+                isScannerActive = true; // Reactiva el escaneo
             }
         }
 
-
         private async Task EnviarCodigoQR(string userCode)
         {
+            if (string.IsNullOrEmpty(userCode))
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                DisplayAlert("Error", "El código escaneado está vacío. Intente nuevamente.", "OK"));
+                return;
+            }
+
             try
             {
                 using (var httpClient = new HttpClient())
@@ -111,19 +141,24 @@ namespace UnphuCard_Lectores
 
                     if (response.IsSuccessStatusCode)
                     {
-                        await DisplayAlert("Éxito", "El código fue enviado correctamente.", "OK");
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        DisplayAlert("Éxito", "El código fue enviado correctamente.", "OK"));
                     }
                     else
                     {
-                        await DisplayAlert("Error", "No se pudo procesar la solicitud. Intente nuevamente.", "OK");
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        DisplayAlert("Error", $"No se pudo procesar la solicitud. Error: {response.ReasonPhrase}", "OK"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Error al enviar el código: {ex.Message}", "OK");
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                DisplayAlert("Error", $"Error al enviar el código: {ex.Message}", "OK"));
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
             }
         }
+
 
         public bool IsDiagnosticMode => isDiagnosticMode; // Para acceder al modo actual desde MainActivity
     }
