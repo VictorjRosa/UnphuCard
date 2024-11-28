@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using ZXing.Net.Maui;
 using ZXing.Net.Maui.Controls;
 
 namespace UnphuCard_Lectores

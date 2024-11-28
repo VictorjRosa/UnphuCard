@@ -1,6 +1,7 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text;
+using Newtonsoft.Json;
+using ZXing.Net.Maui;
 using ZXing.Net.Maui.Controls;
-using System.Text;
 
 namespace UnphuCard_Lectores
 {
@@ -49,25 +50,32 @@ namespace UnphuCard_Lectores
             }
         }
 
-        public bool IsDiagnosticMode => isDiagnosticMode; // Para acceder al modo actual desde MainActivity
-
-        private async void OnScanQrClicked(object sender, EventArgs e)
+        private async void CameraView_BarcodeDetected(object sender, BarcodeDetectionEventArgs e)
         {
-            // Abrir la cámara para escanear QR
-            var scanner = new CameraBarcodeReaderView();
-            var result = await scanner.ReadAsync();
-
-            if (result != null)
+            try
             {
-                string userCode = result.Value; // Extrae el UsuCodigo desde el QR
-                ResultLabel.Text = $"Código escaneado: {userCode}";
+                var barcodeResult = e.Results.FirstOrDefault();
+                if (barcodeResult != null)
+                {
+                    string scannedCode = barcodeResult.Value;
 
-                // Envía el código escaneado a la API para procesar la compra
-                await EnviarCodigoQR(userCode);
+                    // Muestra el código escaneado
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                        DisplayAlert("Código Escaneado", scannedCode, "OK"));
+
+                    // Si no estás en modo diagnóstico, envía el código QR a la API
+                    if (!isDiagnosticMode)
+                    {
+                        await EnviarCodigoQR(scannedCode);
+                    }
+                }
             }
-            else
+            catch (Exception ex)
             {
-                ResultLabel.Text = "No se pudo escanear el QR. Intente nuevamente.";
+                // Muestra el error en un mensaje y registra los detalles en la consola
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                    DisplayAlert("Error", $"Error al procesar el código: {ex.Message}", "OK"));
+                Console.WriteLine($"Error en CameraView_BarcodeDetected: {ex}");
             }
         }
 
@@ -103,5 +111,7 @@ namespace UnphuCard_Lectores
                 await DisplayAlert("Error", $"Error al enviar el código: {ex.Message}", "OK");
             }
         }
+
+        public bool IsDiagnosticMode => isDiagnosticMode; // Para acceder al modo actual desde MainActivity
     }
 }
