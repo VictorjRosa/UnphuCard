@@ -44,7 +44,7 @@ namespace UnphuCard.Controllers
                 {
                     CompMonto = insertCompra.CompMonto,
                     CompFecha = insertCompra.CompFecha,
-                    UsuId = insertCompra.UsuId,
+                    UsuId = insertCompra.UsuCodigo,
                     EstId = insertCompra.EstId,
                     MetPagId = insertCompra.MetPagId,
                 };
