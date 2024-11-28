@@ -10,8 +10,8 @@ namespace UnphuCard.DTOS
         [Required(ErrorMessage = "La fecha de la compra es requerida")]
         public DateTime? CompFecha { get; set; }
 
-        [Required(ErrorMessage = "El ID de usuario es requerido")]
-        public int? UsuId { get; set; }
+        [Required(ErrorMessage = "El código de usuario es requerido")]
+        public int? UsuCodigo { get; set; }
 
         [Required(ErrorMessage = "El ID del establecimiento es requerido")]
         public int? EstId { get; set; }
