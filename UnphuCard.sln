@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnphuCard_Api", "UnphuCard_Api\UnphuCard_Api.csproj", "{293055D0-2714-418E-BC2D-0D539B6FE290}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnphuCard_Api", "UnphuCard_Api\UnphuCard_Api.csproj", "{293055D0-2714-418E-BC2D-0D539B6FE290}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnphuCard_AccesoFront", "UnphuCard_AccesoFront\UnphuCard_AccesoFront.csproj", "{45A7271B-958F-437C-A166-0F0740554912}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnphuCard_AccesoFront", "UnphuCard_AccesoFront\UnphuCard_AccesoFront.csproj", "{45A7271B-958F-437C-A166-0F0740554912}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnphuCard_PagoFront", "UnphuCard_PagoFront\UnphuCard_PagoFront.csproj", "{49D3426A-747A-4044-9E16-96ED6281C322}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnphuCard_PagoFront", "UnphuCard_PagoFront\UnphuCard_PagoFront.csproj", "{49D3426A-747A-4044-9E16-96ED6281C322}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnphuCard_Lectores", "UnphuCard_Lectores\UnphuCard_Lectores.csproj", "{16063B5F-D64F-4166-800B-38FB81C44056}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnphuCard_Lectores", "UnphuCard_Lectores\UnphuCard_Lectores.csproj", "{8BF4898E-FACD-4D18-B635-F94EEAAF3D55}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnphuCard_RecargaFront", "UnphuCard_RecargaFront\UnphuCard_RecargaFront.csproj", "{C4CEF364-2A99-4D2A-B079-955456BCFD6E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,12 +31,16 @@ Global
 		{49D3426A-747A-4044-9E16-96ED6281C322}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{49D3426A-747A-4044-9E16-96ED6281C322}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{49D3426A-747A-4044-9E16-96ED6281C322}.Release|Any CPU.Build.0 = Release|Any CPU
-		{16063B5F-D64F-4166-800B-38FB81C44056}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{16063B5F-D64F-4166-800B-38FB81C44056}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{16063B5F-D64F-4166-800B-38FB81C44056}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
-		{16063B5F-D64F-4166-800B-38FB81C44056}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{16063B5F-D64F-4166-800B-38FB81C44056}.Release|Any CPU.Build.0 = Release|Any CPU
-		{16063B5F-D64F-4166-800B-38FB81C44056}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{8BF4898E-FACD-4D18-B635-F94EEAAF3D55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BF4898E-FACD-4D18-B635-F94EEAAF3D55}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BF4898E-FACD-4D18-B635-F94EEAAF3D55}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{8BF4898E-FACD-4D18-B635-F94EEAAF3D55}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BF4898E-FACD-4D18-B635-F94EEAAF3D55}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8BF4898E-FACD-4D18-B635-F94EEAAF3D55}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{C4CEF364-2A99-4D2A-B079-955456BCFD6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4CEF364-2A99-4D2A-B079-955456BCFD6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4CEF364-2A99-4D2A-B079-955456BCFD6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4CEF364-2A99-4D2A-B079-955456BCFD6E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

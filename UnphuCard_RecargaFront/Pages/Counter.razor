@@ -1,0 +1,59 @@
+﻿@page "/usuarios"
+@inject HttpClient Http
+@using UnphuCard_Api.Models
+
+<h3>Lista de Usuarios</h3>
+
+@if (usuarios == null)
+{
+    <p>Cargando datos...</p>
+}
+else if (!usuarios.Any())
+{
+    <p>No se encontraron usuarios.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Correo</th>
+                <th>Saldo</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var usuario in usuarios)
+            {
+                <tr>
+                    <td>@usuario.UsuId</td>
+                    <td>@usuario.UsuCodigo</td>
+                    <td>@usuario.UsuNombre</td>
+                    <td>@usuario.UsuApellido</td>
+                    <td>@usuario.UsuCorreo</td>
+                    <td>@usuario.UsuSaldo:C</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Usuario>? usuarios;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Realiza una solicitud GET al endpoint
+            usuarios = await Http.GetFromJsonAsync<List<Usuario>>("api/MostrarUsuarios");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar los usuarios: {ex.Message}");
+        }
+    }
+}
