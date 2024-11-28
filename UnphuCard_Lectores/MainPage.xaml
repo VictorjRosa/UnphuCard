@@ -26,16 +26,16 @@
                 TextColor="Gray"
                 HorizontalOptions="Center" />
 
-            <!-- Escaneo de código QR -->
-            <Label Text="Escanear Código QR" FontSize="18" HorizontalOptions="Center" />
-            <Label x:Name="ResultLabel" Text="Esperando escaneo..." FontSize="14" TextColor="Gray" />
+            <Label x:Name="statusLabel2"
+       Text="Estado: Esperando escaneo..."
+       TextColor="Gray"
+       HorizontalOptions="Center" />
 
-            <!-- Vista de cámara para escanear códigos -->
             <zxing:CameraBarcodeReaderView x:Name="cameraView"
-                                           BarcodesDetected="CameraView_BarcodeDetected"
-                                           IsDetecting="true"
-                                           HorizontalOptions="FillAndExpand"
-                                           VerticalOptions="FillAndExpand" />
+                               BarcodesDetected="CameraView_BarcodeDetected"
+                               IsDetecting="true"
+                               HorizontalOptions="FillAndExpand"
+                               VerticalOptions="FillAndExpand" />
         </VerticalStackLayout>
     </ScrollView>
 

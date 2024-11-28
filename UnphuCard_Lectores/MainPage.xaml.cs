@@ -28,7 +28,7 @@ namespace UnphuCard_Lectores
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                statusLabel.Text = message;
+                statusLabel2.Text = message;
             });
         }
 
@@ -50,8 +50,13 @@ namespace UnphuCard_Lectores
             }
         }
 
+        private bool isScanning = true; // Controla si el lector está activo
+
         private async void CameraView_BarcodeDetected(object sender, BarcodeDetectionEventArgs e)
         {
+            if (!isScanning) return; // Si ya se está procesando un escaneo, no haga nada
+
+            isScanning = false; // Desactiva el escaneo hasta que se complete el proceso
             try
             {
                 var barcodeResult = e.Results.FirstOrDefault();
@@ -59,25 +64,33 @@ namespace UnphuCard_Lectores
                 {
                     string scannedCode = barcodeResult.Value;
 
-                    // Muestra el código escaneado
-                    await MainThread.InvokeOnMainThreadAsync(() =>
-                        DisplayAlert("Código Escaneado", scannedCode, "OK"));
-
-                    // Si no estás en modo diagnóstico, envía el código QR a la API
-                    if (!isDiagnosticMode)
+                    if (isDiagnosticMode)
                     {
+                        // Mostrar el Tag ID en modo diagnóstico
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                            DisplayAlert("Modo Diagnóstico", $"Tag ID: {scannedCode}", "OK"));
+                    }
+                    else
+                    {
+                        // Enviar el código QR a la API
                         await EnviarCodigoQR(scannedCode);
                     }
                 }
             }
             catch (Exception ex)
             {
-                // Muestra el error en un mensaje y registra los detalles en la consola
                 await MainThread.InvokeOnMainThreadAsync(() =>
                     DisplayAlert("Error", $"Error al procesar el código: {ex.Message}", "OK"));
-                Console.WriteLine($"Error en CameraView_BarcodeDetected: {ex}");
+            }
+            finally
+            {
+                UpdateStatusLabel("Escaneo en proceso...");
+                await Task.Delay(3000);
+                UpdateStatusLabel("Listo para escanear.");
+                isScanning = true; // Reactiva el escaneo
             }
         }
+
 
         private async Task EnviarCodigoQR(string userCode)
         {
