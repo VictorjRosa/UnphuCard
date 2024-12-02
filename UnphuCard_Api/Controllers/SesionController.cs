@@ -24,34 +24,34 @@ namespace UnphuCard.Controllers
             return sesion;
         }
 
-        [HttpPut("api/EditarSesion")]
-        public async Task<IActionResult> PutSesion([FromBody] int usuCodigo)
+        [HttpPut("api/EditarSesion/{estId}")]
+        public async Task<IActionResult> PutSesion(int estId, [FromBody] UpdateSesion updateSesion)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest("Sesió no válida");
+                return BadRequest("Sesión no válida");
             }
             try
             {
-                var sesion = await _context.Sesions.Where(s => s.UsuId == usuCodigo).OrderByDescending(s => s.SesionFecha).FirstOrDefaultAsync();
+                var sesion = await _context.Sesions.Where(s => s.EstId == estId).OrderByDescending(s => s.SesionFecha).FirstOrDefaultAsync();
                 if (sesion == null)
                 {
                     return NotFound("Sesión no encontrada.");
                 }
-                var usuario = await _context.Usuarios.Where(u => u.UsuCodigo == usuCodigo).Select(u => u.UsuId).FirstOrDefaultAsync();
+                var usuario = await _context.Usuarios.Where(u => u.UsuCodigo == updateSesion.UsuId).Select(u => u.UsuId).FirstOrDefaultAsync();
                 sesion.UsuId = usuario;
                 await _context.SaveChangesAsync();
                 return Ok("Sesión actualizada.");
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (UsuarioExists(usuCodigo))
+                if (UsuarioExists(updateSesion.UsuId))
                 {
                     return NotFound("Usuario no encontrado");
                 }
-                else if (EstablecimientoExists(usuCodigo))
+                else if (EstablecimientoExists(estId))
                 {
-                    return NotFound("Equipo no encontrado");
+                    return NotFound("Establecimiento no encontrado");
                 }
                 else
                 {
@@ -65,7 +65,7 @@ namespace UnphuCard.Controllers
         }
 
         [HttpPost("api/RegistrarSesion")]
-        public async Task<ActionResult> PostSesion([FromBody] string nombreEquipo)
+        public async Task<ActionResult> PostSesion([FromBody] int estId)
         {
             if (!ModelState.IsValid)
             {
@@ -85,7 +85,7 @@ namespace UnphuCard.Controllers
                 {
                     SesionToken = Guid.NewGuid().ToString(),
                     SesionFecha = fechaEnRD,
-                    NombreEquipo = nombreEquipo,
+                    EstId = estId,
                 };
                 _context.Sesions.Add(sesion);
                 await _context.SaveChangesAsync();
@@ -103,7 +103,7 @@ namespace UnphuCard.Controllers
         }
         private bool EstablecimientoExists(int id)
         {
-            return _context.Sesions.Any(c => c.UsuId == id);
+            return _context.Sesions.Any(c => c.EstId == id);
         }
     }
 }

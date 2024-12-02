@@ -13,5 +13,5 @@ public partial class Sesion
 
     public int? UsuId { get; set; }
 
-    public string? NombreEquipo { get; set; }
+    public int? EstId { get; set; }
 }

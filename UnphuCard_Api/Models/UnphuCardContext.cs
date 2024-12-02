@@ -332,10 +332,7 @@ public partial class UnphuCardContext : DbContext
             entity.ToTable("Sesion");
 
             entity.Property(e => e.SesionId).HasColumnName("Sesion_ID");
-            entity.Property(e => e.NombreEquipo)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasColumnName("Nombre_Equipo");
+            entity.Property(e => e.EstId).HasColumnName("Est_ID");
             entity.Property(e => e.SesionFecha)
                 .HasColumnType("datetime")
                 .HasColumnName("Sesion_Fecha");

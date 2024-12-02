@@ -115,7 +115,7 @@ namespace UnphuCard_Lectores
             }
         }
 
-        private async Task EnviarCodigoQR(string userCode)
+        private async Task EnviarCodigoQR(string userCode, int estId = 1)
         {
             if (string.IsNullOrEmpty(userCode))
             {
@@ -128,16 +128,15 @@ namespace UnphuCard_Lectores
             {
                 using (var httpClient = new HttpClient())
                 {
-                    string apiUrl = "https://unphucard.azurewebsites.net/api/PagarCompra";
+                    string apiUrl = $"https://unphucard.azurewebsites.net/api/EditarSesion/{estId}";
                     var payload = new
                     {
                         UsuCodigo = userCode
                     };
-
                     var jsonContent = JsonConvert.SerializeObject(payload);
                     var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-                    var response = await httpClient.PostAsync(apiUrl, content);
+                    var response = await httpClient.PutAsync(apiUrl, content);
 
                     if (response.IsSuccessStatusCode)
                     {

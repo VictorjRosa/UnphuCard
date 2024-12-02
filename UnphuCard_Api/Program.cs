@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using UnphuCard_Api.Models;
-using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,9 +40,6 @@ builder.Services.AddDbContext<UnphuCardContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("UnphuCardContext"));
 });
 
-// Agregar SignalR
-builder.Services.AddSignalR();
-
 var app = builder.Build();
 
 // Configura el pipeline de solicitudes HTTP
@@ -70,8 +66,5 @@ app.UseAuthorization();
 
 // Mapear rutas de los controladores
 app.MapControllers();
-
-// Mapear el Hub de SignalR
-app.MapHub<CompraHub>("/ComprasHub"); // Asegúrate de crear esta clase
 
 app.Run();
