@@ -110,7 +110,7 @@ namespace UnphuCard.Controllers
         }
 
         [HttpPost("api/PagarCompra")]
-        public async Task<IActionResult> ProcesarPago([FromBody] InsertCompra insertCompra)
+        public async Task<ActionResult> ProcesarPago([FromBody] InsertCompra insertCompra)
         {
             try
             {

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using UnphuCard.DTOS;
 using UnphuCard_Api.Models;
@@ -9,11 +8,9 @@ namespace UnphuCard.Controllers
     public class SesionController : Controller
     {
         private readonly UnphuCardContext _context;
-        private readonly IHubContext<CompraHub> _hubContext;
-        public SesionController(UnphuCardContext context, IHubContext<CompraHub> hubContext)
+        public SesionController(UnphuCardContext context)
         {
             _context = context;
-            _hubContext = hubContext;
         }
 
         [HttpGet("api/MostrarSesion/{id}")]
@@ -28,7 +25,7 @@ namespace UnphuCard.Controllers
         }
 
         [HttpPut("api/EditarSesion")]
-        public async Task<IActionResult> PutSesion(string nombreEquipo, int usuCodigo)
+        public async Task<IActionResult> PutSesion([FromBody] int usuCodigo)
         {
             if (!ModelState.IsValid)
             {
@@ -36,7 +33,7 @@ namespace UnphuCard.Controllers
             }
             try
             {
-                var sesion = await _context.Sesions.Where(s => s.NombreEquipo == nombreEquipo).OrderByDescending(s => s.SesionFecha).FirstOrDefaultAsync();
+                var sesion = await _context.Sesions.Where(s => s.UsuId == usuCodigo).OrderByDescending(s => s.SesionFecha).FirstOrDefaultAsync();
                 if (sesion == null)
                 {
                     return NotFound("Sesión no encontrada.");
@@ -44,7 +41,6 @@ namespace UnphuCard.Controllers
                 var usuario = await _context.Usuarios.Where(u => u.UsuCodigo == usuCodigo).Select(u => u.UsuId).FirstOrDefaultAsync();
                 sesion.UsuId = usuario;
                 await _context.SaveChangesAsync();
-                await _hubContext.Clients.Group(nombreEquipo).SendAsync("EscaneoCompletado", sesion);
                 return Ok("Sesión actualizada.");
             }
             catch (DbUpdateConcurrencyException)
@@ -53,7 +49,7 @@ namespace UnphuCard.Controllers
                 {
                     return NotFound("Usuario no encontrado");
                 }
-                else if (EquipoExists(nombreEquipo))
+                else if (EstablecimientoExists(usuCodigo))
                 {
                     return NotFound("Equipo no encontrado");
                 }
@@ -105,9 +101,9 @@ namespace UnphuCard.Controllers
         {
             return _context.Sesions.Any(c => c.UsuId == id);
         }
-        private bool EquipoExists(string nombreEquipo)
+        private bool EstablecimientoExists(int id)
         {
-            return _context.Sesions.Any(c => c.NombreEquipo == nombreEquipo);
+            return _context.Sesions.Any(c => c.UsuId == id);
         }
     }
 }
