@@ -38,7 +38,7 @@ namespace UnphuCard.Controllers
                 {
                     return NotFound("Sesión no encontrada.");
                 }
-                var usuario = await _context.Usuarios.Where(u => u.UsuCodigo == updateSesion.UsuId).Select(u => u.UsuId).FirstOrDefaultAsync();
+                var usuario = await _context.Usuarios.Where(u => u.UsuId == updateSesion.UsuId).Select(u => u.UsuId).FirstOrDefaultAsync();
                 sesion.UsuId = usuario;
                 await _context.SaveChangesAsync();
                 return Ok("Sesión actualizada.");
