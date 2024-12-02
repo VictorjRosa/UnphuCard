@@ -5,6 +5,6 @@ namespace UnphuCard.DTOS
     public class UpdateSesion
     {
 
-        public int UsuId { get; set; }
+        public int UsuCodigo { get; set; }
     }
 }

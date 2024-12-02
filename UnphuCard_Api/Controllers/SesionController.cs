@@ -38,14 +38,14 @@ namespace UnphuCard.Controllers
                 {
                     return NotFound("Sesión no encontrada.");
                 }
-                var usuario = await _context.Usuarios.Where(u => u.UsuId == updateSesion.UsuId).Select(u => u.UsuId).FirstOrDefaultAsync();
+                var usuario = await _context.Usuarios.Where(u => u.UsuCodigo == updateSesion.UsuCodigo).Select(u => u.UsuId).FirstOrDefaultAsync();
                 sesion.UsuId = usuario;
                 await _context.SaveChangesAsync();
                 return Ok("Sesión actualizada.");
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (UsuarioExists(updateSesion.UsuId))
+                if (UsuarioExists(updateSesion.UsuCodigo))
                 {
                     return NotFound("Usuario no encontrado");
                 }
