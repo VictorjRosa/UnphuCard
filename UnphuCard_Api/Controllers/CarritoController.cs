@@ -61,7 +61,7 @@ namespace UnphuCard.Controllers
             }
         }
 
-        [HttpPut("api/EditarCarrito")]
+        [HttpPut("api/EditarCarrito/{id}")]
         public async Task<IActionResult> PutCarrito(int id, [FromBody] UpdateCarrito updateCarrito)
         {
             if (!ModelState.IsValid)

@@ -13,7 +13,7 @@ namespace UnphuCard.Controllers
             _context = context;
         }
 
-        [HttpGet("api/MostrarSesion{id}")]
+        [HttpGet("api/MostrarSesion/{id}")]
         public async Task<ActionResult<Sesion>> GetSesion(int id)
         {
             var sesion = await _context.Sesions.Where(s => s.UsuId == id).OrderByDescending(s => s.SesionFecha).FirstOrDefaultAsync();
@@ -25,7 +25,7 @@ namespace UnphuCard.Controllers
         }
 
         [HttpPost("api/RegistrarSesion")]
-        public async Task<ActionResult> PostSesion([FromBody] InsertSesion insertSesion)
+        public async Task<ActionResult> PostSesion()
         {
             if (!ModelState.IsValid)
             {
@@ -39,12 +39,14 @@ namespace UnphuCard.Controllers
                 DateTime fechaActualUtc = DateTime.UtcNow;
                 // Convertir la fecha a la zona horaria de República Dominicana
                 DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
+                // Obtener el nombre del equipo
+                string nombreEquipo = Environment.MachineName;
 
                 var sesion = new Sesion()
                 {
                     SesionToken = Guid.NewGuid().ToString(),
                     SesionFecha = fechaEnRD,
-                    UsuId = insertSesion.UsuId,
+                    NombreEquipo = nombreEquipo,
                 };
                 _context.Sesions.Add(sesion);
                 await _context.SaveChangesAsync();
