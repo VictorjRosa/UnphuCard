@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using UnphuCard.DTOS;
 using UnphuCard_Api.Models;
@@ -8,9 +9,11 @@ namespace UnphuCard.Controllers
     public class SesionController : Controller
     {
         private readonly UnphuCardContext _context;
-        public SesionController(UnphuCardContext context)
+        private readonly IHubContext<CompraHub> _hubContext;
+        public SesionController(UnphuCardContext context, IHubContext<CompraHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         [HttpGet("api/MostrarSesion/{id}")]
@@ -24,8 +27,49 @@ namespace UnphuCard.Controllers
             return sesion;
         }
 
+        [HttpPut("api/EditarSesion")]
+        public async Task<IActionResult> PutSesion(string nombreEquipo, int usuCodigo)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Sesió no válida");
+            }
+            try
+            {
+                var sesion = await _context.Sesions.Where(s => s.NombreEquipo == nombreEquipo).OrderByDescending(s => s.SesionFecha).FirstOrDefaultAsync();
+                if (sesion == null)
+                {
+                    return NotFound("Sesión no encontrada.");
+                }
+                var usuario = await _context.Usuarios.Where(u => u.UsuCodigo == usuCodigo).Select(u => u.UsuId).FirstOrDefaultAsync();
+                sesion.UsuId = usuario;
+                await _context.SaveChangesAsync();
+                await _hubContext.Clients.Group(nombreEquipo).SendAsync("EscaneoCompletado", sesion);
+                return Ok("Sesión actualizada.");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (UsuarioExists(usuCodigo))
+                {
+                    return NotFound("Usuario no encontrado");
+                }
+                else if (EquipoExists(nombreEquipo))
+                {
+                    return NotFound("Equipo no encontrado");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
         [HttpPost("api/RegistrarSesion")]
-        public async Task<ActionResult> PostSesion()
+        public async Task<ActionResult> PostSesion([FromBody] string nombreEquipo)
         {
             if (!ModelState.IsValid)
             {
@@ -40,7 +84,6 @@ namespace UnphuCard.Controllers
                 // Convertir la fecha a la zona horaria de República Dominicana
                 DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
                 // Obtener el nombre del equipo
-                string nombreEquipo = Environment.MachineName;
 
                 var sesion = new Sesion()
                 {
@@ -56,6 +99,15 @@ namespace UnphuCard.Controllers
             {
                 return StatusCode(500, $"Error interno del servidor: {ex.Message}");
             }
+        }
+
+        private bool UsuarioExists(int id)
+        {
+            return _context.Sesions.Any(c => c.UsuId == id);
+        }
+        private bool EquipoExists(string nombreEquipo)
+        {
+            return _context.Sesions.Any(c => c.NombreEquipo == nombreEquipo);
         }
     }
 }

@@ -174,7 +174,7 @@ namespace UnphuCard.Controllers
 
         private bool CarritoExists(int id)
         {
-            return _context.Carritos.Any(c => c.SesionId == id);
+            return _context.Carritos.Any(c => c.CarId == id);
         }
     }
 }

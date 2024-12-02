@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using UnphuCard_Api.Models;
+using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,9 +11,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();  // Agregar Swagger
+
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
 
+// Configurar JWT Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -38,6 +41,9 @@ builder.Services.AddDbContext<UnphuCardContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("UnphuCardContext"));
 });
 
+// Agregar SignalR
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 // Configura el pipeline de solicitudes HTTP
@@ -59,8 +65,13 @@ else
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication(); // Habilitar autenticación
 app.UseAuthorization();
 
+// Mapear rutas de los controladores
 app.MapControllers();
+
+// Mapear el Hub de SignalR
+app.MapHub<CompraHub>("/ComprasHub"); // Asegúrate de crear esta clase
 
 app.Run();
