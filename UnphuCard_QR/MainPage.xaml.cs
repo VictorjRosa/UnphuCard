@@ -96,7 +96,7 @@ namespace UnphuCard_QR
                     var jsonContent = JsonConvert.SerializeObject(payload);
                     var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-                    var response = await httpClient.PostAsync(apiUrl, content);
+                    var response = await httpClient.PutAsync(apiUrl, content);
 
                     if (response.IsSuccessStatusCode)
                     {
