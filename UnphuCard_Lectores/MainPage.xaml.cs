@@ -24,11 +24,19 @@ namespace UnphuCard_Lectores
             });
         }
 
-        public void UpdateStatusLabel(string message)
+        public void UpdateStatusLabelNfc(string message)
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                statusLabel.Text = message;
+                statusLabel.Text = $"Estado NFC: {message}";
+            });
+        }
+
+        public void UpdateStatusLabelQr(string message)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                statusLabel2.Text = $"Estado QR: {message}";
             });
         }
 
@@ -41,17 +49,39 @@ namespace UnphuCard_Lectores
             if (isDiagnosticMode)
             {
                 button.Text = "Modo Validación: Validar Acceso";
-                UpdateStatusLabel("Modo Diagnóstico activado. Escanee una tarjeta para mostrar su Tag ID.");
+                UpdateStatusLabelNfc("Modo Diagnóstico activado. Escanee una tarjeta para mostrar su Tag ID.");
             }
             else
             {
                 button.Text = "Modo Diagnóstico: Mostrar Tag ID";
-                UpdateStatusLabel("Modo Validación activado. Escanee una tarjeta para validar acceso.");
+                UpdateStatusLabelNfc("Modo Validación activado. Escanee una tarjeta para validar acceso.");
+            }
+        }
+
+        private bool isScannerActive = false; // Controla si el escáner está activo
+
+        private void ToggleScanner_Clicked(object sender, EventArgs e)
+        {
+            isScannerActive = !isScannerActive;
+
+            var button = sender as Button;
+            if (isScannerActive)
+            {
+                button.Text = "Desactivar Escáner";
+                UpdateStatusLabelQr("Escáner activado. Listo para escanear.");
+            }
+            else
+            {
+                button.Text = "Activar Escáner";
+                UpdateStatusLabelQr("Escáner desactivado.");
             }
         }
 
         private async void CameraView_BarcodeDetected(object sender, BarcodeDetectionEventArgs e)
         {
+            if (!isScannerActive) return; // Si el escáner está desactivado, no haga nada
+
+            isScannerActive = false; // Desactiva el escáner tras un escaneo exitoso
             try
             {
                 var barcodeResult = e.Results.FirstOrDefault();
@@ -59,12 +89,12 @@ namespace UnphuCard_Lectores
                 {
                     string scannedCode = barcodeResult.Value;
 
-                    // Muestra el código escaneado
-                    await MainThread.InvokeOnMainThreadAsync(() =>
-                        DisplayAlert("Código Escaneado", scannedCode, "OK"));
-
-                    // Si no estás en modo diagnóstico, envía el código QR a la API
-                    if (!isDiagnosticMode)
+                    if (isDiagnosticMode)
+                    {
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                            DisplayAlert("Modo Diagnóstico", $"Tag ID: {scannedCode}", "OK"));
+                    }
+                    else
                     {
                         await EnviarCodigoQR(scannedCode);
                     }
@@ -72,45 +102,62 @@ namespace UnphuCard_Lectores
             }
             catch (Exception ex)
             {
-                // Muestra el error en un mensaje y registra los detalles en la consola
                 await MainThread.InvokeOnMainThreadAsync(() =>
-                    DisplayAlert("Error", $"Error al procesar el código: {ex.Message}", "OK"));
-                Console.WriteLine($"Error en CameraView_BarcodeDetected: {ex}");
+                    DisplayAlert("Error al procesar el código", $"Detalle del error: {ex.Message}", "OK"));
+            }
+
+            finally
+            {
+                UpdateStatusLabelQr("Escaneo en proceso...");
+                await Task.Delay(3000);
+                UpdateStatusLabelQr("Listo para escanear.");
+                isScannerActive = true; // Reactiva el escaneo
             }
         }
 
-        private async Task EnviarCodigoQR(string userCode)
+        private async Task EnviarCodigoQR(string userCode, int estId = 1)
         {
+            if (string.IsNullOrEmpty(userCode))
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                DisplayAlert("Error", "El código escaneado está vacío. Intente nuevamente.", "OK"));
+                return;
+            }
+
             try
             {
                 using (var httpClient = new HttpClient())
                 {
-                    string apiUrl = "https://unphucard.azurewebsites.net/api/PagarCompra";
+                    string apiUrl = $"https://unphucard.azurewebsites.net/api/EditarSesion/{estId}";
                     var payload = new
                     {
                         UsuCodigo = userCode
                     };
-
                     var jsonContent = JsonConvert.SerializeObject(payload);
                     var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-                    var response = await httpClient.PostAsync(apiUrl, content);
+                    var response = await httpClient.PutAsync(apiUrl, content);
 
                     if (response.IsSuccessStatusCode)
                     {
-                        await DisplayAlert("Éxito", "El código fue enviado correctamente.", "OK");
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        DisplayAlert("Éxito", "El código fue enviado correctamente.", "OK"));
                     }
                     else
                     {
-                        await DisplayAlert("Error", "No se pudo procesar la solicitud. Intente nuevamente.", "OK");
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        DisplayAlert("Error", $"No se pudo procesar la solicitud. Error: {response.ReasonPhrase}", "OK"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Error al enviar el código: {ex.Message}", "OK");
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                DisplayAlert("Error", $"Error al enviar el código: {ex.Message}", "OK"));
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
             }
         }
+
 
         public bool IsDiagnosticMode => isDiagnosticMode; // Para acceder al modo actual desde MainActivity
     }

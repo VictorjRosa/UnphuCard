@@ -61,7 +61,7 @@ namespace UnphuCard.Controllers
             }
         }
 
-        [HttpPut("api/EditarCarrito")]
+        [HttpPut("api/EditarCarrito/{id}")]
         public async Task<IActionResult> PutCarrito(int id, [FromBody] UpdateCarrito updateCarrito)
         {
             if (!ModelState.IsValid)
@@ -110,7 +110,7 @@ namespace UnphuCard.Controllers
         }
 
         [HttpPost("api/PagarCompra")]
-        public async Task<IActionResult> ProcesarPago([FromBody] InsertCompra insertCompra)
+        public async Task<ActionResult> ProcesarPago([FromBody] InsertCompra insertCompra)
         {
             try
             {
@@ -174,7 +174,7 @@ namespace UnphuCard.Controllers
 
         private bool CarritoExists(int id)
         {
-            return _context.Carritos.Any(c => c.SesionId == id);
+            return _context.Carritos.Any(c => c.CarId == id);
         }
     }
 }

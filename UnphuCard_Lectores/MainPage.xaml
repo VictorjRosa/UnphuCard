@@ -20,22 +20,27 @@
 
             <!-- Etiqueta para mostrar el estado -->
             <Label
-                x:Name="statusLabel"
-                Text="Estado: Esperando acción..."
-                FontSize="14"
-                TextColor="Gray"
-                HorizontalOptions="Center" />
+    x:Name="statusLabel"
+    Text="Estado NFC: Esperando acción..."
+    FontSize="14"
+    TextColor="Gray"
+    HorizontalOptions="Center" />
 
-            <!-- Escaneo de código QR -->
-            <Label Text="Escanear Código QR" FontSize="18" HorizontalOptions="Center" />
-            <Label x:Name="ResultLabel" Text="Esperando escaneo..." FontSize="14" TextColor="Gray" />
+            <Button
+    Text="Activar Escáner"
+    Clicked="ToggleScanner_Clicked" />
+            <Label
+    x:Name="statusLabel2"
+    Text="Estado QR: Esperando escaneo..."
+    FontSize="14"
+    TextColor="Gray"
+    HorizontalOptions="Center" />
 
-            <!-- Vista de cámara para escanear códigos -->
             <zxing:CameraBarcodeReaderView x:Name="cameraView"
-                                           BarcodesDetected="CameraView_BarcodeDetected"
-                                           IsDetecting="true"
-                                           HorizontalOptions="FillAndExpand"
-                                           VerticalOptions="FillAndExpand" />
+                               BarcodesDetected="CameraView_BarcodeDetected"
+                               IsDetecting="true"
+                               HorizontalOptions="FillAndExpand"
+                               VerticalOptions="FillAndExpand" />
         </VerticalStackLayout>
     </ScrollView>
 

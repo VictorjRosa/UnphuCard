@@ -13,7 +13,7 @@ namespace UnphuCard.Controllers
             _context = context;
         }
 
-        [HttpGet("api/MostrarSesion{id}")]
+        [HttpGet("api/MostrarSesion/{id}")]
         public async Task<ActionResult<Sesion>> GetSesion(int id)
         {
             var sesion = await _context.Sesions.Where(s => s.UsuId == id).OrderByDescending(s => s.SesionFecha).FirstOrDefaultAsync();
@@ -24,8 +24,48 @@ namespace UnphuCard.Controllers
             return sesion;
         }
 
+        [HttpPut("api/EditarSesion/{estId}")]
+        public async Task<IActionResult> PutSesion(int estId, [FromBody] UpdateSesion updateSesion)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Sesión no válida");
+            }
+            try
+            {
+                var sesion = await _context.Sesions.Where(s => s.EstId == estId).OrderByDescending(s => s.SesionFecha).FirstOrDefaultAsync();
+                if (sesion == null)
+                {
+                    return NotFound("Sesión no encontrada.");
+                }
+                var usuarioId = await _context.Usuarios.Where(u => u.UsuCodigo == updateSesion.UsuCodigo).Select(u => u.UsuId).FirstOrDefaultAsync();
+                sesion.UsuId = usuarioId;
+                await _context.SaveChangesAsync();
+                return Ok("Sesión actualizada.");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (UsuarioExists(updateSesion.UsuCodigo))
+                {
+                    return NotFound("Usuario no encontrado");
+                }
+                else if (EstablecimientoExists(estId))
+                {
+                    return NotFound("Establecimiento no encontrado");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
         [HttpPost("api/RegistrarSesion")]
-        public async Task<ActionResult> PostSesion([FromBody] InsertSesion insertSesion)
+        public async Task<ActionResult> PostSesion([FromBody] int estId)
         {
             if (!ModelState.IsValid)
             {
@@ -39,12 +79,13 @@ namespace UnphuCard.Controllers
                 DateTime fechaActualUtc = DateTime.UtcNow;
                 // Convertir la fecha a la zona horaria de República Dominicana
                 DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
+                // Obtener el nombre del equipo
 
                 var sesion = new Sesion()
                 {
                     SesionToken = Guid.NewGuid().ToString(),
                     SesionFecha = fechaEnRD,
-                    UsuId = insertSesion.UsuId,
+                    EstId = estId,
                 };
                 _context.Sesions.Add(sesion);
                 await _context.SaveChangesAsync();
@@ -54,6 +95,15 @@ namespace UnphuCard.Controllers
             {
                 return StatusCode(500, $"Error interno del servidor: {ex.Message}");
             }
+        }
+
+        private bool UsuarioExists(int id)
+        {
+            return _context.Sesions.Any(c => c.UsuId == id);
+        }
+        private bool EstablecimientoExists(int id)
+        {
+            return _context.Sesions.Any(c => c.EstId == id);
         }
     }
 }

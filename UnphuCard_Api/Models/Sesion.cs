@@ -12,4 +12,6 @@ public partial class Sesion
     public DateTime? SesionFecha { get; set; }
 
     public int? UsuId { get; set; }
+
+    public int? EstId { get; set; }
 }

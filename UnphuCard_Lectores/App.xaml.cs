@@ -6,7 +6,8 @@
         {
             InitializeComponent();
 
-            MainPage = new AppShell();
+            // Configura el menú como página principal con navegación
+            MainPage = new NavigationPage(new MenuPage());
         }
     }
 }

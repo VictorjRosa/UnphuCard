@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UnphuCard_Lectores.MenuPage">
+
+    <VerticalStackLayout
+        Padding="30,50"
+        Spacing="25"
+        VerticalOptions="Center">
+        <Label
+            Text="Seleccione una funcionalidad"
+            HorizontalOptions="Center"
+            FontSize="24"
+            TextColor="DarkBlue" />
+
+        <Button
+            Text="Usar NFC"
+            HorizontalOptions="Center"
+            Clicked="OnNfcButtonClicked" />
+
+        <Button
+            Text="Usar QR"
+            HorizontalOptions="Center"
+            Clicked="OnQrButtonClicked" />
+    </VerticalStackLayout>
+</ContentPage>

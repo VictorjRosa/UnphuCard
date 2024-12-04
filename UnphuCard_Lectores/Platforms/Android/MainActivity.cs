@@ -21,7 +21,7 @@ namespace UnphuCard_Lectores
             }
             else
             {
-                MainPage.Instance?.UpdateStatusLabel("NFC no disponible o desactivado.");
+                MainPage.Instance?.UpdateStatusLabelNfc("NFC no disponible o desactivado.");
             }
         }
 
@@ -42,7 +42,7 @@ namespace UnphuCard_Lectores
                     if (MainPage.Instance.IsDiagnosticMode)
                     {
                         // Solo muestra el Tag ID
-                        MainPage.Instance.UpdateStatusLabel($"Tag ID Detectado: {tagId}");
+                        MainPage.Instance.UpdateStatusLabelNfc($"Tag ID Detectado: {tagId}");
                     }
                     else
                     {
