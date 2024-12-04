@@ -3,7 +3,7 @@
 @using UnphuCard_Api.DTOS
 @inject AuthService AuthService
 @inject NavigationManager NavigationManager
-
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
 
 <div class="login-container">
     <div class="left-panel wave-animation">
@@ -34,7 +34,8 @@
                     </div>
                     <InputText type="password" id="password" class="form-input" @bind-Value="LoginModel.Contraseña" required />
                 </div>
-                <button @onclick="HandleLogin" type="submit" class="form-button">Iniciar sesión</button>
+
+                <button @onclick="HandleLogin" type="button" class="form-button">Iniciar sesión</button>
             </EditForm>
             <div style="text-align: center; margin-top: 1rem;">
                 <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
@@ -50,6 +51,7 @@
 
 
 @code {
+    private bool isAuthenticated;
 
     private string errorMessage;
     private LoginModel LoginModel = new LoginModel();
@@ -59,12 +61,28 @@
         showPassword = !showPassword;
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var token = await localStorage.GetItemAsync<string>("authToken");
+            isAuthenticated = !string.IsNullOrEmpty(token);
+
+            if (isAuthenticated)
+            {
+                NavigationManager.NavigateTo("/index");
+            }
+        }
+    }
+
+
     private async Task HandleLogin()
     {
         try
         {
             errorMessage = null;
             var token = await AuthService.Login(LoginModel);
+            await localStorage.SetItemAsync("authToken", token);
             NavigationManager.NavigateTo("/index");
 
         }

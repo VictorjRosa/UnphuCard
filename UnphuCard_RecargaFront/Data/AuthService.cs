@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using NuGet.Protocol.Plugins;
 using UnphuCard.DTOS;
@@ -11,11 +12,15 @@ namespace UnphuCard_RecargaFront.Data
     public class AuthService
     {
         private readonly HttpClient _httpClient;
+        private readonly ILocalStorageService _localStorage;
 
-        public AuthService(HttpClient httpClient)
+
+        public AuthService(HttpClient httpClient, ILocalStorageService localStorage)
         {
             _httpClient = httpClient;
-           
+            _localStorage = localStorage;
+
+
         }
 
         public async Task<string> Login(LoginModel loginModel)
@@ -35,6 +40,11 @@ namespace UnphuCard_RecargaFront.Data
                 throw new ApplicationException(errorMessage);
             }
 
+        }
+
+        public async Task LogoutAsync()
+        {
+            await _localStorage.RemoveItemAsync("authToken");
         }
 
 

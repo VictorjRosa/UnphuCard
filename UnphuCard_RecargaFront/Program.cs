@@ -1,6 +1,10 @@
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using NuGet.Common;
+using System.Net.Http.Headers;
 using UnphuCard_RecargaFront.Data;
+using ZXing.Aztec.Internal;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,12 +12,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddBlazoredLocalStorage(); 
+
 
 builder.Services.AddScoped(sp =>
     new HttpClient
 {
-BaseAddress = new Uri("https://localhost:7192/")
-});
+BaseAddress = new Uri("https://localhost:7192/"),
+
+    });
 
 
 var app = builder.Build();
