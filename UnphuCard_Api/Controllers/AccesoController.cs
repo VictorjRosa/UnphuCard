@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using UnphuCard.DTOS;
 using UnphuCard_Api.DTOS;
@@ -64,9 +65,15 @@ namespace UnphuCard.Controllers
         {
             try
             {
-                var AulaId = await _context.Aulas.Where(a => a.AulaSensor == validarAcceso.aulaSensor).Select(a => a.AulaId).FirstOrDefaultAsync();
-                var tarjeta = await _context.Tarjetas.FirstOrDefaultAsync(t => t.TarjId == validarAcceso.tarjetaId);
-                var usuarioTarjeta = await _context.Tarjetas.Where(u => u.TarjId == validarAcceso.tarjetaId).Select(u => u.UsuId).FirstOrDefaultAsync();
+                // Obtener la zona horaria de República Dominicana (GMT-4)
+                TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
+                // Obtener la fecha y hora actual en UTC
+                DateTime fechaActualUtc = DateTime.UtcNow;
+                // Convertir la fecha a la zona horaria de República Dominicana
+                DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
+                var AulaId = await _context.Aulas.Where(a => a.AulaSensor == validarAcceso.AulaSensor).Select(a => a.AulaId).FirstOrDefaultAsync();
+                var tarjeta = await _context.Tarjetas.FirstOrDefaultAsync(t => t.TarjCodigo == validarAcceso.TarjCodigo);
+                var usuarioTarjeta = await _context.Tarjetas.Where(t => t.TarjCodigo == validarAcceso.TarjCodigo).Select(u => u.UsuId).FirstOrDefaultAsync();
                 var inscrito = await _context.Inscripciones.FirstOrDefaultAsync(i => i.UsuId == tarjeta.UsuId && i.StatusId == 5);
                 var materiaInscrito = await _context.Inscripciones.Where(i => i.UsuId == usuarioTarjeta).Select(i => i.MatId).FirstOrDefaultAsync();
                 var usuarioMatProfesor = await _context.Materias.Where(m => m.MatId == Convert.ToInt16(materiaInscrito)).Select(m => m.UsuId).FirstOrDefaultAsync();
@@ -96,127 +103,329 @@ namespace UnphuCard.Controllers
                                                                         h.HorHoraFin <= horaFin/*fechaEnRD.TimeOfDay*/);
                 var profesorAcceso = await _context.Accesos.AnyAsync(a => usuarioMatProfesor == usuarioHorProfesor && a.AulaId == AulaId && a.StatusId == 8);
 
-                // Obtener la zona horaria de República Dominicana (GMT-4)
-                TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
-                // Obtener la fecha y hora actual en UTC
-                DateTime fechaActualUtc = DateTime.UtcNow;
-                // Convertir la fecha a la zona horaria de República Dominicana
-                DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
-
-                if (usuarioTarjeta == 1)
+                if (tarjeta != null)
                 {
-                    if (tarjeta == null || tarjeta.StatusId == 4)
+                    if (usuarioTarjeta == 1)
                     {
-                        var accesoFallido = new InsertAcceso()
+                        if (tarjeta == null || tarjeta.StatusId == 4)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjeta,
+                                AulaId = AulaId,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("Tarjeta deshabilitada o no encontrada.");
+                        }
+
+                        if (inscrito == null)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjeta,
+                                AulaId = AulaId,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("El estudiante no está inscrito en la materia");
+                        }
+
+                        if (horarioAccesoEstu == null)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjeta,
+                                AulaId = AulaId,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("Acceso fuera del horario permitido o aula incorrecta.");
+                        }
+
+                        if (!profesorAcceso)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjeta,
+                                AulaId = AulaId,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("El profesor aún no ha ingresado al aula.");
+                        }
+
+                        var accesoAprobado = new InsertAcceso()
                         {
                             AccesFecha = fechaEnRD,
                             UsuId = usuarioTarjeta,
                             AulaId = AulaId,
-                            StatusId = 9,
+                            StatusId = 8,
                         };
-                        await PostAcceso(accesoFallido);
-                        return BadRequest("Tarjeta deshabilitada o no encontrada.");
+                        await PostAcceso(accesoAprobado);
+                        return Ok("Acceso permitido. Tarjeta Estudiante.");
                     }
-
-                    if (inscrito == null)
+                    else if (usuarioTarjeta == 2)
                     {
-                        var accesoFallido = new InsertAcceso()
+                        if (tarjeta == null || tarjeta.StatusId == 4)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjeta,
+                                AulaId = AulaId,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("Tarjeta deshabilitada o no encontrada.");
+                        }
+
+                        if (horarioAccesoProf == null)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjeta,
+                                AulaId = AulaId,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("Acceso fuera del horario permitido o aula incorrecta.");
+                        }
+                        var accesoAprobado = new InsertAcceso()
                         {
                             AccesFecha = fechaEnRD,
                             UsuId = usuarioTarjeta,
                             AulaId = AulaId,
-                            StatusId = 9,
+                            StatusId = 8,
                         };
-                        await PostAcceso(accesoFallido);
-                        return BadRequest("El estudiante no está inscrito en la materia");
+                        await PostAcceso(accesoAprobado);
+                        return Ok("Acceso permitido. Tarjeta Profesor.");
                     }
-
-                    if (horarioAccesoEstu == null)
+                    else if (usuarioTarjeta == 5)
                     {
-                        var accesoFallido = new InsertAcceso()
+                        var accesoAprobado = new InsertAcceso()
                         {
                             AccesFecha = fechaEnRD,
                             UsuId = usuarioTarjeta,
                             AulaId = AulaId,
-                            StatusId = 9,
+                            StatusId = 8,
                         };
-                        await PostAcceso(accesoFallido);
-                        return BadRequest("Acceso fuera del horario permitido o aula incorrecta.");
+                        await PostAcceso(accesoAprobado);
+                        return Ok("Acceso permitido. Tarjeta Admin.");
                     }
-
-                    if (!profesorAcceso)
-                    {
-                        var accesoFallido = new InsertAcceso()
-                        {
-                            AccesFecha = fechaEnRD,
-                            UsuId = usuarioTarjeta,
-                            AulaId = AulaId,
-                            StatusId = 9,
-                        };
-                        await PostAcceso(accesoFallido);
-                        return BadRequest("El profesor aún no ha ingresado al aula.");
-                    }
-
-                    var accesoAprobado = new InsertAcceso()
+                    var accesoFallido1 = new InsertAcceso()
                     {
                         AccesFecha = fechaEnRD,
                         UsuId = usuarioTarjeta,
                         AulaId = AulaId,
                         StatusId = 8,
                     };
-                    await PostAcceso(accesoAprobado);
-                    return Ok("Acceso permitido. Tarjeta Estudiante.");
+                    await PostAcceso(accesoFallido1);
+                    return BadRequest("Tarjeta no reconocida.");
                 }
-                else if (usuarioTarjeta == 2)
+                else if (tarjeta == null)
                 {
-                    if (tarjeta == null || tarjeta.StatusId == 4)
+                    var AulaIdProv = await _context.Aulas.Where(a => a.AulaSensor == validarAcceso.AulaSensor).Select(a => a.AulaId).FirstOrDefaultAsync();
+                    var tarjetaProv = await _context.TarjetasProvisionales.FirstOrDefaultAsync(t => t.TarjProvCodigo == validarAcceso.TarjCodigo);
+                    var usuarioTarjetaProv = await _context.TarjetasProvisionales.Where(u => u.TarjProvCodigo == validarAcceso.TarjCodigo).Select(u => u.UsuId).FirstOrDefaultAsync();
+                    var inscritoProv = await _context.Inscripciones.FirstOrDefaultAsync(i => i.UsuId == tarjetaProv.UsuId && i.StatusId == 5);
+                    var materiaInscritoProv = await _context.Inscripciones.Where(i => i.UsuId == usuarioTarjetaProv).Select(i => i.MatId).FirstOrDefaultAsync();
+                    var usuarioMatProfesorProv = await _context.Materias.Where(m => m.MatId == Convert.ToInt16(materiaInscritoProv)).Select(m => m.UsuId).FirstOrDefaultAsync();
+                    var usuarioHorProfesorProv = await _context.Horarios.Where(h => h.AulaId == AulaIdProv && h.MatId == Convert.ToInt16(materiaInscritoProv)).Select(h => h.UsuId).FirstOrDefaultAsync();
+                    var materiaProfesorProv = await _context.Materias.Where(i => i.UsuId == usuarioTarjetaProv).Select(i => i.MatId).FirstOrDefaultAsync();
+                    if (usuarioMatProfesorProv == null)
                     {
-                        var accesoFallido = new InsertAcceso()
-                        {
-                            AccesFecha = fechaEnRD,
-                            UsuId = usuarioTarjeta,
-                            AulaId = AulaId,
-                            StatusId = 9,
-                        };
-                        await PostAcceso(accesoFallido);
-                        return BadRequest("Tarjeta deshabilitada o no encontrada.");
+                        return BadRequest();
                     }
+                    if (usuarioHorProfesorProv == null)
+                    {
+                        return BadRequest();
+                    }
+                    if (materiaInscritoProv == null)
+                    {
+                        return BadRequest();
+                    }
+                    TimeOnly horaInicioProv = new TimeOnly(15, 45, 00);
+                    TimeOnly horaFinProv = new TimeOnly(17, 45, 00);
+                    var horarioAccesoEstuProv = await _context.Horarios.FirstOrDefaultAsync(h => h.AulaId == AulaIdProv && h.MatId == Convert.ToInt16(materiaInscritoProv) &&
+                                                                            h.HorDia == "Monday"/*fechaEnRD.DayOfWeek.ToString()  */ &&
+                                                                            h.HorHoraInicio <= horaInicioProv/*fechaEnRD.TimeOfDay*/ &&
+                                                                            h.HorHoraFin <= horaFinProv/*fechaEnRD.TimeOfDay*/);
+                    var horarioAccesoProfProv = await _context.Horarios.FirstOrDefaultAsync(h => h.AulaId == AulaIdProv && h.MatId == Convert.ToInt16(materiaProfesorProv) &&
+                                                                            h.HorDia == "Monday"/*fechaEnRD.DayOfWeek.ToString()  */ &&
+                                                                            h.HorHoraInicio <= horaInicioProv/*fechaEnRD.TimeOfDay*/ &&
+                                                                            h.HorHoraFin <= horaFinProv/*fechaEnRD.TimeOfDay*/);
+                    var profesorAccesoProv = await _context.Accesos.AnyAsync(a => usuarioMatProfesorProv == usuarioHorProfesorProv && a.AulaId == AulaIdProv && a.StatusId == 8);
 
-                    if (horarioAccesoProf == null)
+                    if (usuarioTarjetaProv == 1)
                     {
-                        var accesoFallido = new InsertAcceso()
+                        if (tarjetaProv == null || tarjetaProv.StatusId == 4)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjetaProv,
+                                AulaId = AulaIdProv,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("Tarjeta provisional deshabilitada o no encontrada.");
+                        }
+
+                        if (tarjetaProv.TarjProvFechaExpiracion < fechaEnRD)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjetaProv,
+                                AulaId = AulaIdProv,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("Tarjeta provisional expirada.");
+                        }
+
+                        if (inscritoProv == null)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjetaProv,
+                                AulaId = AulaIdProv,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("El estudiante no está inscrito en la materia");
+                        }
+
+                        if (horarioAccesoEstuProv == null)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjetaProv,
+                                AulaId = AulaIdProv,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("Acceso fuera del horario permitido o aula incorrecta.");
+                        }
+
+                        if (!profesorAccesoProv)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjetaProv,
+                                AulaId = AulaIdProv,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("El profesor aún no ha ingresado al aula.");
+                        }
+
+                        var accesoAprobado = new InsertAcceso()
                         {
                             AccesFecha = fechaEnRD,
-                            UsuId = usuarioTarjeta,
-                            AulaId = AulaId,
-                            StatusId = 9,
+                            UsuId = usuarioTarjetaProv,
+                            AulaId = AulaIdProv,
+                            StatusId = 8,
                         };
-                        await PostAcceso(accesoFallido);
-                        return BadRequest("Acceso fuera del horario permitido o aula incorrecta.");
+                        await PostAcceso(accesoAprobado);
+                        return Ok("Acceso permitido. Tarjeta provisional Estudiante.");
                     }
-                    var accesoAprobado = new InsertAcceso()
+                    else if (usuarioTarjetaProv == 2)
                     {
-                        AccesFecha = fechaEnRD,
-                        UsuId = usuarioTarjeta,
-                        AulaId = AulaId,
-                        StatusId = 8,
-                    };
-                    await PostAcceso(accesoAprobado);
-                    return Ok("Acceso permitido. Tarjeta Profesor.");
+                        if (tarjetaProv == null || tarjetaProv.StatusId == 4)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjetaProv,
+                                AulaId = AulaIdProv,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("Tarjeta provisional deshabilitada o no encontrada.");
+                        }
+
+                        if (tarjetaProv.TarjProvFechaExpiracion < fechaEnRD)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjetaProv,
+                                AulaId = AulaIdProv,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("Tarjeta provisional expirada.");
+                        }
+
+                        if (horarioAccesoProfProv == null)
+                        {
+                            var accesoFallido = new InsertAcceso()
+                            {
+                                AccesFecha = fechaEnRD,
+                                UsuId = usuarioTarjetaProv,
+                                AulaId = AulaIdProv,
+                                StatusId = 9,
+                            };
+                            await PostAcceso(accesoFallido);
+                            return BadRequest("Acceso fuera del horario permitido o aula incorrecta.");
+                        }
+                        var accesoAprobado = new InsertAcceso()
+                        {
+                            AccesFecha = fechaEnRD,
+                            UsuId = usuarioTarjetaProv,
+                            AulaId = AulaIdProv,
+                            StatusId = 8,
+                        };
+                        await PostAcceso(accesoAprobado);
+                        return Ok("Acceso permitido. Tarjeta provisional Profesor.");
+                    }
+                    else if (usuarioTarjetaProv == 5)
+                    {
+                        var accesoAprobado = new InsertAcceso()
+                        {
+                            AccesFecha = fechaEnRD,
+                            UsuId = usuarioTarjetaProv,
+                            AulaId = AulaIdProv,
+                            StatusId = 8,
+                        };
+                        await PostAcceso(accesoAprobado);
+                        return Ok("Acceso permitido. Tarjeta provisional Admin.");
+                    }
+                    else
+                    {
+                        var accesoFallido0 = new InsertAcceso()
+                        {
+                            AccesFecha = fechaEnRD,
+                            UsuId = usuarioTarjetaProv,
+                            AulaId = AulaIdProv,
+                            StatusId = 8,
+                        };
+                        await PostAcceso(accesoFallido0);
+                        return BadRequest("Usuario no reconocido.");
+                    }
                 }
-                else if (usuarioTarjeta == 5)
+                else
                 {
-                    var accesoAprobado = new InsertAcceso()
+                    var accesoFallido1 = new InsertAcceso()
                     {
                         AccesFecha = fechaEnRD,
                         UsuId = usuarioTarjeta,
                         AulaId = AulaId,
                         StatusId = 8,
                     };
-                    await PostAcceso(accesoAprobado);
-                    return Ok("Acceso permitido. Tarjeta Admin.");
+                    await PostAcceso(accesoFallido1);
+                    return BadRequest("Tarjeta no reconocida.");
                 }
-                return BadRequest("Tipo de usuario no reconocido.");
             }
             catch (Exception ex)
             {

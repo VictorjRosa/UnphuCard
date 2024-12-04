@@ -114,7 +114,7 @@ namespace UnphuCard.Controllers
         {
             try
             {
-                var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.UsuId == insertCompra.UsuId);
+                var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.UsuCodigo == insertCompra.UsuCodigo);
                 if (usuario == null)
                 {
                     return NotFound("Usuario no encontrado.");
@@ -134,7 +134,7 @@ namespace UnphuCard.Controllers
                 {
                     CompMonto = insertCompra.CompMonto,
                     CompFecha = insertCompra.CompFecha,
-                    UsuId = insertCompra.UsuId,
+                    UsuId = insertCompra.UsuCodigo,
                     EstId = insertCompra.EstId,
                     MetPagId = insertCompra.MetPagId,
                     SesionId = insertCompra.SesionId,
