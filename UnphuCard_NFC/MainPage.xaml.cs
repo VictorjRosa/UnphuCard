@@ -2,24 +2,49 @@
 {
     public partial class MainPage : ContentPage
     {
-        int count = 0;
+        public static MainPage Instance { get; private set; }
+        private bool isDiagnosticMode = false; // Bandera para alternar entre los modos
 
         public MainPage()
         {
             InitializeComponent();
+            Instance = this; // Guarda la referencia a esta página
         }
 
-        private void OnCounterClicked(object sender, EventArgs e)
+        public void ShowAlert(string title, string message)
         {
-            count++;
-
-            if (count == 1)
-                CounterBtn.Text = $"Clicked {count} time";
-            else
-                CounterBtn.Text = $"Clicked {count} times";
-
-            SemanticScreenReader.Announce(CounterBtn.Text);
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                await DisplayAlert(title, message, "OK");
+            });
         }
-    }
 
+        public void UpdateStatusLabel(string message)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                statusLabel.Text = message;
+            });
+        }
+
+        // Método del botón para alternar entre los modos
+        private void ToggleMode_Clicked(object sender, EventArgs e)
+        {
+            isDiagnosticMode = !isDiagnosticMode;
+
+            var button = sender as Button;
+            if (isDiagnosticMode)
+            {
+                button.Text = "Modo Validación: Validar Acceso";
+                UpdateStatusLabel("Modo Diagnóstico activado. Escanee una tarjeta para mostrar su Tag ID.");
+            }
+            else
+            {
+                button.Text = "Modo Diagnóstico: Mostrar Tag ID";
+                UpdateStatusLabel("Modo Validación activado. Escanee una tarjeta para validar acceso.");
+            }
+        }
+
+        public bool IsDiagnosticMode => isDiagnosticMode; // Para acceder al modo actual desde MainActivity
+    }
 }
