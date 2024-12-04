@@ -15,7 +15,7 @@
 
         <Label
             x:Name="statusLabelNfc"
-            Text="Estado: Esperando acción..."
+            Text="Estado: Esperando acciï¿½n..."
             HorizontalOptions="Center"
             FontSize="14"
             TextColor="Gray" />

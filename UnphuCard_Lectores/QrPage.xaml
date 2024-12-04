@@ -9,13 +9,13 @@
         Spacing="25"
         VerticalOptions="Center">
         <Label
-            Text="Escaneo de Código QR"
+            Text="Escaneo de Cï¿½digo QR"
             HorizontalOptions="Center"
             FontSize="24"
             TextColor="DarkBlue" />
 
         <Button
-            Text="Activar Escáner"
+            Text="Activar Escï¿½ner"
             Clicked="ToggleScanner_Clicked" />
 
         <Label
