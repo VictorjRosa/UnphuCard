@@ -2,25 +2,22 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="UnphuCard_Lectores.MenuPage">
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="30,0"
+            Spacing="25">
+            <Label
+                Text="Menu Principal"
+                FontSize="24"
+                HorizontalOptions="Center" />
 
-    <VerticalStackLayout
-        Padding="30,50"
-        Spacing="25"
-        VerticalOptions="Center">
-        <Label
-            Text="Seleccione una funcionalidad"
-            HorizontalOptions="Center"
-            FontSize="24"
-            TextColor="DarkBlue" />
+            <Button
+                Text="Escaneo NFC"
+                Clicked="OnNfcPageClicked" />
 
-        <Button
-            Text="Usar NFC"
-            HorizontalOptions="Center"
-            Clicked="OnNfcButtonClicked" />
-
-        <Button
-            Text="Usar QR"
-            HorizontalOptions="Center"
-            Clicked="OnQrButtonClicked" />
-    </VerticalStackLayout>
+            <Button
+                Text="Escaneo QR"
+                Clicked="OnQrPageClicked" />
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

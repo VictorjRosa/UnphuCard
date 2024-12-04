@@ -17,12 +17,12 @@
             if (isScannerActive)
             {
                 button.Text = "Desactivar Escáner";
-                statusLabelQr.Text = "Escáner activado. Listo para escanear.";
+                UpdateStatus("Escáner activado. Listo para escanear.");
             }
             else
             {
                 button.Text = "Activar Escáner";
-                statusLabelQr.Text = "Escáner desactivado.";
+                UpdateStatus("Escáner desactivado.");
             }
         }
 
@@ -30,28 +30,22 @@
         {
             if (!isScannerActive) return;
 
-            isScannerActive = false; // Desactiva el escáner para evitar múltiples lecturas
-            try
+            isScannerActive = false; // Pausa el escáner temporalmente
+            var barcodeResult = e.Results.FirstOrDefault();
+            if (barcodeResult != null)
             {
-                var barcodeResult = e.Results.FirstOrDefault();
-                if (barcodeResult != null)
-                {
-                    string scannedCode = barcodeResult.Value;
-                    await MainThread.InvokeOnMainThreadAsync(() =>
-                        DisplayAlert("Código QR Detectado", scannedCode, "OK"));
-                }
+                await DisplayAlert("Código Detectado", barcodeResult.Value, "OK");
             }
-            catch (Exception ex)
+            UpdateStatus("Listo para escanear.");
+            isScannerActive = true; // Reactiva el escáner
+        }
+
+        private void UpdateStatus(string message)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
             {
-                await MainThread.InvokeOnMainThreadAsync(() =>
-                    DisplayAlert("Error al procesar el código", ex.Message, "OK"));
-            }
-            finally
-            {
-                await Task.Delay(3000); // Espera 3 segundos antes de reactivar el escáner
-                isScannerActive = true;
-                statusLabelQr.Text = "Listo para escanear.";
-            }
+                statusLabel.Text = message;
+            });
         }
     }
 }

@@ -7,14 +7,12 @@
             InitializeComponent();
         }
 
-        // Método para navegar a la página de NFC
-        private async void OnNfcButtonClicked(object sender, EventArgs e)
+        private async void OnNfcPageClicked(object sender, EventArgs e)
         {
             await Navigation.PushAsync(new NfcPage());
         }
 
-        // Método para navegar a la página de QR
-        private async void OnQrButtonClicked(object sender, EventArgs e)
+        private async void OnQrPageClicked(object sender, EventArgs e)
         {
             await Navigation.PushAsync(new QrPage());
         }
