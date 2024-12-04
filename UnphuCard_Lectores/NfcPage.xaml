@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UnphuCard_Lectores.NfcPage">
+
+    <VerticalStackLayout
+        Padding="30,50"
+        Spacing="25"
+        VerticalOptions="Center">
+        <Label
+            Text="Escaneo NFC"
+            HorizontalOptions="Center"
+            FontSize="24"
+            TextColor="DarkBlue" />
+
+        <Label
+            x:Name="statusLabelNfc"
+            Text="Estado: Esperando acción..."
+            HorizontalOptions="Center"
+            FontSize="14"
+            TextColor="Gray" />
+    </VerticalStackLayout>
+</ContentPage>
