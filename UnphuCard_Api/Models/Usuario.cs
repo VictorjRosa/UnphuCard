@@ -19,6 +19,10 @@ public partial class Usuario
 
     public string? UsuCorreo { get; set; }
 
+    public string? UsuCarrera { get; set; }
+
+    public string? UsuCampus { get; set; }
+
     public string? UsuContraseña { get; set; }
 
     public decimal? UsuSaldo { get; set; }
