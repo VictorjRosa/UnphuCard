@@ -7,43 +7,75 @@ namespace UnphuCard_QR
 {
     public partial class MainPage : ContentPage
     {
-        private bool isScanning = true; // Controla si el escáner está activo
+        private bool isScannerActive = false; // Controla si el escáner está activo
 
         public MainPage()
         {
             InitializeComponent();
         }
 
+        private void ToggleScanner_Clicked(object sender, EventArgs e)
+        {
+            isScannerActive = !isScannerActive;
+            cameraView.IsDetecting = isScannerActive; // Activa o desactiva el escaneo
+
+            var button = sender as Button;
+            if (isScannerActive)
+            {
+                button.Text = "Desactivar Escáner";
+                statusLabel2.Text = "Estado: Escáner activado. Listo para escanear.";
+            }
+            else
+            {
+                button.Text = "Activar Escáner";
+                statusLabel2.Text = "Estado: Escáner desactivado.";
+            }
+        }
+
         private async void CameraView_BarcodeDetected(object sender, BarcodeDetectionEventArgs e)
         {
-            if (!isScanning) return; // Evitar múltiples escaneos
+            if (!isScannerActive) return; // Si el escáner está desactivado, no haga nada
 
-            isScanning = false; // Desactiva temporalmente el escáner
+            isScannerActive = false; // Desactiva el escáner tras un escaneo exitoso
+            cameraView.IsDetecting = false; // Detiene el escaneo hasta que el usuario lo reactive
+
             try
             {
                 var barcodeResult = e.Results.FirstOrDefault();
                 if (barcodeResult != null)
                 {
                     string scannedCode = barcodeResult.Value;
-                    await EnviarCodigoQR(scannedCode);
-                }
-                else
-                {
-                    await DisplayAlert("Error", "No se pudo escanear el código. Intente nuevamente.", "OK");
+
+                    await EnviarCodigoQR(scannedCode, 1);
+
+                    // Actualiza la UI desde el hilo principal
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        statusLabel2.Text = "Código procesado correctamente.";
+                    });
                 }
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Error al procesar el código: {ex.Message}", "OK");
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    DisplayAlert("Error al procesar el código", $"Detalle del error: {ex.Message}", "OK");
+                });
             }
             finally
             {
-                await Task.Delay(3000); // Agregar un retraso antes de reactivar
-                isScanning = true;
+                // Reactiva el escáner después de un tiempo
+                await Task.Delay(3000);
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    statusLabel2.Text = "Listo para escanear.";
+                    isScannerActive = true;
+                    cameraView.IsDetecting = true;
+                });
             }
         }
 
-        private async Task EnviarCodigoQR(string userCode)
+        private async Task EnviarCodigoQR(string userCode, int estId)
         {
             if (string.IsNullOrEmpty(userCode))
             {
@@ -55,8 +87,12 @@ namespace UnphuCard_QR
             {
                 using (var httpClient = new HttpClient())
                 {
-                    string apiUrl = "https://unphucard.azurewebsites.net/api/PagarCompra";
-                    var payload = new { UsuCodigo = userCode };
+                    string apiUrl = $"https://unphucard.azurewebsites.net/api/EditarSesion/{estId}";
+                    var payload = new
+                    {
+                        UsuCodigo = userCode
+                    };
+
                     var jsonContent = JsonConvert.SerializeObject(payload);
                     var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
@@ -64,11 +100,11 @@ namespace UnphuCard_QR
 
                     if (response.IsSuccessStatusCode)
                     {
-                        await DisplayAlert("Éxito", "Código QR procesado correctamente.", "OK");
+                        await DisplayAlert("Éxito", "El código fue enviado correctamente.", "OK");
                     }
                     else
                     {
-                        await DisplayAlert("Error", $"No se pudo procesar la solicitud: {response.ReasonPhrase}", "OK");
+                        await DisplayAlert("Error", $"No se pudo procesar la solicitud. Error: {response.ReasonPhrase}", "OK");
                     }
                 }
             }

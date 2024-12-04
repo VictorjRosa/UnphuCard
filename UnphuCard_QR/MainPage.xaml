@@ -9,22 +9,29 @@
             Padding="30,0"
             Spacing="25">
             <Label
-                Text="Validación de Compras (QR)"
+                Text="Validación de Compras"
                 Style="{StaticResource Headline}"
                 HorizontalOptions="Center" />
 
+            <!-- Botón para activar/desactivar el escáner -->
+            <Button
+                x:Name="toggleScannerButton"
+                Text="Activar Escáner"
+                Clicked="ToggleScanner_Clicked" />
+
+            <!-- Estado del escáner -->
             <Label
-                x:Name="statusLabel"
-                Text="Estado QR: Esperando acción..."
-                FontSize="14"
+                x:Name="statusLabel2"
+                Text="Estado: Escáner desactivado."
                 TextColor="Gray"
                 HorizontalOptions="Center" />
 
+            <!-- Vista para el escaneo QR -->
             <zxing:CameraBarcodeReaderView x:Name="cameraView"
-                               BarcodesDetected="CameraView_BarcodeDetected"
-                               IsDetecting="true"
-                               HorizontalOptions="FillAndExpand"
-                               VerticalOptions="FillAndExpand" />
+                                           BarcodesDetected="CameraView_BarcodeDetected"
+                                           IsDetecting="false"
+                                           HorizontalOptions="FillAndExpand"
+                                           VerticalOptions="FillAndExpand" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
