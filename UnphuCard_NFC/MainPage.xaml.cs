@@ -23,7 +23,10 @@
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                statusLabel.Text = message;
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    statusLabel.Text = message;
+                });
             });
         }
 
@@ -35,13 +38,19 @@
             var button = sender as Button;
             if (isDiagnosticMode)
             {
-                button.Text = "Modo Validación: Validar Acceso";
-                UpdateStatusLabel("Modo Diagnóstico activado. Escanee una tarjeta para mostrar su Tag ID.");
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    button.Text = "Modo Validación: Validar Acceso";
+                    UpdateStatusLabel("Modo Diagnóstico activado. Escanee una tarjeta para mostrar su Tag ID.");
+                });
             }
             else
             {
-                button.Text = "Modo Diagnóstico: Mostrar Tag ID";
-                UpdateStatusLabel("Modo Validación activado. Escanee una tarjeta para validar acceso.");
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    button.Text = "Modo Diagnóstico: Mostrar Tag ID";
+                    UpdateStatusLabel("Modo Validación activado. Escanee una tarjeta para validar acceso.");
+                });
             }
         }
 

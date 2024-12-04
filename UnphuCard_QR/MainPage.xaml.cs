@@ -22,13 +22,19 @@ namespace UnphuCard_QR
             var button = sender as Button;
             if (isScannerActive)
             {
-                button.Text = "Desactivar Escáner";
-                statusLabel2.Text = "Estado: Escáner activado. Listo para escanear.";
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    button.Text = "Desactivar Escáner";
+                    statusLabel2.Text = "Estado: Escáner activado. Listo para escanear.";
+                });
             }
             else
             {
-                button.Text = "Activar Escáner";
-                statusLabel2.Text = "Estado: Escáner desactivado.";
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    button.Text = "Activar Escáner";
+                    statusLabel2.Text = "Estado: Escáner desactivado.";
+                });
             }
         }
 
@@ -79,7 +85,10 @@ namespace UnphuCard_QR
         {
             if (string.IsNullOrEmpty(userCode))
             {
-                await DisplayAlert("Error", "El código escaneado está vacío. Intente nuevamente.", "OK");
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    DisplayAlert("Error", "El código escaneado está vacío. Intente nuevamente.", "OK");
+                });
                 return;
             }
 
@@ -100,17 +109,26 @@ namespace UnphuCard_QR
 
                     if (response.IsSuccessStatusCode)
                     {
-                        await DisplayAlert("Éxito", "El código fue enviado correctamente.", "OK");
+                        MainThread.BeginInvokeOnMainThread(() =>
+                        {
+                            DisplayAlert("Éxito", "El código fue enviado correctamente.", "OK");
+                        });
                     }
                     else
                     {
-                        await DisplayAlert("Error", $"No se pudo procesar la solicitud. Error: {response.ReasonPhrase}", "OK");
+                        MainThread.BeginInvokeOnMainThread(() =>
+                        {
+                            DisplayAlert("Error", $"No se pudo procesar la solicitud. Error: {response.ReasonPhrase}", "OK");
+                        });
                     }
                 }
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Error al enviar el código: {ex.Message}", "OK");
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    DisplayAlert("Error", $"Error al enviar el código: {ex.Message}", "OK");
+                });
             }
         }
     }

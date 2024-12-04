@@ -21,7 +21,10 @@ namespace UnphuCard_NFC
             }
             else
             {
-                MainPage.Instance?.UpdateStatusLabel("NFC no disponible o desactivado.");
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    MainPage.Instance?.UpdateStatusLabel("NFC no disponible o desactivado.");
+                });
             }
         }
 
@@ -35,14 +38,20 @@ namespace UnphuCard_NFC
             public async void OnTagDiscovered(Tag tag)
             {
                 var tagId = BitConverter.ToString(tag.GetId()).Replace("-", "");
-                Console.WriteLine($"Tag ID: {tagId}");
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    Console.WriteLine($"Tag ID: {tagId}");
+                });
 
                 if (MainPage.Instance != null)
                 {
                     if (MainPage.Instance.IsDiagnosticMode)
                     {
                         // Solo muestra el Tag ID
-                        MainPage.Instance.UpdateStatusLabel($"Tag ID Detectado: {tagId}");
+                        MainThread.BeginInvokeOnMainThread(() =>
+                        {
+                            MainPage.Instance.UpdateStatusLabel($"Tag ID Detectado: {tagId}");
+                        });
                     }
                     else
                     {
@@ -50,11 +59,17 @@ namespace UnphuCard_NFC
                         var isValid = await SendTagIdToApi(tagId);
                         if (isValid)
                         {
-                            MainPage.Instance.ShowAlert("Acceso Permitido", "La tarjeta es válida.");
+                            MainThread.BeginInvokeOnMainThread(() =>
+                            {
+                                MainPage.Instance.ShowAlert("Acceso Permitido", "La tarjeta es válida.");
+                            });
                         }
                         else
                         {
-                            MainPage.Instance.ShowAlert("Acceso Denegado", "La tarjeta no es válida.");
+                            MainThread.BeginInvokeOnMainThread(() =>
+                            {
+                                MainPage.Instance.ShowAlert("Acceso Denegado", "La tarjeta no es válida.");
+                            });
                         }
                     }
                 }
@@ -76,7 +91,10 @@ namespace UnphuCard_NFC
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error al enviar el ID de la tarjeta a la API: {ex.Message}");
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        Console.WriteLine($"Error al enviar el ID de la tarjeta a la API: {ex.Message}");
+                    });
                     return false;
                 }
             }
