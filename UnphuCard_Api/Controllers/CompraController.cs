@@ -40,10 +40,16 @@ namespace UnphuCard.Controllers
             }
             try
             {
+                // Obtener la zona horaria de República Dominicana (GMT-4)
+                TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
+                // Obtener la fecha y hora actual en UTC
+                DateTime fechaActualUtc = DateTime.UtcNow;
+                // Convertir la fecha a la zona horaria de República Dominicana
+                DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
                 var compra = new Compra
                 {
                     CompMonto = insertCompra.CompMonto,
-                    CompFecha = insertCompra.CompFecha,
+                    CompFecha = fechaEnRD,
                     UsuId = insertCompra.UsuCodigo,
                     EstId = insertCompra.EstId,
                     MetPagId = insertCompra.MetPagId,

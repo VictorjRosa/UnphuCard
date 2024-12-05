@@ -48,10 +48,16 @@ namespace UnphuCard.Controllers
             }
             try
             {
+                // Obtener la zona horaria de República Dominicana (GMT-4)
+                TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
+                // Obtener la fecha y hora actual en UTC
+                DateTime fechaActualUtc = DateTime.UtcNow;
+                // Convertir la fecha a la zona horaria de República Dominicana
+                DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
                 var SesionId = await _context.Sesions.Where(s => s.SesionToken == insertCarrito.SesionToken).Select(s => s.SesionId).FirstOrDefaultAsync();
                 var carrito = new Carrito
                 {
-                    CarFecha = insertCarrito.CarFecha,
+                    CarFecha = fechaEnRD,
                     CarCantidad = insertCarrito.CarCantidad,
                     ProdId = insertCarrito.ProdId,
                     SesionId = SesionId,
@@ -75,16 +81,20 @@ namespace UnphuCard.Controllers
             }
             try
             {
+                // Obtener la zona horaria de República Dominicana (GMT-4)
+                TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
+                // Obtener la fecha y hora actual en UTC
+                DateTime fechaActualUtc = DateTime.UtcNow;
+                // Convertir la fecha a la zona horaria de República Dominicana
+                DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
+                // Obtener el nombre del equipo
                 var SesionId = await _context.Sesions.Where(s => s.SesionToken == SesionToken).Select(s => s.SesionId).FirstOrDefaultAsync();
                 var carrito = await _context.Carritos.FirstOrDefaultAsync(s => s.SesionId == SesionId);
                 if (carrito == null)
                 {
                     return NotFound("Carrito no encontrado");
                 }
-                if (updateCarrito.CarFecha.HasValue && updateCarrito.CarFecha != DateTime.UtcNow)
-                {
-                    carrito.CarFecha = updateCarrito.CarFecha;
-                }
+                carrito.CarFecha = fechaEnRD;
                 if (updateCarrito.CarCantidad.HasValue && updateCarrito.CarCantidad.Value > 0)
                 {
                     carrito.CarCantidad = updateCarrito.CarCantidad;
@@ -120,6 +130,12 @@ namespace UnphuCard.Controllers
         {
             try
             {
+                // Obtener la zona horaria de República Dominicana (GMT-4)
+                TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
+                // Obtener la fecha y hora actual en UTC
+                DateTime fechaActualUtc = DateTime.UtcNow;
+                // Convertir la fecha a la zona horaria de República Dominicana
+                DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
                 var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.UsuCodigo == insertCompra.UsuCodigo);
                 if (usuario == null)
                 {
@@ -139,7 +155,7 @@ namespace UnphuCard.Controllers
                 var compra = new Compra
                 {
                     CompMonto = insertCompra.CompMonto,
-                    CompFecha = insertCompra.CompFecha,
+                    CompFecha = fechaEnRD,
                     UsuId = insertCompra.UsuCodigo,
                     EstId = insertCompra.EstId,
                     MetPagId = insertCompra.MetPagId,

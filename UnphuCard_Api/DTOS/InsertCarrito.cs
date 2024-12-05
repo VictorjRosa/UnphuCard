@@ -5,8 +5,6 @@ namespace UnphuCard.DTOS
     public class InsertCarrito
     {
 
-        public DateTime? CarFecha { get; set; }
-
         public int? CarCantidad { get; set; }
 
         public int? ProdId { get; set; }

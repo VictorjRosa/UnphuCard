@@ -7,9 +7,6 @@ namespace UnphuCard.DTOS
         [Required(ErrorMessage = "El monto de la compra es requerido")]
         public decimal? CompMonto { get; set; }
 
-        [Required(ErrorMessage = "La fecha de la compra es requerida")]
-        public DateTime? CompFecha { get; set; }
-
         [Required(ErrorMessage = "El código de usuario es requerido")]
         public int? UsuCodigo { get; set; }
 

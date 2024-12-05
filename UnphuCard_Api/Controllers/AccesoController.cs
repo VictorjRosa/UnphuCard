@@ -42,9 +42,15 @@ namespace UnphuCard.Controllers
             }
             try
             {
+                // Obtener la zona horaria de República Dominicana (GMT-4)
+                TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
+                // Obtener la fecha y hora actual en UTC
+                DateTime fechaActualUtc = DateTime.UtcNow;
+                // Convertir la fecha a la zona horaria de República Dominicana
+                DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
                 var acceso = new Acceso()
                 {
-                    AccesFecha = insertAcceso.AccesFecha,
+                    AccesFecha = fechaEnRD,
                     UsuId = insertAcceso.UsuId,
                     AulaId = insertAcceso.AulaId,
                     StatusId = insertAcceso.StatusId,
@@ -91,16 +97,14 @@ namespace UnphuCard.Controllers
                 {
                     return BadRequest();
                 }
-                TimeOnly horaInicio = new TimeOnly(15, 45, 00);
-                TimeOnly horaFin = new TimeOnly(17, 45, 00);
                 var horarioAccesoEstu = await _context.Horarios.FirstOrDefaultAsync(h => h.AulaId == AulaId && h.MatId == Convert.ToInt16(materiaInscrito) &&
-                                                                        h.HorDia == "Monday"/*fechaEnRD.DayOfWeek.ToString()  */ &&
-                                                                        h.HorHoraInicio <= horaInicio/*fechaEnRD.TimeOfDay*/ &&
-                                                                        h.HorHoraFin <= horaFin/*fechaEnRD.TimeOfDay*/);
+                                                                        h.HorDia == fechaEnRD.DayOfWeek.ToString() &&
+                                                                        Convert.ToDateTime(h.HorHoraInicio).TimeOfDay <= fechaEnRD.TimeOfDay &&
+                                                                        Convert.ToDateTime(h.HorHoraFin).TimeOfDay <= fechaEnRD.TimeOfDay);
                 var horarioAccesoProf = await _context.Horarios.FirstOrDefaultAsync(h => h.AulaId == AulaId && h.MatId == Convert.ToInt16(materiaProfesor) &&
-                                                                        h.HorDia == "Monday"/*fechaEnRD.DayOfWeek.ToString()  */ &&
-                                                                        h.HorHoraInicio <= horaInicio/*fechaEnRD.TimeOfDay*/ &&
-                                                                        h.HorHoraFin <= horaFin/*fechaEnRD.TimeOfDay*/);
+                                                                        h.HorDia == fechaEnRD.DayOfWeek.ToString() &&
+                                                                        Convert.ToDateTime(h.HorHoraInicio).TimeOfDay <= fechaEnRD.TimeOfDay &&
+                                                                        Convert.ToDateTime(h.HorHoraFin).TimeOfDay <= fechaEnRD.TimeOfDay);
                 var profesorAcceso = await _context.Accesos.AnyAsync(a => usuarioMatProfesor == usuarioHorProfesor && a.AulaId == AulaId && a.StatusId == 8);
 
                 if (tarjeta != null)
@@ -250,16 +254,14 @@ namespace UnphuCard.Controllers
                     {
                         return BadRequest();
                     }
-                    TimeOnly horaInicioProv = new TimeOnly(15, 45, 00);
-                    TimeOnly horaFinProv = new TimeOnly(17, 45, 00);
                     var horarioAccesoEstuProv = await _context.Horarios.FirstOrDefaultAsync(h => h.AulaId == AulaIdProv && h.MatId == Convert.ToInt16(materiaInscritoProv) &&
-                                                                            h.HorDia == "Monday"/*fechaEnRD.DayOfWeek.ToString()  */ &&
-                                                                            h.HorHoraInicio <= horaInicioProv/*fechaEnRD.TimeOfDay*/ &&
-                                                                            h.HorHoraFin <= horaFinProv/*fechaEnRD.TimeOfDay*/);
+                                                                            h.HorDia == fechaEnRD.DayOfWeek.ToString() &&
+                                                                            Convert.ToDateTime(h.HorHoraInicio).TimeOfDay <= fechaEnRD.TimeOfDay &&
+                                                                        Convert.ToDateTime(h.HorHoraFin).TimeOfDay <= fechaEnRD.TimeOfDay);
                     var horarioAccesoProfProv = await _context.Horarios.FirstOrDefaultAsync(h => h.AulaId == AulaIdProv && h.MatId == Convert.ToInt16(materiaProfesorProv) &&
-                                                                            h.HorDia == "Monday"/*fechaEnRD.DayOfWeek.ToString()  */ &&
-                                                                            h.HorHoraInicio <= horaInicioProv/*fechaEnRD.TimeOfDay*/ &&
-                                                                            h.HorHoraFin <= horaFinProv/*fechaEnRD.TimeOfDay*/);
+                                                                            h.HorDia == fechaEnRD.DayOfWeek.ToString() &&
+                                                                            Convert.ToDateTime(h.HorHoraInicio).TimeOfDay <= fechaEnRD.TimeOfDay &&
+                                                                        Convert.ToDateTime(h.HorHoraFin).TimeOfDay <= fechaEnRD.TimeOfDay);
                     var profesorAccesoProv = await _context.Accesos.AnyAsync(a => usuarioMatProfesorProv == usuarioHorProfesorProv && a.AulaId == AulaIdProv && a.StatusId == 8);
 
                     if (usuarioTarjetaProv == 1)
