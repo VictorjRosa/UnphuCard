@@ -1,7 +1,10 @@
 ﻿using System.Text;
+using Android.OS;
 using Newtonsoft.Json;
+using UnphuCard_QR.Services;
 using ZXing.Net.Maui;
 using ZXing.Net.Maui.Controls;
+using Android.Provider;
 
 namespace UnphuCard_QR
 {
@@ -12,7 +15,10 @@ namespace UnphuCard_QR
         public MainPage()
         {
             InitializeComponent();
+            InicializarEstablecimientoId();
         }
+
+        private int? estId; // EstId
 
         private void ToggleScanner_Clicked(object sender, EventArgs e)
         {
@@ -38,6 +44,32 @@ namespace UnphuCard_QR
             }
         }
 
+
+        private async void InicializarEstablecimientoId()
+        {
+            // Obtén el Android ID
+            string androidId = Settings.Secure.GetString(Android.App.Application.Context.ContentResolver, Settings.Secure.AndroidId);
+
+            var apiService = new ApiService();
+            var estId = await apiService.ObtenerEstablecimientoId(androidId); // Enviar Android ID al servicio API
+
+            if (estId == null)
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    DisplayAlert("Error", "No se pudo obtener el EstId para este dispositivo.", "OK");
+                });
+            }
+            else
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    DisplayAlert("Éxito", $"EstablecimientoId obtenido: {estId}", "OK");
+                });
+                // Guarda establecimientoId para uso posterior
+            }
+        }
+
         private async void CameraView_BarcodeDetected(object sender, BarcodeDetectionEventArgs e)
         {
             if (!isScannerActive) return; // Si el escáner está desactivado, no haga nada
@@ -52,7 +84,7 @@ namespace UnphuCard_QR
                 {
                     string scannedCode = barcodeResult.Value;
 
-                    await EnviarCodigoQR(scannedCode, 1);
+                    await EnviarCodigoQR(scannedCode);
 
                     // Actualiza la UI desde el hilo principal
                     MainThread.BeginInvokeOnMainThread(() =>
@@ -81,13 +113,22 @@ namespace UnphuCard_QR
             }
         }
 
-        private async Task EnviarCodigoQR(string userCode, int estId)
+        private async Task EnviarCodigoQR(string userCode)
         {
             if (string.IsNullOrEmpty(userCode))
             {
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
                     DisplayAlert("Error", "El código escaneado está vacío. Intente nuevamente.", "OK");
+                });
+                return;
+            }
+
+            if (estId == null)
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    DisplayAlert("Error", "El EstId no está configurado. Intente nuevamente.", "OK");
                 });
                 return;
             }

@@ -27,6 +27,8 @@ public partial class UnphuCardContext : DbContext
 
     public virtual DbSet<DetallesCompra> DetallesCompras { get; set; }
 
+    public virtual DbSet<Dispositivo> Dispositivos { get; set; }
+
     public virtual DbSet<Establecimiento> Establecimientos { get; set; }
 
     public virtual DbSet<Estado> Estados { get; set; }
@@ -160,6 +162,21 @@ public partial class UnphuCardContext : DbContext
                 .HasColumnName("DetComp_Precio");
             entity.Property(e => e.ProdId).HasColumnName("Prod_ID");
             entity.Property(e => e.SesionId).HasColumnName("Sesion_ID");
+        });
+
+        modelBuilder.Entity<Dispositivo>(entity =>
+        {
+            entity.HasKey(e => e.DispId).HasName("PK__Disposit__C942AA1422C38C10");
+
+            entity.Property(e => e.DispId).HasColumnName("Disp_ID");
+            entity.Property(e => e.DispAndroidId)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Disp_AndroidId");
+            entity.Property(e => e.DispFecha)
+                .HasColumnType("datetime")
+                .HasColumnName("Disp_Fecha");
+            entity.Property(e => e.EstId).HasColumnName("Est_ID");
         });
 
         modelBuilder.Entity<Establecimiento>(entity =>
