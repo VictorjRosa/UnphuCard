@@ -469,6 +469,9 @@ public partial class UnphuCardContext : DbContext
                 .HasColumnType("decimal(6, 2)")
                 .HasColumnName("Precio del Producto");
             entity.Property(e => e.SesiónId).HasColumnName("Sesión ID");
+            entity.Property(e => e.SesiónToken)
+                .IsUnicode(false)
+                .HasColumnName("Sesión Token");
         });
 
         modelBuilder.Entity<VwComprasUsuario>(entity =>

@@ -14,21 +14,22 @@ namespace UnphuCard.Controllers
             _context = context;
         }
 
-        [HttpGet("api/MostrarCarrito/{id}")]
-        public async Task<ActionResult<VwCarritoCompra>> GetCarrito(int id)
+        [HttpGet("api/MostrarCarrito/{SesionToken}")]
+        public async Task<ActionResult<VwCarritoCompra>> GetCarrito(string SesionToken)
         {
-            var carrito = await _context.VwCarritoCompras.FirstOrDefaultAsync(c => c.SesiónId == id);
+            var carrito = await _context.VwCarritoCompras.Where(s => s.SesiónToken == SesionToken).OrderByDescending(s => s.FechaDeCompra).FirstOrDefaultAsync();
             if (carrito == null)
             {
-                return BadRequest("Producto no encontrado");
+                return BadRequest("Carrito no encontrado");
             }
             return carrito;
         }
 
-        [HttpDelete("api/EliminarCarrito/{id}")]
-        public async Task<IActionResult> DeleteCarrito(int id)
+        [HttpDelete("api/EliminarCarrito/{SesionToken}")]
+        public async Task<IActionResult> DeleteCarrito(string SesionToken)
         {
-            var carrito = await _context.Carritos.FirstOrDefaultAsync(c => c.SesionId == id);
+            var SesionId = await _context.Sesions.Where(s => s.SesionToken == SesionToken).Select(s => s.SesionId).FirstOrDefaultAsync();
+            var carrito = await _context.Carritos.Where(s => s.SesionId == SesionId).OrderByDescending(s => s.CarFecha).FirstOrDefaultAsync();
             if (carrito == null) 
             {
                 return NotFound();
@@ -47,9 +48,13 @@ namespace UnphuCard.Controllers
             }
             try
             {
+                var SesionId = await _context.Sesions.Where(s => s.SesionToken == insertCarrito.SesionToken).Select(s => s.SesionId).FirstOrDefaultAsync();
                 var carrito = new Carrito
                 {
-                    SesionId = insertCarrito.SesionId,
+                    CarFecha = insertCarrito.CarFecha,
+                    CarCantidad = insertCarrito.CarCantidad,
+                    ProdId = insertCarrito.ProdId,
+                    SesionId = SesionId,
                 };
                 _context.Carritos.Add(carrito);
                 await _context.SaveChangesAsync();
@@ -61,16 +66,17 @@ namespace UnphuCard.Controllers
             }
         }
 
-        [HttpPut("api/EditarCarrito/{id}")]
-        public async Task<IActionResult> PutCarrito(int id, [FromBody] UpdateCarrito updateCarrito)
+        [HttpPut("api/EditarCarrito/{SesionToken}")]
+        public async Task<IActionResult> PutCarrito(string SesionToken, [FromBody] UpdateCarrito updateCarrito)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest("Producto no válido");
+                return BadRequest("Carrito no válido");
             }
             try
             {
-                var carrito = await _context.Carritos.FirstOrDefaultAsync(c => c.CarId == id);
+                var SesionId = await _context.Sesions.Where(s => s.SesionToken == SesionToken).Select(s => s.SesionId).FirstOrDefaultAsync();
+                var carrito = await _context.Carritos.FirstOrDefaultAsync(s => s.SesionId == SesionId);
                 if (carrito == null)
                 {
                     return NotFound("Carrito no encontrado");
@@ -94,7 +100,7 @@ namespace UnphuCard.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (CarritoExists(id))
+                if (CarritoExists(SesionToken))
                 {
                     return NotFound("Carrito no encontrado");
                 }
@@ -172,9 +178,9 @@ namespace UnphuCard.Controllers
             }
         }
 
-        private bool CarritoExists(int id)
+        private bool CarritoExists(string SesionToken)
         {
-            return _context.Carritos.Any(c => c.CarId == id);
+            return _context.Carritos.Any(c => c.SesionId == (_context.Sesions.Where(s => s.SesionToken == SesionToken).Select(s => s.SesionId).FirstOrDefault()));
         }
     }
 }

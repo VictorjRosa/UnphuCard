@@ -18,4 +18,6 @@ public partial class VwCarritoCompra
     public decimal? PrecioDelProducto { get; set; }
 
     public int SesiónId { get; set; }
+
+    public string? SesiónToken { get; set; }
 }
