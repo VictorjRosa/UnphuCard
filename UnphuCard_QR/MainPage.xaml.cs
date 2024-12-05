@@ -18,8 +18,6 @@ namespace UnphuCard_QR
             InicializarEstablecimientoId();
         }
 
-        private int? estId; // EstId
-
         private void ToggleScanner_Clicked(object sender, EventArgs e)
         {
             isScannerActive = !isScannerActive;
@@ -44,14 +42,17 @@ namespace UnphuCard_QR
             }
         }
 
+        private int? estId; // EstId
 
         private async void InicializarEstablecimientoId()
         {
-            // Obtén el Android ID
-            string androidId = Settings.Secure.GetString(Android.App.Application.Context.ContentResolver, Settings.Secure.AndroidId);
+            var androidId = Android.Provider.Settings.Secure.GetString(
+                Android.App.Application.Context.ContentResolver,
+                Android.Provider.Settings.Secure.AndroidId
+            );
 
             var apiService = new ApiService();
-            var estId = await apiService.ObtenerEstablecimientoId(androidId); // Enviar Android ID al servicio API
+            estId = await apiService.ObtenerEstablecimientoId(androidId);
 
             if (estId == null)
             {
@@ -66,7 +67,6 @@ namespace UnphuCard_QR
                 {
                     DisplayAlert("Éxito", $"EstablecimientoId obtenido: {estId}", "OK");
                 });
-                // Guarda establecimientoId para uso posterior
             }
         }
 
