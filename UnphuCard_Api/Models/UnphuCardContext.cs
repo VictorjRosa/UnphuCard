@@ -67,6 +67,8 @@ public partial class UnphuCardContext : DbContext
 
     public virtual DbSet<VwInventarioEstablecimiento> VwInventarioEstablecimientos { get; set; }
 
+    public virtual DbSet<VwRecarga> VwRecargas { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("Server=tcp:unphucard.database.windows.net,1433;Initial Catalog=UnphuCard;Persist Security Info=False;User ID=UnphuCard;Password=Proyecto1;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
@@ -557,6 +559,24 @@ public partial class UnphuCardContext : DbContext
             entity.Property(e => e.PrecioDelProducto)
                 .HasColumnType("decimal(6, 2)")
                 .HasColumnName("Precio del Producto");
+        });
+
+        modelBuilder.Entity<VwRecarga>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("vw_Recargas");
+
+            entity.Property(e => e.Descripción)
+                .HasMaxLength(11)
+                .IsUnicode(false);
+            entity.Property(e => e.Fecha).HasColumnType("datetime");
+            entity.Property(e => e.IdDelUsuario).HasColumnName("ID del usuario");
+            entity.Property(e => e.Monto).HasColumnType("decimal(6, 2)");
+            entity.Property(e => e.MétodoDePago)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Método de pago");
         });
 
         OnModelCreatingPartial(modelBuilder);
