@@ -54,11 +54,12 @@ public class CardnetService
     // Método para procesar el pago
     public async Task<string> ProcesarPagoAsync(PagoRequest pagoRequest)
     {
-        var token = await ObtenerTokenAsync(); // Obtén el token
+        var token = pagoRequest.Token;  // Ahora usamos el token recibido del frontend
         var urlPago = "https://api.cardnet.com.do/v1/pagos";
 
         var data = new
         {
+            token = token,  // Token que se obtuvo de Cardnet
             amount = pagoRequest.Amount,
             currency = "DOP",
             orderNumber = pagoRequest.OrderNumber,
@@ -67,13 +68,11 @@ public class CardnetService
         };
 
         var jsonContent = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
         var response = await _httpClient.PostAsync(urlPago, jsonContent);
 
         if (response.IsSuccessStatusCode)
         {
-            return await response.Content.ReadAsStringAsync(); 
+            return await response.Content.ReadAsStringAsync();  // Aquí se obtiene la respuesta del pago
         }
         else
         {
@@ -81,6 +80,7 @@ public class CardnetService
             throw new Exception($"Error en la transacción: {error}");
         }
     }
+
 }
 
 

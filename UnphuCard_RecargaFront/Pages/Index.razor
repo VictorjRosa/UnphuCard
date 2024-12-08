@@ -1,1 +1,120 @@
-﻿
+﻿@page "/index"
+@inject ILocalStorageService localStorage
+@inject NavigationManager NavigationManager
+@inject UsuarioService UsuarioService
+@using UnphuCard_Api.Models
+@inject AuthService AuthService
+
+
+
+<div class="dashboard">
+    <!-- Header -->
+    <header>
+        <h1>Recarga UnphuCard</h1>
+        <button @onclick="Logout" class="logout-button">
+            <span class="icon-logout"></span>
+            Cerrar
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Student Info Section -->
+        <div class="student-info">
+            <div class="student-header">
+                <span class="icon-user"></span>
+                <div>
+                    <h2>@usuario.UsuNombre @usuario.UsuApellido</h2>
+                    <p>Matrícula: @usuario.UsuMatricula</p>
+                </div>
+            </div>
+
+            <div class="student-details">
+                <div class="detail-item">
+                    <span class="icon-graduation-cap"></span>
+                    <span>@usuario.UsuCarrera</span>
+                </div>
+
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="icon-building"></span>
+                        <span>@usuario.UsuCampus</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="icon-card"></span>
+                        <span>@usuario.UsuCodigo</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="icon-mail"></span>
+                        <span>@usuario.UsuCorreo</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="separator" />
+
+        <!-- Balance and Actions Section -->
+        <div class="account-details">
+            <h2>Detalle de cuenta</h2>
+
+            <div class="balance-card">
+                <h3>Saldo a favor</h3>
+                <p>RD$ @(usuario?.UsuSaldo.HasValue == true ? usuario.UsuSaldo.Value.ToString("F2") : "0.00")</p>
+            </div>
+
+            <div class="action-buttons">
+                <button @onclick="NavigateToRecharge" class="action-button primary">
+                    <span class="icon-credit-card"></span>
+                    <span>Recargar tarjeta</span>
+                </button>
+                <button @onclick="NavigateToHistory" class="action-button secondary">
+                    <span class="icon-history"></span>
+                    <span>Historial de transacciones</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+</div>
+@code {
+    private string token;
+        private string errorMessage;
+
+    private Usuario usuario = new Usuario();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var userId = await AuthService.GetUserIdFromTokenAsync();
+
+            usuario = await UsuarioService.GetStudentInfoAsync(userId);
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private void Logout()
+    {
+        localStorage.RemoveItemAsync("authToken");
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void NavigateToRecharge()
+    {
+        NavigationManager.NavigateTo("/recarga");
+    }
+
+    private void NavigateToHistory()
+    {
+        NavigationManager.NavigateTo("/historial");
+    }
+}
+    

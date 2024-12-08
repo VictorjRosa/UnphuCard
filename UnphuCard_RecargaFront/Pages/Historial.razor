@@ -1,0 +1,174 @@
+﻿@* @page "/historial"
+@inject NavigationManager NavigationManager
+
+<div class="min-h-screen bg-gray-100 flex flex-col">
+    <header class="bg-green-600 text-white px-4 py-3 flex justify-between items-center">
+        <h1 class="text-xl font-semibold">Recarga UnphuCard</h1>
+    </header>
+
+    <main class="flex-1 container mx-auto px-4 py-6">
+        <button class="mb-4 text-green-600 hover:text-green-700" @onclick="GoBack">
+            <span class="mr-2">←</span> Volver al dashboard
+        </button>
+
+        <div class="bg-white rounded-lg shadow-md w-full">
+            <div class="flex flex-row items-center justify-between p-6 border-b">
+                <h2 class="text-2xl font-bold text-gray-800">Historial de Recargas</h2>
+                <div class="flex space-x-2">
+                    <select @onchange="HandleMethodChange" class="w-[180px] border rounded-md">
+                        <option value="all">Todos los métodos</option>
+                        <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+                        <option value="Tarjeta de Débito">Tarjeta de Débito</option>
+                        <option value="PayPal">PayPal</option>
+                        <option value="Google Pay">Google Pay</option>
+                    </select>
+                    <input type="date" @bind="SelectedDate" @bind:event="oninput" class="w-[180px] border rounded-md" />
+                    <button @onclick="OpenExportDialog" class="px-4 py-2 border rounded-md flex items-center">
+                        <span class="mr-2">↓</span> Exportar
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th class="text-left">Fecha</th>
+                            <th class="text-left">Descripción</th>
+                            <th class="text-left">Método de pago</th>
+                            <th class="text-right">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var transaction in Transactions)
+                        {
+                            <tr>
+                                <td>@FormatDate(transaction.Date)</td>
+                                <td>Recarga tarjeta</td>
+                                <td>@transaction.PaymentMethod</td>
+                                <td class="text-right font-medium">@FormatAmount(transaction.Amount)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-blue-900 text-white p-4">
+        <div class="container mx-auto">
+            <p class="text-sm">UNPHU | Recarga UnphuCard</p>
+        </div>
+    </footer>
+</div>
+
+@if (IsExportDialogOpen)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg">
+            <h3 class="text-lg font-semibold mb-4">Exportar transacciones</h3>
+            <div class="grid gap-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="date" @bind="ExportStartDate" placeholder="Fecha inicial" class="border rounded-md p-2" />
+                    <input type="date" @bind="ExportEndDate" placeholder="Fecha final" class="border rounded-md p-2" />
+                </div>
+                <button @onclick="HandleExport" class="bg-green-600 text-white px-4 py-2 rounded-md">Exportar</button>
+                <button @onclick="CloseExportDialog" class="border px-4 py-2 rounded-md">Cancelar</button>
+            </div>
+        </div>
+    </div>
+}
+ *@
+
+@code {
+
+
+    // private List<Transaction> AllTransactions { get; set; } = new List<Transaction>();
+    // private List<Transaction> Transactions { get; set; } = new List<Transaction>();
+    // private string SelectedMethod { get; set; } = "all";
+    // private DateTime? SelectedDate { get; set; }
+    // private DateTime? ExportStartDate { get; set; }
+    // private DateTime? ExportEndDate { get; set; }
+    // private bool IsExportDialogOpen { get; set; } = false;
+
+    // protected override void OnInitialized()
+    // {
+    //     // Initialize with sample data
+    //     AllTransactions = new List<Transaction>
+    //     {
+    //         new Transaction { Id = "1", Date = new DateTime(2023, 5, 15), Amount = 500, PaymentMethod = "Tarjeta de Crédito" },
+    //         new Transaction { Id = "2", Date = new DateTime(2023, 5, 18), Amount = 200, PaymentMethod = "PayPal" },
+    //         new Transaction { Id = "3", Date = new DateTime(2023, 5, 22), Amount = 300, PaymentMethod = "Tarjeta de Débito" },
+    //         new Transaction { Id = "4", Date = new DateTime(2023, 5, 25), Amount = 100, PaymentMethod = "Google Pay" },
+    //         new Transaction { Id = "5", Date = new DateTime(2023, 5, 28), Amount = 150, PaymentMethod = "Tarjeta de Crédito" }
+    //     };
+
+    //     Transactions = new List<Transaction>(AllTransactions);
+    // }
+
+    // private void FilterTransactions()
+    // {
+    //     Transactions = AllTransactions;
+
+    //     if (SelectedMethod != "all")
+    //     {
+    //         Transactions = Transactions.Where(t => t.PaymentMethod == SelectedMethod).ToList();
+    //     }
+
+    //     if (SelectedDate.HasValue)
+    //     {
+    //         Transactions = Transactions.Where(t => t.Date.Date == SelectedDate.Value.Date).ToList();
+    //     }
+    // }
+
+    // private void HandleMethodChange(ChangeEventArgs e)
+    // {
+    //     SelectedMethod = e.Value.ToString();
+    //     FilterTransactions();
+    // }
+
+    // private void GoBack()
+    // {
+    //     NavigationManager.NavigateTo("/dashboard");
+    // }
+
+    // private void OpenExportDialog()
+    // {
+    //     IsExportDialogOpen = true;
+    // }
+
+    // private void CloseExportDialog()
+    // {
+    //     IsExportDialogOpen = false;
+    // }
+
+    // private void HandleExport()
+    // {
+    //     if (ExportStartDate.HasValue && ExportEndDate.HasValue)
+    //     {
+    //         var filteredTransactions = Transactions.Where(t =>
+    //             t.Date >= ExportStartDate.Value && t.Date <= ExportEndDate.Value).ToList();
+    //         Console.WriteLine($"Exporting {filteredTransactions.Count} transactions");
+    //         // Here you would implement the actual export logic
+    //     }
+    //     CloseExportDialog();
+    // }
+
+    // private string FormatDate(DateTime date)
+    // {
+    //     return date.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("es-ES"));
+    // }
+
+    // private string FormatAmount(decimal amount)
+    // {
+    //     return amount.ToString("C", new System.Globalization.CultureInfo("es-DO"));
+    // }
+    // }
+
+    // public class Transaction
+    // {
+    // public string Id { get; set; }
+    // public DateTime Date { get; set; }
+    // public decimal Amount { get; set; }
+    // public string PaymentMethod { get; set; }
+    // }
+}

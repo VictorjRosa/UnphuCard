@@ -1,0 +1,219 @@
+﻿@page "/pago"
+@inject NavigationManager NavigationManager
+@using UnphuCard.DTOS
+@inject Pago pago
+@inject IJSRuntime JSRuntime
+
+
+
+<div class="min-h-screen bg-gray-100 flex flex-col">
+    <header class="bg-green-600 text-white px-4 py-3 flex justify-between items-center">
+        <h1 class="text-xl font-semibold">Recarga UnphuCard</h1>
+    </header>
+
+    <main class="flex-1 container mx-auto px-4 py-6">
+        <button class="mb-4 text-green-600 hover:text-green-700" @onclick="GoBack">
+            <span class="mr-2">←</span> Volver
+        </button>
+
+        <div class="card w-full max-w-md mx-auto">
+            <div class="card-header text-center">
+                <h2 class="card-title text-2xl font-bold text-gray-800">Información de pago</h2>
+            </div>
+            <div class="card-content">
+                <EditForm Model="paymentRequest" class="space-y-4">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="flex justify-center items-center space-x-2 mb-4">
+                        <input type="checkbox" id="invoice" @bind="RequireInvoice" />
+                        <label for="invoice" class="text-sm font-medium leading-none">
+                            Requiere factura de crédito fiscal
+                        </label>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="cardNumber" class="flex items-center gap-2">
+                            <span class="icon-credit-card"></span>
+                            Número de tarjeta
+                        </label>
+                        <InputText id="cardNumber"
+                               placeholder="XXXX XXXX XXXX XXXX"
+                               @bind-Value="paymentRequest.CardNumber"
+                               @bind:event="oninput"
+                               maxlength="19"
+                               class="input font-mono" />
+                        <ValidationMessage For="@(() => paymentRequest.CardNumber)" />
+
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label for="expiry" class="flex items-center gap-2">
+                                <span class="icon-calendar"></span>
+                                Expiración
+                            </label>
+                            <InputText id="expiry"
+                                   placeholder="MM/YY"
+                                   @bind-value="@paymentRequest.CardExpirationDate"
+                                   @bind:event="oninput"
+                                   maxlength="5"
+                                   class="input font-mono" />
+                            <ValidationMessage For="@(() => paymentRequest.CardExpirationDate)" />
+
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="cvv" class="flex items-center gap-2">
+                                <span class="icon-lock"></span>
+                                CVV
+                            </label>
+                            <InputText id="cvv"
+                                   type="password"
+                                   placeholder="000"
+                                   @bind-value="@paymentRequest.CardCvv" 
+                                   @bind:event="oninput"
+                                   maxlength="4"
+                                   class="input font-mono" />
+                            <ValidationMessage For="@(() => paymentRequest.CardCvv)" />
+
+                        </div>
+                    </div>
+
+                    <div class="text-center text-lg font-semibold">
+                        Total a Pagar: RD$ 200.00
+                    </div>
+                </EditForm>
+            </div>
+            <div class="card-footer flex flex-col gap-4">
+                <button class="button w-full bg-green-600 hover:bg-green-700 text-white" @onclick="ProcesarPago">
+                    Pagar
+                </button>
+                <div class="text-center text-sm text-gray-500">
+                    Este proceso es realizado con
+                    <img src="/placeholder.svg" alt="CardNet" width="80" height="20" class="inline-block ml-2" />
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-blue-900 text-white p-4">
+        <div class="container mx-auto">
+            <p class="text-sm">UNPHU | Recarga UnphuCard</p>
+        </div>
+    </footer>
+
+    @if (ShowSuccessModal)
+    {
+        <div class="modal">
+            <div class="modal-content">
+                <h2 class="modal-title text-green-600">
+                    <span class="icon-check-circle"></span>
+                    Pago Exitoso
+                </h2>
+                <p class="modal-description">
+                    Su pago ha sido procesado correctamente. La recarga se reflejará en su cuenta en breve.
+                </p>
+                <div class="flex justify-center mt-4">
+                    <button class="button" @onclick="() => ShowSuccessModal = false">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (ShowFailureModal)
+    {
+        <div class="modal">
+            <div class="modal-content">
+                <h2 class="modal-title text-red-600">
+                    <span class="icon-x-circle"></span>
+                    Pago Fallido
+                </h2>
+                <p class="modal-description">
+                    Lo sentimos, hubo un problema al procesar su pago. Por favor, intente nuevamente o contacte a soporte.
+                </p>
+                <div class="flex justify-center mt-4">
+                    <button class="button" @onclick="() => ShowFailureModal = false">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    }
+
+  
+</div>
+@code {
+    private PagoRequest paymentRequest = new PagoRequest();
+    private string responseMessage;
+    private string errorMessage;
+
+    private string CardNumber { get; set; } = string.Empty;
+    private string Expiry { get; set; } = string.Empty;
+    private string CVV { get; set; } = string.Empty;
+    private bool RequireInvoice { get; set; } = false;
+    private bool ShowSuccessModal { get; set; } = false;
+    private bool ShowFailureModal { get; set; } = false;
+
+    // protected override void OnInitialized()
+    // {
+    //     CardNumber = FormatCardNumber(CardNumber);
+    //     Expiry = FormatExpiry(Expiry);
+    //     CVV = FormatCVV(CVV);
+    // }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/recarga");
+    }
+
+
+    private async Task ProcesarPago()
+    {
+        try
+        {
+            var token = await ObtenerTokenDePago();
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                paymentRequest.Token = token; // Asignamos el token al request
+
+                var response = await pago.PagoRequest(paymentRequest);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al procesar el pago: {ex.Message}");
+        }
+    }
+
+    private async Task<string> ObtenerTokenDePago()
+    {
+        // Llamada al servicio Cardnet para obtener el token de la tarjeta (suponiendo que Cardnet tiene una API para esto)
+        var token = await JSRuntime.InvokeAsync<string>("cardnetTokenizar", paymentRequest.CardNumber, paymentRequest.CardExpirationDate, paymentRequest.CardCvv);
+        return token;
+    }
+
+    // private string FormatCardNumber(string value)
+    // {
+    //     value = Regex.Replace(value, @"\s+", "").Replace("-", "");
+    //     var parts = Regex.Matches(value, @"\d{1,4}");
+    //     return string.Join(" ", parts);
+    // }
+
+    // private string FormatExpiry(string value)
+    // {
+    //     value = Regex.Replace(value, @"\s+", "").Replace("/", "");
+    //     if (value.Length >= 2)
+    //     {
+    //         return value.Substring(0, 2) + "/" + value.Substring(2);
+    //     }
+    //     return value;
+    // }
+
+    // private string FormatCVV(string value)
+    // {
+    //     return Regex.Replace(value, @"\D", "");
+    // }
+
+ 
+   
+  
+}
