@@ -71,7 +71,7 @@ namespace UnphuCard.Controllers
         [HttpGet("api/MostrarRecarga/{id}")]
         public async Task<ActionResult<VwRecarga>> GetRecarga(int id)
         {
-            var recarga = await _context.VwRecargas.FirstOrDefaultAsync(p => p.IdDelUsuario == id);
+            var recarga = await _context.VwRecargas.FirstOrDefaultAsync(r => r.IdDelUsuario == id);
             if (recarga == null)
             {
                 return BadRequest("Recarga no encontrada");
