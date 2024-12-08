@@ -27,6 +27,8 @@ public partial class UnphuCardContext : DbContext
 
     public virtual DbSet<DetallesCompra> DetallesCompras { get; set; }
 
+    public virtual DbSet<Dispositivo> Dispositivos { get; set; }
+
     public virtual DbSet<Establecimiento> Establecimientos { get; set; }
 
     public virtual DbSet<Estado> Estados { get; set; }
@@ -64,6 +66,8 @@ public partial class UnphuCardContext : DbContext
     public virtual DbSet<VwComprasUsuario> VwComprasUsuarios { get; set; }
 
     public virtual DbSet<VwInventarioEstablecimiento> VwInventarioEstablecimientos { get; set; }
+
+    public virtual DbSet<VwRecarga> VwRecargas { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -160,6 +164,21 @@ public partial class UnphuCardContext : DbContext
                 .HasColumnName("DetComp_Precio");
             entity.Property(e => e.ProdId).HasColumnName("Prod_ID");
             entity.Property(e => e.SesionId).HasColumnName("Sesion_ID");
+        });
+
+        modelBuilder.Entity<Dispositivo>(entity =>
+        {
+            entity.HasKey(e => e.DispId).HasName("PK__Disposit__C942AA1422C38C10");
+
+            entity.Property(e => e.DispId).HasColumnName("Disp_ID");
+            entity.Property(e => e.DispAndroidId)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Disp_AndroidId");
+            entity.Property(e => e.DispFecha)
+                .HasColumnType("datetime")
+                .HasColumnName("Disp_Fecha");
+            entity.Property(e => e.EstId).HasColumnName("Est_ID");
         });
 
         modelBuilder.Entity<Establecimiento>(entity =>
@@ -469,6 +488,9 @@ public partial class UnphuCardContext : DbContext
                 .HasColumnType("decimal(6, 2)")
                 .HasColumnName("Precio del Producto");
             entity.Property(e => e.SesiónId).HasColumnName("Sesión ID");
+            entity.Property(e => e.SesiónToken)
+                .IsUnicode(false)
+                .HasColumnName("Sesión Token");
         });
 
         modelBuilder.Entity<VwComprasUsuario>(entity =>
@@ -537,6 +559,24 @@ public partial class UnphuCardContext : DbContext
             entity.Property(e => e.PrecioDelProducto)
                 .HasColumnType("decimal(6, 2)")
                 .HasColumnName("Precio del Producto");
+        });
+
+        modelBuilder.Entity<VwRecarga>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("vw_Recargas");
+
+            entity.Property(e => e.Descripción)
+                .HasMaxLength(11)
+                .IsUnicode(false);
+            entity.Property(e => e.Fecha).HasColumnType("datetime");
+            entity.Property(e => e.IdDelUsuario).HasColumnName("ID del usuario");
+            entity.Property(e => e.Monto).HasColumnType("decimal(6, 2)");
+            entity.Property(e => e.MétodoDePago)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Método de pago");
         });
 
         OnModelCreatingPartial(modelBuilder);

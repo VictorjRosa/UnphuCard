@@ -4,7 +4,11 @@ namespace UnphuCard.DTOS
 {
     public class InsertCarrito
     {
-        [Required(ErrorMessage = "La sesión es requerida")]
-        public int? SesionId { get; set; }
+
+        public int? CarCantidad { get; set; }
+
+        public int? ProdId { get; set; }
+
+        public string? SesionToken { get; set; }
     }
 }

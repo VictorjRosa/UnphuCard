@@ -62,6 +62,23 @@ namespace UnphuCard.Controllers
             }
         }
 
+        [HttpGet("api/MostrarRecargas")]
+        public async Task<ActionResult<IEnumerable<VwRecarga>>> GetRecargas()
+        {
+            return await _context.VwRecargas.ToListAsync();
+        }
+
+        [HttpGet("api/MostrarRecarga/{id}")]
+        public async Task<ActionResult<VwRecarga>> GetRecarga(int id)
+        {
+            var recarga = await _context.VwRecargas.FirstOrDefaultAsync(r => r.IdDelUsuario == id);
+            if (recarga == null)
+            {
+                return BadRequest("Recarga no encontrada");
+            }
+            return recarga;
+        }
+
         public async Task<bool> ActualizarSaldoAsync(int usuarioId, decimal monto)
         {
             var usuario = await _context.Usuarios.SingleOrDefaultAsync(u => u.UsuId == usuarioId);

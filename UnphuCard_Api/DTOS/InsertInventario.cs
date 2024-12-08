@@ -7,9 +7,6 @@ namespace UnphuCard.DTOS
         [Required(ErrorMessage = "La cantidad del inventario es requerida")]
         public int? InvCantidad { get; set; }
 
-        [Required(ErrorMessage = "La fecha del inventario es requerida")]
-        public DateTime? InvFecha { get; set; }
-
         [Required(ErrorMessage = "El ID del establecimiento es requerido")]
         public int? EstId { get; set; }
 

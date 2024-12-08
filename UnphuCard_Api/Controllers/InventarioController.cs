@@ -57,10 +57,16 @@ namespace UnphuCard.Controllers
             }
             try
             {
+                // Obtener la zona horaria de República Dominicana (GMT-4)
+                TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
+                // Obtener la fecha y hora actual en UTC
+                DateTime fechaActualUtc = DateTime.UtcNow;
+                // Convertir la fecha a la zona horaria de República Dominicana
+                DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
                 var inventario = new Inventario()
                 {
                     InvCantidad = insertInventario.InvCantidad,
-                    InvFecha = insertInventario.InvFecha,
+                    InvFecha = fechaEnRD,
                     EstId = insertInventario.EstId,
                     ProdId = insertInventario.ProdId,
                 };
@@ -84,6 +90,12 @@ namespace UnphuCard.Controllers
             }
             try
             {
+                // Obtener la zona horaria de República Dominicana (GMT-4)
+                TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
+                // Obtener la fecha y hora actual en UTC
+                DateTime fechaActualUtc = DateTime.UtcNow;
+                // Convertir la fecha a la zona horaria de República Dominicana
+                DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
                 var inventario = await _context.Inventarios.FirstOrDefaultAsync(i => i.InvId == id);
                 if (inventario == null)
                 {
@@ -93,10 +105,7 @@ namespace UnphuCard.Controllers
                 {
                     inventario.InvCantidad = updateInventario.InvCantidad;
                 }
-                if (updateInventario.InvFecha.HasValue && updateInventario.InvFecha != DateTime.UtcNow)
-                {
-                    inventario.InvFecha = updateInventario.InvFecha;
-                }
+                inventario.InvFecha = fechaEnRD;
                 if (updateInventario.EstId.HasValue && updateInventario.EstId.Value > 0)
                 {
                     inventario.EstId = updateInventario.EstId;

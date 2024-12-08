@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.Maui.Controls"
+             x:Class="UnphuCard_QR.MainPage">
+
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="30,0"
+            Spacing="25">
+            <Label
+                Text="Validación de Compras"
+                Style="{StaticResource Headline}"
+                HorizontalOptions="Center" />
+
+            <!-- Botón para activar/desactivar el escáner -->
+            <Button
+                x:Name="toggleScannerButton"
+                Text="Activar Escáner"
+                Clicked="ToggleScanner_Clicked" />
+
+            <!-- Estado del escáner -->
+            <Label
+                x:Name="statusLabel2"
+                Text="Estado: Escáner desactivado."
+                TextColor="Gray"
+                HorizontalOptions="Center" />
+
+            <!-- Vista para el escaneo QR -->
+            <zxing:CameraBarcodeReaderView x:Name="cameraView"
+                                           BarcodesDetected="CameraView_BarcodeDetected"
+                                           IsDetecting="false"
+                                           HorizontalOptions="FillAndExpand"
+                                           VerticalOptions="FillAndExpand" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

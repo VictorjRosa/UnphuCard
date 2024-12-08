@@ -1,66 +1,91 @@
-﻿using Android.Nfc;
+﻿using Newtonsoft.Json;
+using System.Text;
 
 namespace UnphuCard_Lectores
 {
     public partial class NfcPage : ContentPage
     {
-        public static NfcPage Instance { get; private set; }
+        private bool isDiagnosticMode = false; // Bandera para alternar entre modos
 
         public NfcPage()
         {
             InitializeComponent();
-            Instance = this;
         }
 
-        public void UpdateStatus(string message)
+        public void OnNfcTagScanned(string tagId)
         {
-            MainThread.BeginInvokeOnMainThread(() =>
+            MainThread.BeginInvokeOnMainThread(async () =>
             {
-                statusLabelNfc.Text = $"Estado NFC: {message}";
+                if (isDiagnosticMode)
+                {
+                    // Muestra solo el Tag ID en modo diagnóstico
+                    await DisplayAlert("Modo Diagnóstico", $"Tag ID: {tagId}", "OK");
+                    UpdateStatus($"Tag ID Detectado: {tagId}");
+                }
+                else
+                {
+                    // Valida el acceso
+                    UpdateStatus("Validando acceso...");
+                    await ValidarAcceso(tagId);
+                }
             });
         }
 
-        protected override void OnAppearing()
+        private async Task ValidarAcceso(string tagId)
         {
-            base.OnAppearing();
-
-            // Configura el lector NFC
-            //if (MainApplication.NfcAdapter != null && MainApplication.NfcAdapter.IsEnabled)
-            //{
-            //    MainApplication.NfcAdapter.EnableReaderMode(
-            //        MainActivity.Instance,
-            //        new NfcReaderCallback(),
-            //        NfcReaderFlags.NfcA | NfcReaderFlags.SkipNdefCheck,
-            //        null
-            //    );
-            //    UpdateStatus("Esperando tarjeta NFC...");
-            //}
-            //else
-            //{
-            //    UpdateStatus("NFC no disponible o desactivado.");
-            //}
-        }
-
-        //protected override void OnDisappearing()
-        //{
-        //    base.OnDisappearing();
-        //    MainApplication.NfcAdapter?.DisableReaderMode(MainActivity.Instance);
-        //}
-
-        private class NfcReaderCallback : Java.Lang.Object, NfcAdapter.IReaderCallback
-        {
-            public async void OnTagDiscovered(Tag tag)
+            try
             {
-                var tagId = BitConverter.ToString(tag.GetId()).Replace("-", "");
-
-                if (Instance != null)
+                using (var httpClient = new HttpClient())
                 {
-                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    string apiUrl = "https://unphucard.azurewebsites.net/api/ValidarAcceso";
+                    var payload = new { TarjCodigo = tagId, AulaSensor = "101" };
+                    var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+
+                    var response = await httpClient.PostAsync(apiUrl, content);
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        Instance.UpdateStatus($"Tag Detectado: {tagId}");
-                    });
+                        await DisplayAlert("Acceso Permitido", "La tarjeta es válida.", "OK");
+                    }
+                    else
+                    {
+                        await DisplayAlert("Acceso Denegado", "La tarjeta no es válida.", "OK");
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Error al validar el acceso: {ex.Message}", "OK");
+            }
+            finally
+            {
+                UpdateStatus("Esperando escaneo...");
+            }
+        }
+
+        private void ToggleMode_Clicked(object sender, EventArgs e)
+        {
+            isDiagnosticMode = !isDiagnosticMode;
+
+            var button = sender as Button;
+            if (isDiagnosticMode)
+            {
+                button.Text = "Modo Validación";
+                UpdateStatus("Modo Diagnóstico activado. Escanee una tarjeta para mostrar su Tag ID.");
+            }
+            else
+            {
+                button.Text = "Modo Diagnóstico";
+                UpdateStatus("Modo Validación activado. Escanee una tarjeta para validar acceso.");
+            }
+        }
+
+        private void UpdateStatus(string message)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                statusLabel.Text = message;
+            });
         }
     }
 }

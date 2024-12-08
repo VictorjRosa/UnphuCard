@@ -1,9 +1,8 @@
 ﻿using Android.App;
+using Android.Content;
 using Android.Content.PM;
 using Android.Nfc;
 using Android.OS;
-using System.Text;
-using Newtonsoft.Json;
 
 namespace UnphuCard_Lectores
 {
@@ -14,70 +13,39 @@ namespace UnphuCard_Lectores
         {
             base.OnCreate(savedInstanceState);
 
-            // Configura la detección de NFC
             if (MainApplication.NfcAdapter != null && MainApplication.NfcAdapter.IsEnabled)
             {
-                SetupNfcReader();
+                SetupNfcForegroundDispatch();
             }
             else
             {
-                MainPage.Instance?.UpdateStatusLabelNfc("NFC no disponible o desactivado.");
+                Microsoft.Maui.Controls.Application.Current.MainPage.DisplayAlert("Error", "NFC no está habilitado en este dispositivo.", "OK");
             }
         }
 
-        private void SetupNfcReader()
+        private void SetupNfcForegroundDispatch()
         {
-            MainApplication.NfcAdapter.EnableReaderMode(this, new MyNfcReaderCallback(), NfcReaderFlags.NfcA | NfcReaderFlags.SkipNdefCheck, null);
+            var intent = new Intent(this, GetType()).AddFlags(ActivityFlags.SingleTop);
+            var pendingIntent = PendingIntent.GetActivity(this, 0, intent, PendingIntentFlags.UpdateCurrent | PendingIntentFlags.Immutable); // Se agregó FLAG_IMMUTABLE
+            var filters = new[] { new IntentFilter(NfcAdapter.ActionTagDiscovered) };
+
+            MainApplication.NfcAdapter.EnableForegroundDispatch(this, pendingIntent, filters, null);
         }
 
-        private class MyNfcReaderCallback : Java.Lang.Object, NfcAdapter.IReaderCallback
+        protected override void OnNewIntent(Intent intent)
         {
-            public async void OnTagDiscovered(Tag tag)
+            base.OnNewIntent(intent);
+
+            if (NfcAdapter.ActionTagDiscovered.Equals(intent.Action))
             {
+                var tag = (Tag)intent.GetParcelableExtra(NfcAdapter.ExtraTag);
                 var tagId = BitConverter.ToString(tag.GetId()).Replace("-", "");
-                Console.WriteLine($"Tag ID: {tagId}");
 
-                if (MainPage.Instance != null)
+                // Redirige el evento a NfcPage si está activa
+                if (Microsoft.Maui.Controls.Application.Current.MainPage is NavigationPage navigationPage &&
+                    navigationPage.CurrentPage is NfcPage nfcPage)
                 {
-                    if (MainPage.Instance.IsDiagnosticMode)
-                    {
-                        // Solo muestra el Tag ID
-                        MainPage.Instance.UpdateStatusLabelNfc($"Tag ID Detectado: {tagId}");
-                    }
-                    else
-                    {
-                        // Realiza la validación de acceso
-                        var isValid = await SendTagIdToApi(tagId);
-                        if (isValid)
-                        {
-                            MainPage.Instance.ShowAlert("Acceso Permitido", "La tarjeta es válida.");
-                        }
-                        else
-                        {
-                            MainPage.Instance.ShowAlert("Acceso Denegado", "La tarjeta no es válida.");
-                        }
-                    }
-                }
-            }
-
-            private async Task<bool> SendTagIdToApi(string tagId)
-            {
-                try
-                {
-                    using (var httpClient = new HttpClient())
-                    {
-                        string apiUrl = "https://unphucard.azurewebsites.net/api/ValidarAcceso";
-                        var jsonContent = JsonConvert.SerializeObject(new { TarjCodigo = tagId, AulaSensor = "101" });
-                        var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-
-                        var response = await httpClient.PostAsync(apiUrl, content);
-                        return response.IsSuccessStatusCode;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error al enviar el ID de la tarjeta a la API: {ex.Message}");
-                    return false;
+                    nfcPage.OnNfcTagScanned(tagId);
                 }
             }
         }

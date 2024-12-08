@@ -99,7 +99,7 @@ namespace UnphuCard.Controllers
             }
         }
 
-        [HttpPut("api/EditarProducto")]
+        [HttpPut("api/EditarProducto/{id}")]
         public async Task<IActionResult> PutProducto(int id, [FromForm] UpdateProducto updateProducto, IFormFile? foto)
         {
             if (!ModelState.IsValid)
