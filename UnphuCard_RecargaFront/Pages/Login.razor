@@ -4,6 +4,7 @@
 @inject AuthService AuthService
 @inject NavigationManager NavigationManager
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
+@layout SecondaryLayout
 
 <div class="login-container">
     <div class="left-panel wave-animation">
@@ -83,6 +84,7 @@
             errorMessage = null;
             var token = await AuthService.Login(LoginModel);
             await localStorage.SetItemAsync("authToken", token);
+
             NavigationManager.NavigateTo("/index");
 
         }

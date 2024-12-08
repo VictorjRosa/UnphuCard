@@ -57,7 +57,7 @@ namespace UnphuCard.Controllers
                 var token = GenerateJwtToken(usuario);
 
                 // Devolver el token al cliente
-                return Ok(new { Token = token });
+                return Ok(new { access_token = token });
             }
             catch (Exception ex)
             {
