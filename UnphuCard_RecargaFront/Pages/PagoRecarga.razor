@@ -1,15 +1,15 @@
 ﻿@page "/pago"
 @inject NavigationManager NavigationManager
+@using System.Text.RegularExpressions
 @using UnphuCard.DTOS
 @inject Pago pago
+@inject LocalStorage LocalStorage
 @inject IJSRuntime JSRuntime
-
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
 
 
 <div class="min-h-screen bg-gray-100 flex flex-col">
-    <header class="bg-green-600 text-white px-4 py-3 flex justify-between items-center">
-        <h1 class="text-xl font-semibold">Recarga UnphuCard</h1>
-    </header>
+    
 
     <main class="flex-1 container mx-auto px-4 py-6">
         <button class="mb-4 text-green-600 hover:text-green-700" @onclick="GoBack">
@@ -39,8 +39,8 @@
                         <InputText id="cardNumber"
                                placeholder="XXXX XXXX XXXX XXXX"
                                @bind-Value="paymentRequest.CardNumber"
-                               @bind:event="oninput"
-                               maxlength="19"
+                                   @oninput="HandleCardNumberInput"
+                                   maxlength="19"
                                class="input font-mono" />
                         <ValidationMessage For="@(() => paymentRequest.CardNumber)" />
 
@@ -55,8 +55,8 @@
                             <InputText id="expiry"
                                    placeholder="MM/YY"
                                    @bind-value="@paymentRequest.CardExpirationDate"
-                                   @bind:event="oninput"
-                                   maxlength="5"
+                                       @oninput="HandleExpiryInput"
+                                       maxlength="5"
                                    class="input font-mono" />
                             <ValidationMessage For="@(() => paymentRequest.CardExpirationDate)" />
 
@@ -70,9 +70,9 @@
                             <InputText id="cvv"
                                    type="password"
                                    placeholder="000"
-                                   @bind-value="@paymentRequest.CardCvv" 
-                                   @bind:event="oninput"
-                                   maxlength="4"
+                                   @bind-value="@paymentRequest.CardCvv"
+                                       @oninput="HandleCvvInput"
+                                       maxlength="4"
                                    class="input font-mono" />
                             <ValidationMessage For="@(() => paymentRequest.CardCvv)" />
 
@@ -80,7 +80,7 @@
                     </div>
 
                     <div class="text-center text-lg font-semibold">
-                        Total a Pagar: RD$ 200.00
+                        Total a Pagar: RD$ @paymentRequest.Amount
                     </div>
                 </EditForm>
             </div>
@@ -96,11 +96,7 @@
         </div>
     </main>
 
-    <footer class="bg-blue-900 text-white p-4">
-        <div class="container mx-auto">
-            <p class="text-sm">UNPHU | Recarga UnphuCard</p>
-        </div>
-    </footer>
+ 
 
     @if (ShowSuccessModal)
     {
@@ -144,7 +140,6 @@
     private PagoRequest paymentRequest = new PagoRequest();
     private string responseMessage;
     private string errorMessage;
-
     private string CardNumber { get; set; } = string.Empty;
     private string Expiry { get; set; } = string.Empty;
     private string CVV { get; set; } = string.Empty;
@@ -152,12 +147,27 @@
     private bool ShowSuccessModal { get; set; } = false;
     private bool ShowFailureModal { get; set; } = false;
 
-    // protected override void OnInitialized()
-    // {
-    //     CardNumber = FormatCardNumber(CardNumber);
-    //     Expiry = FormatExpiry(Expiry);
-    //     CVV = FormatCVV(CVV);
-    // }
+  
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Recuperar datos de localStorage solo después del renderizado en el cliente.
+            var storedPaymentMethod = await localStorage.GetItemAsync<int>("paymentMethod");
+            if (storedPaymentMethod > 0)
+            {
+                paymentRequest.MetodoPago = storedPaymentMethod;
+            }
+
+            var storedAmount = await localStorage.GetItemAsync<decimal>("amount");
+            if (storedAmount > 0)
+            {
+                paymentRequest.Amount = storedAmount;
+                StateHasChanged(); // Forzar una actualización de la vista
+
+            }
+        }
+    }
 
     private void GoBack()
     {
@@ -173,7 +183,7 @@
 
             if (!string.IsNullOrEmpty(token))
             {
-                paymentRequest.Token = token; // Asignamos el token al request
+                paymentRequest.Token = token; 
 
                 var response = await pago.PagoRequest(paymentRequest);
             }
@@ -186,32 +196,53 @@
 
     private async Task<string> ObtenerTokenDePago()
     {
-        // Llamada al servicio Cardnet para obtener el token de la tarjeta (suponiendo que Cardnet tiene una API para esto)
         var token = await JSRuntime.InvokeAsync<string>("cardnetTokenizar", paymentRequest.CardNumber, paymentRequest.CardExpirationDate, paymentRequest.CardCvv);
         return token;
     }
 
-    // private string FormatCardNumber(string value)
-    // {
-    //     value = Regex.Replace(value, @"\s+", "").Replace("-", "");
-    //     var parts = Regex.Matches(value, @"\d{1,4}");
-    //     return string.Join(" ", parts);
-    // }
+    private void HandleCardNumberInput(ChangeEventArgs e)
+    {
+        string value = e.Value.ToString();
+        paymentRequest.CardNumber = FormatCardNumber(value);
+    }
 
-    // private string FormatExpiry(string value)
-    // {
-    //     value = Regex.Replace(value, @"\s+", "").Replace("/", "");
-    //     if (value.Length >= 2)
-    //     {
-    //         return value.Substring(0, 2) + "/" + value.Substring(2);
-    //     }
-    //     return value;
-    // }
+    private void HandleExpiryInput(ChangeEventArgs e)
+    {
+        string value = e.Value.ToString();
+        paymentRequest.CardExpirationDate = FormatExpiry(value);
+    }
 
-    // private string FormatCVV(string value)
-    // {
-    //     return Regex.Replace(value, @"\D", "");
-    // }
+    private void HandleCvvInput(ChangeEventArgs e)
+    {
+        string value = e.Value.ToString();
+        paymentRequest.CardCvv = FormatCVV(value);
+    }
+
+    private string FormatCardNumber(string value)
+    {
+        // Elimina espacios y guiones
+        value = Regex.Replace(value, @"\s+", "").Replace("-", "");
+        var parts = Regex.Matches(value, @"\d{1,4}");
+        return string.Join(" ", parts);
+    }
+
+    private string FormatExpiry(string value)
+    {
+        // Elimina espacios y barras
+        value = Regex.Replace(value, @"\s+", "").Replace("/", "");
+        if (value.Length >= 2)
+        {
+            return value.Substring(0, 2) + "/" + value.Substring(2);
+        }
+        return value;
+    }
+
+    private string FormatCVV(string value)
+    {
+        // Elimina cualquier carácter no numérico
+        return Regex.Replace(value, @"\D", "");
+    }
+
 
  
    

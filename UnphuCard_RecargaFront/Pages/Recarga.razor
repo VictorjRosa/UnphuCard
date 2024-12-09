@@ -6,14 +6,10 @@
 
 
 
-<div class="min-h-screen bg-gray-100 flex flex-col">
-    <header class="bg-green-600 text-white px-4 py-3 flex justify-between items-center">
-        <h1 class="text-xl font-semibold">Recarga UnphuCard</h1>
-    </header>
-    
+<div class="min-h-screen bg-gray-100 flex flex-col">    
     <main class="flex-1 container mx-auto px-4 py-6">
         <button class="mb-4 text-green-600 hover:text-green-700" @onclick="GoBack">
-            <span class="mr-2">←</span> Volver al dashboard
+            <span class="mr-2">←</span> Volver
         </button>
         
         <div class="card w-full max-w-md mx-auto">
@@ -38,13 +34,20 @@
                 <div class="space-y-2">
                     <label>Método de pago</label>
                     <div class="radio-group">
+                     <InputRadioGroup @bind-Value="PaymentMethod" name="metodoPago">
+
                         @foreach (var metodo in MetodosPago)
                         {
-                            <div class="flex items-center space-x-2">
-                                <InputText type="radio" id="@metodo.MetPagId" @bind-value="PaymentMethod"  name="metodoPago" />
-                                <label for="@metodo.MetPagId">@metodo.MetPagDescripcion</label>
+                            if (@metodo.MetPagId != 1 && @metodo.MetPagId != 2)
+                            {
+                                <div class="flex items-center space-x-2">
+                                <InputRadio value="@metodo.MetPagId" id="@metodo.MetPagId" />
+                                <label  for="@metodo.MetPagId">@metodo.MetPagDescripcion</label>
                             </div>
+                            }
                         }
+                        </InputRadioGroup>
+
                     </div>
                 </div>
             </div>
@@ -60,7 +63,7 @@
 </div>
 @code {
 
-    private string PaymentMethod { get; set; }
+    private int PaymentMethod { get; set; }
     private decimal Amount { get; set; }
     private List<int> QuickAmounts { get; set; } = new List<int> { 100, 200, 300, 500 };
     private List<MetodoPago> MetodosPago { get; set; } = new List<MetodoPago>();
@@ -79,21 +82,23 @@
             Console.WriteLine($"Error al cargar los métodos de pago: {ex.Message}");
         }
 
-        }
-
-
+    }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-            var storedPaymentMethod = await localStorage.GetItemAsync<string>("paymentMethod");
-            if (!string.IsNullOrEmpty(storedPaymentMethod))
+        if (firstRender)
+        {
+            // Recuperar el valor de 'Amount' desde localStorage después de la renderización
+            var storedAmount = await localStorage.GetItemAsync<decimal>("amount");
+            if (storedAmount > 0)
             {
-                PaymentMethod = storedPaymentMethod;
+                Amount = storedAmount;
             }
-        
+        }
     }
+
     private async Task StorePaymentMethodAndAmount()
     {
-        if (!string.IsNullOrEmpty(PaymentMethod))
+        if (PaymentMethod > 0)
         {
             await localStorage.SetItemAsync("paymentMethod", PaymentMethod);
         }
@@ -114,14 +119,16 @@
     {
         NavigationManager.NavigateTo("/index");
     }
-    private void GoContinuar()
+    private async Task GoContinuar()
     {
 
-        if (string.IsNullOrEmpty(PaymentMethod) || Amount <= 0)
+        if (PaymentMethod <= 0 || Amount <= 0)
         {
             Console.WriteLine("Por favor, seleccione un monto y un método de pago.");
             return;
         }
+        await StorePaymentMethodAndAmount();
+
         NavigationManager.NavigateTo("/pago");
     }
 }
