@@ -13,6 +13,8 @@ public partial class Usuario
 
     public string? UsuApellido { get; set; }
 
+    public string? UsuDocIdentidad { get; set; }
+
     public string? UsuMatricula { get; set; }
 
     public string? UsuUsuario { get; set; }

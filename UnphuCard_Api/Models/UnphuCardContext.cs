@@ -398,9 +398,9 @@ public partial class UnphuCardContext : DbContext
 
         modelBuilder.Entity<Usuario>(entity =>
         {
-            entity.HasKey(e => e.UsuId).HasName("PK__Usuarios__B6173FEB81514711");
+            entity.HasKey(e => e.UsuId).HasName("PK__Usuarios__B6173FEB0A0AEDA2");
 
-            entity.HasIndex(e => e.UsuCodigo, "UQ__Usuarios__45605A21DEB730A9").IsUnique();
+            entity.HasIndex(e => e.UsuCodigo, "UQ__Usuarios__45605A215F25E7A4").IsUnique();
 
             entity.Property(e => e.UsuId).HasColumnName("Usu_ID");
             entity.Property(e => e.RolId).HasColumnName("Rol_ID");
@@ -426,6 +426,10 @@ public partial class UnphuCardContext : DbContext
                 .HasMaxLength(22)
                 .IsUnicode(false)
                 .HasColumnName("Usu_Correo");
+            entity.Property(e => e.UsuDocIdentidad)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("Usu_DocIdentidad");
             entity.Property(e => e.UsuMatricula)
                 .HasMaxLength(7)
                 .IsUnicode(false)
