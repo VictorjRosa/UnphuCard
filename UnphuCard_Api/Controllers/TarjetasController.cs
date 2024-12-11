@@ -52,7 +52,7 @@ namespace UnphuCard.Controllers
             return tarjetaProv;
         }
 
-        [HttpPut("api/EditarTarjeta")]
+        [HttpPut("api/EditarTarjeta/{id}")]
         public async Task<IActionResult> PutTarjeta(int id, [FromBody] UpdateTarjeta updateTarjeta)
         {
             if (!ModelState.IsValid)
@@ -96,7 +96,7 @@ namespace UnphuCard.Controllers
             }
         }
 
-        [HttpPut("api/EditarTarjetaProv")]
+        [HttpPut("api/EditarTarjetaProv/{id}")]
         public async Task<IActionResult> PutTarjetaProv(int id, [FromBody] UpdateTarjetaProv updateTarjetaProv)
         {
             if (!ModelState.IsValid)
@@ -111,13 +111,17 @@ namespace UnphuCard.Controllers
                 DateTime fechaActualUtc = DateTime.UtcNow;
                 // Convertir la fecha a la zona horaria de República Dominicana
                 DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
+                DateTime fechaExpiracion = new(fechaEnRD.Year,fechaEnRD.Month,fechaEnRD.Day,23,0,0);
                 var tarjetaProv = await _context.TarjetasProvisionales.FirstOrDefaultAsync(t => t.TarjProvId == id);
                 if (tarjetaProv == null)
                 {
                     return NotFound("Tarjeta provisional no encontrada");
                 }
+                var usuId = await _context.Usuarios.Where(u => u.UsuDocIdentidad == updateTarjetaProv.UsuDocIdentidad).Select(u => u.UsuId).FirstOrDefaultAsync();
                 tarjetaProv.TarjProvFecha = fechaEnRD;
                 tarjetaProv.StatusId = updateTarjetaProv.StatusId;
+                tarjetaProv.UsuId = usuId;
+                tarjetaProv.TarjProvFechaExpiracion = fechaExpiracion; 
 
                 _context.Entry(tarjetaProv).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
