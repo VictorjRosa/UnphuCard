@@ -1,10 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace UnphuCard.DTOS
+﻿namespace UnphuCard_Api.DTOS
 {
     public class UpdateSesion
     {
-
         public int UsuCodigo { get; set; }
     }
 }

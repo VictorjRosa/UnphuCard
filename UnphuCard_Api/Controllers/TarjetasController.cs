@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using UnphuCard_Api.DTOS;
 using UnphuCard_Api.Models;
 
-namespace UnphuCard.Controllers
+namespace UnphuCard_Api.Controllers
 {
     public class TarjetasController : Controller
     {
@@ -96,8 +96,8 @@ namespace UnphuCard.Controllers
             }
         }
 
-        [HttpPut("api/EditarTarjetaProv/{id}")]
-        public async Task<IActionResult> PutTarjetaProv(int id, [FromBody] UpdateTarjetaProv updateTarjetaProv)
+        [HttpPut("api/ActivarTarjetaProv/{id}")]
+        public async Task<IActionResult> ActivarTarjetaProv(int id, [FromBody] UpdateTarjetaProv updateTarjetaProv)
         {
             if (!ModelState.IsValid)
             {
@@ -122,6 +122,54 @@ namespace UnphuCard.Controllers
                 tarjetaProv.StatusId = updateTarjetaProv.StatusId;
                 tarjetaProv.UsuId = usuId;
                 tarjetaProv.TarjProvFechaExpiracion = fechaExpiracion; 
+
+                _context.Entry(tarjetaProv).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+                return Ok(tarjetaProv);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (TarjetaProvExists(id))
+                {
+                    return NotFound("Tarjeta provisional no encontrada");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        [HttpPut("api/DesactivarTarjetaProv/{id}")]
+        public async Task<IActionResult> DesactivarTarjetaProv(int id, [FromBody] UpdateTarjetaProv updateTarjetaProv)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Tarjeta provisional no válida");
+            }
+            try
+            {
+                // Obtener la zona horaria de República Dominicana (GMT-4)
+                TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
+                // Obtener la fecha y hora actual en UTC
+                DateTime fechaActualUtc = DateTime.UtcNow;
+                // Convertir la fecha a la zona horaria de República Dominicana
+                DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
+                DateTime fechaExpiracion = new(fechaEnRD.Year, fechaEnRD.Month, fechaEnRD.Day, 23, 0, 0);
+                var tarjetaProv = await _context.TarjetasProvisionales.FirstOrDefaultAsync(t => t.TarjProvId == id);
+                if (tarjetaProv == null)
+                {
+                    return NotFound("Tarjeta provisional no encontrada");
+                }
+                var usuId = await _context.Usuarios.Where(u => u.UsuDocIdentidad == updateTarjetaProv.UsuDocIdentidad).Select(u => u.UsuId).FirstOrDefaultAsync();
+                tarjetaProv.TarjProvFecha = fechaEnRD;
+                tarjetaProv.StatusId = updateTarjetaProv.StatusId;
+                tarjetaProv.UsuId = usuId;
+                tarjetaProv.TarjProvFechaExpiracion = fechaExpiracion;
 
                 _context.Entry(tarjetaProv).State = EntityState.Modified;
                 await _context.SaveChangesAsync();

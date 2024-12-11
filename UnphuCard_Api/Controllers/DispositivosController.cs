@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NuGet.DependencyResolver;
-using UnphuCard.DTOS;
 using UnphuCard_Api.DTOS;
 using UnphuCard_Api.Models;
 

@@ -11,7 +11,7 @@ using System.Text;
 using Microsoft.AspNetCore.Identity.Data;
 
 
-namespace UnphuCard.Controllers
+namespace UnphuCard_Api.Controllers
 {
     public class UsuarioController : Controller
     {

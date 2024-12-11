@@ -2,11 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
-using UnphuCard.DTOS;
 using UnphuCard_Api.DTOS;
 using UnphuCard_Api.Models;
 
-namespace UnphuCard.Controllers
+namespace UnphuCard_Api.Controllers
 {
     public class AccesoController : Controller
     {

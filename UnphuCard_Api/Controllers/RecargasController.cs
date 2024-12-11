@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using UnphuCard_Api.Models;
-using UnphuCard.DTOS;
+using UnphuCard_Api.DTOS;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
 
-namespace UnphuCard.Controllers
+namespace UnphuCard_Api.Controllers
 {
     public class RecargasController : Controller
     {

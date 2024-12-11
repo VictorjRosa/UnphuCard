@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnphuCard_Api.Models;
 
-namespace UnphuCard.Controllers
+namespace UnphuCard_Api.Controllers
 {
     public class HorariosController : ControllerBase
     {

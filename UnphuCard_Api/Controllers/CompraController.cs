@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using UnphuCard.DTOS;
+using UnphuCard_Api.DTOS;
 using UnphuCard_Api.Models;
 
-namespace UnphuCard.Controllers
+namespace UnphuCard_Api.Controllers
 {
     public class CompraController : Controller
     {

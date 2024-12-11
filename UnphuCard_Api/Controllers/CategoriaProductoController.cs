@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using UnphuCard_Api.Models;
 
-namespace UnphuCard.Controllers
+namespace UnphuCard_Api.Controllers
 {
     public class CategoriaProductoController : Controller
     {

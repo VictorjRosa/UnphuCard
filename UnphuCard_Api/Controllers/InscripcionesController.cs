@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using UnphuCard_Api.Models;
 using UnphuCard_Api.DTOS;
 
-namespace UnphuCard.Controllers
+namespace UnphuCard_Api.Controllers
 {
     public class InscripcionesController : ControllerBase
     {

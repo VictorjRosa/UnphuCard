@@ -1,8 +1,8 @@
-﻿namespace UnphuCard.DTOS
+﻿namespace UnphuCard_Api.DTOS
 {
     public class TokenResponse
     {
-        public string access_token { get; set; }
-        public int expires_in { get; set; }
+        public string? Access_token { get; set; }
+        public int? Expires_in { get; set; }
     }
 }
