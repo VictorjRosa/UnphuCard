@@ -54,7 +54,7 @@
                             </label>
                             <InputText id="expiry"
                                    placeholder="MM/YY"
-                                   @bind-value="@paymentRequest.CardExpirationDate"
+                                   @bind-Value="@paymentRequest.CardExpirationDate"
                                        @oninput="HandleExpiryInput"
                                        maxlength="5"
                                    class="input font-mono" />
@@ -70,7 +70,7 @@
                             <InputText id="cvv"
                                    type="password"
                                    placeholder="000"
-                                   @bind-value="@paymentRequest.CardCvv"
+                                   @bind-Value="@paymentRequest.CardCvv"
                                        @oninput="HandleCvvInput"
                                        maxlength="4"
                                    class="input font-mono" />
@@ -80,7 +80,7 @@
                     </div>
 
                     <div class="text-center text-lg font-semibold">
-                        Total a Pagar: RD$ @paymentRequest.Amount
+                        Total a Pagar: RD$ @Amount
                     </div>
                 </EditForm>
             </div>
@@ -140,34 +140,29 @@
     private PagoRequest paymentRequest = new PagoRequest();
     private string responseMessage;
     private string errorMessage;
-    private string CardNumber { get; set; } = string.Empty;
-    private string Expiry { get; set; } = string.Empty;
-    private string CVV { get; set; } = string.Empty;
     private bool RequireInvoice { get; set; } = false;
     private bool ShowSuccessModal { get; set; } = false;
     private bool ShowFailureModal { get; set; } = false;
+    private decimal Amount;
+    private string Method;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var amountString = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "amount");
+        var method = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "paymentMethod");
+        Amount = decimal.Parse(amountString);
+        Method = method;
+    }
 
   
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            // Recuperar datos de localStorage solo después del renderizado en el cliente.
-            var storedPaymentMethod = await localStorage.GetItemAsync<int>("paymentMethod");
-            if (storedPaymentMethod > 0)
-            {
-                paymentRequest.MetodoPago = storedPaymentMethod;
-            }
-
-            var storedAmount = await localStorage.GetItemAsync<decimal>("amount");
-            if (storedAmount > 0)
-            {
-                paymentRequest.Amount = storedAmount;
-                StateHasChanged(); // Forzar una actualización de la vista
-
-            }
-        }
-    }
+    // protected override void OnInitialized()
+    // {
+    //     var uri = new Uri(NavigationManager.Uri);
+    //     var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+    //     Amount = decimal.Parse(query["amount"]);
+    //     Method = query["method"];
+    // }
 
     private void GoBack()
     {
@@ -179,6 +174,10 @@
     {
         try
         {
+            if (!string.IsNullOrEmpty(Method) && int.TryParse(Method, out int method))
+            {
+                paymentRequest.MetodoPago = method;
+            }
             var token = await ObtenerTokenDePago();
 
             if (!string.IsNullOrEmpty(token))
