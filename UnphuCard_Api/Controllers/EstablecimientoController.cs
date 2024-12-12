@@ -28,5 +28,17 @@ namespace UnphuCard_Api.Controllers
             }
             return establecimiento;
         }
+
+        [HttpGet("api/MostrarNombreEst/{id}")]
+        public async Task<ActionResult<Establecimiento>> GetNombreEst(int id)
+        {
+            var estId = await _context.Usuarios.Where(u => u.UsuId == id).Select(u => u.EstId).FirstOrDefaultAsync();
+            var estNombre = await _context.Establecimientos.Where(e => e.EstId == estId).Select(e => e.EstDescripcion).FirstOrDefaultAsync();
+            if (estNombre == null)
+            {
+                return BadRequest("Establecimiento no encontrado");
+            }
+            return Ok(estNombre);
+        }
     }
 }
