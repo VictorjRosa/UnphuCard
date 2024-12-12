@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using UnphuCard_PagoFront.Data;
@@ -8,7 +9,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<LocalStorage>();
+builder.Services.AddBlazoredLocalStorage();
 
+builder.Services.AddScoped(sp =>
+    new HttpClient
+    {
+        BaseAddress = new Uri("https://localhost:7192/"),
+
+    });
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -7,13 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnphuCard_Api", "UnphuCard_
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnphuCard_AccesoFront", "UnphuCard_AccesoFront\UnphuCard_AccesoFront.csproj", "{45A7271B-958F-437C-A166-0F0740554912}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnphuCard_PagoFront", "UnphuCard_PagoFront\UnphuCard_PagoFront.csproj", "{49D3426A-747A-4044-9E16-96ED6281C322}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnphuCard_RecargaFront", "UnphuCard_RecargaFront\UnphuCard_RecargaFront.csproj", "{C4CEF364-2A99-4D2A-B079-955456BCFD6E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnphuCard_NFC", "UnphuCard_NFC\UnphuCard_NFC.csproj", "{E524EC18-3AA8-4A02-A143-5CD09624FAFD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnphuCard_NFC", "UnphuCard_NFC\UnphuCard_NFC.csproj", "{E524EC18-3AA8-4A02-A143-5CD09624FAFD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnphuCard_QR", "UnphuCard_QR\UnphuCard_QR.csproj", "{02DD9BF7-1BF2-4731-8627-8CE22B6CB3F8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnphuCard_QR", "UnphuCard_QR\UnphuCard_QR.csproj", "{02DD9BF7-1BF2-4731-8627-8CE22B6CB3F8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnphuCard_PagosFront", "UnphuCard_PagosFront\UnphuCard_PagosFront.csproj", "{655D1AA3-F705-4A38-AA30-287FC37DCA12}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +29,6 @@ Global
 		{45A7271B-958F-437C-A166-0F0740554912}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{45A7271B-958F-437C-A166-0F0740554912}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{45A7271B-958F-437C-A166-0F0740554912}.Release|Any CPU.Build.0 = Release|Any CPU
-		{49D3426A-747A-4044-9E16-96ED6281C322}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{49D3426A-747A-4044-9E16-96ED6281C322}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{49D3426A-747A-4044-9E16-96ED6281C322}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{49D3426A-747A-4044-9E16-96ED6281C322}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C4CEF364-2A99-4D2A-B079-955456BCFD6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C4CEF364-2A99-4D2A-B079-955456BCFD6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4CEF364-2A99-4D2A-B079-955456BCFD6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -49,6 +45,10 @@ Global
 		{02DD9BF7-1BF2-4731-8627-8CE22B6CB3F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{02DD9BF7-1BF2-4731-8627-8CE22B6CB3F8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{02DD9BF7-1BF2-4731-8627-8CE22B6CB3F8}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{655D1AA3-F705-4A38-AA30-287FC37DCA12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{655D1AA3-F705-4A38-AA30-287FC37DCA12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{655D1AA3-F705-4A38-AA30-287FC37DCA12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{655D1AA3-F705-4A38-AA30-287FC37DCA12}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

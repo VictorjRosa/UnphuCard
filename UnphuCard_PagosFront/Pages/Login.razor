@@ -1,0 +1,101 @@
+﻿@page "/"
+@using System.ComponentModel.DataAnnotations
+@using UnphuCard_Api.DTOS
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@layout SecondaryLayout
+
+
+<div class="login-container">
+    <div class="left-panel wave-animation">
+        <h6 class="main-title">RECARGA UNPHUCARD</h6>
+    </div>
+    <div class="right-panel">
+        <div class="form-container">
+            <img src="../css/Archivos/Logo Recarga.svg" alt="UNPHU Logo" class="logo">
+            <h2 class="form-title">Iniciar sesión</h2>
+             <EditForm Model="LoginModel">
+                <DataAnnotationsValidator />
+                <Validaciones TModel="LoginModel" />
+                <div style="position: relative;">
+                    <label for="email" class="form-label">Usuario</label>
+                    <div class="icon-container">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <InputText type="text" id="email" class="form-input" @bind-Value="LoginModel.Usuario" required />
+                </div>
+                <div style="position: relative;">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <div class="icon-container">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <InputText type="password" id="password" class="form-input" @bind-Value="LoginModel.Contraseña" required />
+                </div>
+
+                <button @onclick="HandleLogin" type="button" class="form-button">Iniciar sesión</button>
+            </EditForm>
+            <div style="text-align: center; margin-top: 1rem;">
+                <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+            </div>            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+        </div>
+       
+    </div>
+</div>
+
+@code {
+    private bool isAuthenticated;
+
+    private string errorMessage;
+    private LoginModel LoginModel = new LoginModel();
+    private bool showPassword = false;
+    private void TogglePasswordVisibility()
+    {
+        showPassword = !showPassword;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var token = await localStorage.GetItemAsync<string>("authToken");
+            isAuthenticated = !string.IsNullOrEmpty(token);
+
+            if (isAuthenticated)
+            {
+                NavigationManager.NavigateTo("/index");
+            }
+        }
+    }
+
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            errorMessage = null;
+            var token = await AuthService.Login(LoginModel);
+            await localStorage.SetItemAsync("authToken", token);
+
+            NavigationManager.NavigateTo("/index");
+
+        }
+        catch (ApplicationException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An unexpected error occurred.";
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+}
