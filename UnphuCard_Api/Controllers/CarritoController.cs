@@ -1,17 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor;
 using UnphuCard_Api.DTOS;
 using UnphuCard_Api.Models;
+using UnphuCard_Api.Service;
 
 namespace UnphuCard_Api.Controllers
 {
     public class CarritoController : Controller
     {
         private readonly UnphuCardContext _context;
-        public CarritoController(UnphuCardContext context)
+        private readonly IServicioEmail _emailService;
+        public CarritoController(UnphuCardContext context, IServicioEmail emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         [HttpGet("api/MostrarCarrito/{SesionToken}")]
@@ -185,6 +189,100 @@ namespace UnphuCard_Api.Controllers
 
                 _context.Carritos.RemoveRange(itemsCarrito);
                 await _context.SaveChangesAsync();
+                // Construir el mensaje del correo
+                string mensaje = $@"
+<!DOCTYPE html>
+<html lang=""es"">
+<head>
+    <meta charset=""UTF-8"">
+    <title>Comprobante de Transacción</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }}
+        .header {{
+            background-color: #007b3e;
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }}
+        .header img {{
+            max-height: 50px;
+        }}
+        .content {{
+            padding: 20px;
+        }}
+        .table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }}
+        .table th, .table td {{
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }}
+        .table th {{
+            background-color: #f2f2f2;
+        }}
+        .total {{
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+            color: #007b3e;
+        }}
+    </style>
+</head>
+<body>
+    <div class=""header"">
+        <img src=""https://www.unphu.edu.do/images/logo-unphu.png"" alt=""UNPHU"">
+        <h1>Comprobante de Transacción</h1>
+    </div>
+    <div class=""content"">
+        <p><strong>{usuario.UsuNombre + " " + usuario.UsuApellido}</strong></p>
+        <p>Matrícula: {usuario.UsuMatricula}</p>
+        <p>Número de recibo: {recibo.NumeroRecibo}</p>
+        <p>RNC: {usuario.UsuDocIdentidad}</p>
+        <p>NCF: {recibo.NCF}</p>
+        <p>Fecha Válida: {recibo.FechaValida:dd/MM/yyyy HH:mm:ss}</p>
+
+        <table class=""table"">
+            <thead>
+                <tr>
+                    <th>Servicio</th>
+                    <th>Beca</th>
+                    <th>Monto</th>
+                    <th>Descuento</th>
+                    <th>Por Pagar</th>
+                    <th>Pendiente</th>
+                </tr>
+            </thead>
+            <tbody>
+                {string.Join("", detalles.Select(d => $@"
+                <tr>
+                    <td>{d.Servicio}</td>
+                    <td>RD$ {d.Beca:N2}</td>
+                    <td>RD$ {d.Monto:N2}</td>
+                    <td>RD$ {d.Descuento:N2}</td>
+                    <td>RD$ {d.PorPagar:N2}</td>
+                    <td>RD$ {d.Pendiente:N2}</td>
+                </tr>"))}
+            </tbody>
+        </table>
+
+        <p><strong>Tarjeta de crédito:</strong> **** **** **** {recibo.TarjetaUltimos4}</p>
+        <p><strong>Cantidad pagada con tarjeta:</strong> RD$ {recibo.CantidadPagada:N2}</p>
+        <p class=""total"">Total pagado: RD$ {recibo.TotalPagado:N2}</p>
+    </div>
+</body>
+</html>
+";
+
+                // Enviar el correo
+                await _emailService.SendEmailAsync(estudiante.Email, "Factura de Compra", mensaje);
 
                 return Ok("Transacción exitosa.");
             }

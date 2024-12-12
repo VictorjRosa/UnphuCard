@@ -99,8 +99,8 @@ namespace UnphuCard_Api.Controllers
             }
         }
 
-        [HttpPut("api/EditarTarjetaProv/{id}")]
-        public async Task<IActionResult> PutTarjetaProv(int id)
+        [HttpPut("api/DesactivarTarjetaProv/{id}")]
+        public async Task<IActionResult> DesactivarTarjetaProv(int id)
         {
             if (!ModelState.IsValid)
             {
@@ -186,8 +186,8 @@ namespace UnphuCard_Api.Controllers
             }
         }
 
-        [HttpGet("api/DesactivarTarjetaProv")]
-        public async Task<IActionResult> DesactivarTarjetaProv()
+        [HttpGet("api/TarjetaProvNoEntregadas")]
+        public async Task<IActionResult> TarjetaProvNoEntregadas()
         {
             try
             {
@@ -204,13 +204,16 @@ namespace UnphuCard_Api.Controllers
                     .ToListAsync();
                 foreach (var tarjeta in usuarioPendiente)
                 {
-                    var correo = await _context.Usuarios.Where(u => u.UsuId == tarjeta.UsuId).Select(u => u.UsuCorreo).FirstOrDefaultAsync();
+                    var usuario = await _context.Usuarios
+                        .Where(u => u.UsuId == tarjeta.UsuId)
+                        .Select(u => new { u.UsuCorreo, u.UsuNombre, u.UsuApellido })
+                        .FirstOrDefaultAsync();
                     string mensaje = $@"
                 <h2>Notificación de Tarjeta No Devuelta</h2>
-                <p>La tarjeta provisional número {tarjeta.TarjProvCodigo} asignada a usted ha expirado el {tarjeta.TarjProvFechaExpiracion} y no ha sido devuelta.</p>
+                <p>La tarjeta provisional número {tarjeta.TarjProvCodigo} asignada a {usuario.UsuNombre + " " + usuario.UsuApellido} ha expirado el {tarjeta.TarjProvFechaExpiracion} y no ha sido devuelta.</p>
                 <p>Por favor, devuelva la tarjeta a la brevedad posible.</p>
             ";
-                    await _emailService.SendEmailAsync(correo, "Tarjeta No Devuelta", mensaje);
+                    await _emailService.SendEmailAsync(usuario.UsuCorreo, "Tarjeta No Devuelta", mensaje);
                     await _emailService.SendEmailAsync("vr19-1028@unphu.edu.do", "Tarjeta No Devuelta", mensaje);
                 }
                 return Ok("Correos enviados exitosamente.");
