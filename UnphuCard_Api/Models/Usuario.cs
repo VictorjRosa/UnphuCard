@@ -32,4 +32,6 @@ public partial class Usuario
     public int? StatusId { get; set; }
 
     public int? RolId { get; set; }
+
+    public int? EstId { get; set; }
 }

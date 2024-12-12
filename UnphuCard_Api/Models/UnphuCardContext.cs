@@ -194,7 +194,6 @@ public partial class UnphuCardContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("Est_Ubicacion");
-            entity.Property(e => e.UsuId).HasColumnName("Usu_ID");
         });
 
         modelBuilder.Entity<Estado>(entity =>

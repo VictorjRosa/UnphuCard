@@ -10,6 +10,4 @@ public partial class Establecimiento
     public string? EstDescripcion { get; set; }
 
     public string? EstUbicacion { get; set; }
-
-    public int? UsuId { get; set; }
 }

@@ -172,13 +172,14 @@ namespace UnphuCard_Api.Controllers
                 var tokenCompra = await _context.Sesions.Where(t => t.SesionId == compra.SesionId).Select(t => t.SesionToken).FirstOrDefaultAsync();
                 var tokenCarrito = await _context.Sesions.Where(t => t.SesionId == sesionIdCarrito).Select(t => t.SesionToken).FirstOrDefaultAsync();
                 var itemsCarrito = await _context.Carritos.Where(c => tokenCarrito == tokenCompra).ToListAsync();
+                var productoCarrito = await _context.Productos.Where(p => tokenCarrito == tokenCompra).ToListAsync();
                 foreach (var item in itemsCarrito)
                 {
-                    var precio = await _context.Productos.Where(p => p.ProdId == item.ProdId).Select(p => p.ProdPrecio).FirstOrDefaultAsync();
+                    var producto = await _context.Productos.Where(p => p.ProdId == item.ProdId).Select(p => new { p.ProdPrecio, p.ProdDescripcion }).FirstOrDefaultAsync();
                     var detalleCompra = new DetallesCompra
                     {
                         DetCompCantidad = item.CarCantidad,
-                        DetCompPrecio = item.CarCantidad * precio,
+                        DetCompPrecio = item.CarCantidad * producto.ProdPrecio,
                         CompId = compra.CompId,
                         ProdId = item.ProdId,
                         SesionId = compra.SesionId
@@ -186,103 +187,98 @@ namespace UnphuCard_Api.Controllers
                     _context.DetallesCompras.Add(detalleCompra);
                 }
                 await _context.SaveChangesAsync();
-
+                
                 _context.Carritos.RemoveRange(itemsCarrito);
                 await _context.SaveChangesAsync();
                 // Construir el mensaje del correo
-                string mensaje = $@"
-<!DOCTYPE html>
-<html lang=""es"">
-<head>
-    <meta charset=""UTF-8"">
-    <title>Comprobante de Transacción</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }}
-        .header {{
-            background-color: #007b3e;
-            color: white;
-            text-align: center;
-            padding: 10px;
-        }}
-        .header img {{
-            max-height: 50px;
-        }}
-        .content {{
-            padding: 20px;
-        }}
-        .table {{
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }}
-        .table th, .table td {{
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }}
-        .table th {{
-            background-color: #f2f2f2;
-        }}
-        .total {{
-            font-size: 1.5em;
-            font-weight: bold;
-            text-align: center;
-            margin-top: 20px;
-            color: #007b3e;
-        }}
-    </style>
-</head>
-<body>
-    <div class=""header"">
-        <img src=""https://www.unphu.edu.do/images/logo-unphu.png"" alt=""UNPHU"">
-        <h1>Comprobante de Transacción</h1>
-    </div>
-    <div class=""content"">
-        <p><strong>{usuario.UsuNombre + " " + usuario.UsuApellido}</strong></p>
-        <p>Matrícula: {usuario.UsuMatricula}</p>
-        <p>Número de recibo: {recibo.NumeroRecibo}</p>
-        <p>RNC: {usuario.UsuDocIdentidad}</p>
-        <p>NCF: {recibo.NCF}</p>
-        <p>Fecha Válida: {recibo.FechaValida:dd/MM/yyyy HH:mm:ss}</p>
+//                string mensaje = $@"
+//<!DOCTYPE html>
+//<html lang=""es"">
+//<head>
+//    <meta charset=""UTF-8"">
+//    <title>Comprobante de Transacción</title>
+//    <style>
+//        body {{
+//            font-family: Arial, sans-serif;
+//            margin: 0;
+//            padding: 0;
+//        }}
+//        .header {{
+//            background-color: #007b3e;
+//            color: white;
+//            text-align: center;
+//            padding: 10px;
+//        }}
+//        .header img {{
+//            max-height: 50px;
+//        }}
+//        .content {{
+//            padding: 20px;
+//        }}
+//        .table {{
+//            width: 100%;
+//            border-collapse: collapse;
+//            margin-top: 20px;
+//        }}
+//        .table th, .table td {{
+//            border: 1px solid #ddd;
+//            padding: 8px;
+//            text-align: left;
+//        }}
+//        .table th {{
+//            background-color: #f2f2f2;
+//        }}
+//        .total {{
+//            font-size: 1.5em;
+//            font-weight: bold;
+//            text-align: center;
+//            margin-top: 20px;
+//            color: #007b3e;
+//        }}
+//    </style>
+//</head>
+//<body>
+//    <div class=""header"">
+//        <img src=""https://www.unphu.edu.do/images/logo-unphu.png"" alt=""UNPHU"">
+//        <h1>Comprobante de Transacción</h1>
+//    </div>
+//    <div class=""content"">
+//        <p><strong>{usuario.UsuNombre + " " + usuario.UsuApellido}</strong></p>
+//        <p>Matrícula: {usuario.UsuMatricula}</p>
+//        <p>Número de recibo: {insertCompra.CompId}</p>
+//        <p>RNC: {usuario.UsuDocIdentidad}</p>
+//        <p>Fecha Válida: {compra.CompFecha:dd/MM/yyyy HH:mm:ss}</p>
 
-        <table class=""table"">
-            <thead>
-                <tr>
-                    <th>Servicio</th>
-                    <th>Beca</th>
-                    <th>Monto</th>
-                    <th>Descuento</th>
-                    <th>Por Pagar</th>
-                    <th>Pendiente</th>
-                </tr>
-            </thead>
-            <tbody>
-                {string.Join("", detalles.Select(d => $@"
-                <tr>
-                    <td>{d.Servicio}</td>
-                    <td>RD$ {d.Beca:N2}</td>
-                    <td>RD$ {d.Monto:N2}</td>
-                    <td>RD$ {d.Descuento:N2}</td>
-                    <td>RD$ {d.PorPagar:N2}</td>
-                    <td>RD$ {d.Pendiente:N2}</td>
-                </tr>"))}
-            </tbody>
-        </table>
+//        <table class=""table"">
+//            <thead>
+//                <tr>
+//                    <th>Servicio</th>
+//                    <th>Monto</th>
+//                    <th>Descuento</th>
+//                    <th>Por Pagar</th>
+//                </tr>
+//            </thead>
+//            <tbody>
+//                {string.Join("", itemsCarrito.Select(d => $@"
+//                <tr>
+//                    <td>{d.des}</td>
+//                    <td>RD$ {d.Monto:N2}</td>
+//                    <td>RD$ {d.Descuento:N2}</td>
+//                    <td>RD$ {d.PorPagar:N2}</td>
+//                </tr>"))}
+//            </tbody>
+//        </table>
 
-        <p><strong>Tarjeta de crédito:</strong> **** **** **** {recibo.TarjetaUltimos4}</p>
-        <p><strong>Cantidad pagada con tarjeta:</strong> RD$ {recibo.CantidadPagada:N2}</p>
-        <p class=""total"">Total pagado: RD$ {recibo.TotalPagado:N2}</p>
-    </div>
-</body>
-</html>
-";
+//        <p><strong>Tarjeta de crédito:</strong> **** **** **** {recibo.TarjetaUltimos4}</p>
+//        <p><strong>Cantidad pagada con tarjeta:</strong> RD$ {recibo.CantidadPagada:N2}</p>
+//        <p class=""total"">Total pagado: RD$ {recibo.TotalPagado:N2}</p>
+//    </div>
+//</body>
+//</html>
+//";
 
-                // Enviar el correo
-                await _emailService.SendEmailAsync(estudiante.Email, "Factura de Compra", mensaje);
+//                // Enviar el correo
+//                await _emailService.SendEmailAsync(estudiante.Email, "Factura de Compra", mensaje);
 
                 return Ok("Transacción exitosa.");
             }

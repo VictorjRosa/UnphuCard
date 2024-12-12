@@ -2,6 +2,7 @@
 {
     public class InsertCompra
     {
+        public int CompId { get; set; }
         public decimal? CompMonto { get; set; }
         public int? UsuCodigo { get; set; }
         public int? EstId { get; set; }
