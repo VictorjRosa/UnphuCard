@@ -1,6 +1,7 @@
 ﻿@page "/recarga"
 @inject NavigationManager NavigationManager
 @inject HttpClient Http
+@inject IJSRuntime JSRuntime
 @using UnphuCard_Api.Models
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 
@@ -41,7 +42,7 @@
                             if (@metodo.MetPagId != 1 && @metodo.MetPagId != 2)
                             {
                                 <div class="flex items-center space-x-2">
-                                <InputRadio value="@metodo.MetPagId" id="@metodo.MetPagId" />
+                                        <InputRadio TValue="int" value="@metodo.MetPagId" id="@metodo.MetPagId" />
                                 <label  for="@metodo.MetPagId">@metodo.MetPagDescripcion</label>
                             </div>
                             }
@@ -83,29 +84,18 @@
         }
 
     }
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            // Recuperar el valor de 'Amount' desde localStorage después de la renderización
-            var storedAmount = await localStorage.GetItemAsync<decimal>("amount");
-            if (storedAmount > 0)
-            {
-                Amount = storedAmount;
-            }
-        }
-    }
+  
 
     private async Task StorePaymentMethodAndAmount()
     {
         if (PaymentMethod > 0)
         {
-            await localStorage.SetItemAsync("paymentMethod", PaymentMethod);
+            await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "paymentMethod", PaymentMethod.ToString());
         }
 
         if (Amount > 0)
         {
-            await localStorage.SetItemAsync("amount", Amount);  
+            await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "amount", Amount.ToString());
         }
     }
 
@@ -128,7 +118,7 @@
             return;
         }
         await StorePaymentMethodAndAmount();
-
+     
         NavigationManager.NavigateTo("/pago");
     }
 }
