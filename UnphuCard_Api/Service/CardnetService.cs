@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using UnphuCard.DTOS;
+using UnphuCard_Api.DTOS;
 
 public class CardnetService
 {
@@ -40,8 +40,8 @@ public class CardnetService
             var tokenResponse = await response.Content.ReadAsStringAsync();
             var tokenData = JsonConvert.DeserializeObject<TokenResponse>(tokenResponse);
 
-            _accessToken = tokenData.access_token;
-            _tokenExpiration = DateTime.UtcNow.AddSeconds(tokenData.expires_in);
+            _accessToken = tokenData.Access_token;
+            _tokenExpiration = DateTime.UtcNow.AddSeconds(tokenData.Expires_in);
 
             return _accessToken;
         }

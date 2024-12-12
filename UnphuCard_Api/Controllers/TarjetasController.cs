@@ -1,23 +1,26 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Threading.Tasks;
 using UnphuCard_Api.DTOS;
 using UnphuCard_Api.Models;
+using UnphuCard_Api.Service;
 
 namespace UnphuCard_Api.Controllers
 {
     public class TarjetasController : Controller
     {
         private readonly UnphuCardContext _context;
+        private readonly IServicioEmail _emailService;
 
-        
-        public TarjetasController(UnphuCardContext context)
+        public TarjetasController(UnphuCardContext context, IServicioEmail emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
-        
+
         [HttpGet("api/ObtenerTarjetas")]
         public async Task<ActionResult<IEnumerable<Tarjeta>>> GetTarjetas()
         {
@@ -144,13 +147,9 @@ namespace UnphuCard_Api.Controllers
             }
         }
 
-        [HttpPut("api/DesactivarTarjetaProv/{id}")]
-        public async Task<IActionResult> DesactivarTarjetaProv(int id, [FromBody] UpdateTarjetaProv updateTarjetaProv)
+        [HttpGet("api/DesactivarTarjetaProv")]
+        public async Task<IActionResult> DesactivarTarjetaProv()
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest("Tarjeta provisional no válida");
-            }
             try
             {
                 // Obtener la zona horaria de República Dominicana (GMT-4)
@@ -160,31 +159,22 @@ namespace UnphuCard_Api.Controllers
                 // Convertir la fecha a la zona horaria de República Dominicana
                 DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
                 DateTime fechaExpiracion = new(fechaEnRD.Year, fechaEnRD.Month, fechaEnRD.Day, 23, 0, 0);
-                var tarjetaProv = await _context.TarjetasProvisionales.FirstOrDefaultAsync(t => t.TarjProvId == id);
-                if (tarjetaProv == null)
+                var usuarioPendiente = await _context.TarjetasProvisionales
+                    .Where(tp => tp.TarjProvFechaExpiracion < fechaEnRD && tp.TarjProvFechaExpiracion.HasValue && tp.StatusId == 3)
+                    .Select(tp => new { tp.UsuId, tp.StatusId, tp.TarjProvFechaExpiracion, tp.TarjProvCodigo })
+                    .ToListAsync();
+                foreach (var tarjeta in usuarioPendiente)
                 {
-                    return NotFound("Tarjeta provisional no encontrada");
+                    var correo = await _context.Usuarios.Where(u => u.UsuId == tarjeta.UsuId).Select(u => u.UsuCorreo).FirstOrDefaultAsync();
+                    string mensaje = $@"
+                <h2>Notificación de Tarjeta No Devuelta</h2>
+                <p>La tarjeta provisional número {tarjeta.TarjProvCodigo} asignada a usted ha expirado el {tarjeta.TarjProvFechaExpiracion} y no ha sido devuelta.</p>
+                <p>Por favor, devuelva la tarjeta a la brevedad posible.</p>
+            ";
+                    await _emailService.SendEmailAsync(correo, "Tarjeta No Devuelta", mensaje);
+                    await _emailService.SendEmailAsync("vr19-1028@unphu.edu.do", "Tarjeta No Devuelta", mensaje);
                 }
-                var usuId = await _context.Usuarios.Where(u => u.UsuDocIdentidad == updateTarjetaProv.UsuDocIdentidad).Select(u => u.UsuId).FirstOrDefaultAsync();
-                tarjetaProv.TarjProvFecha = fechaEnRD;
-                tarjetaProv.StatusId = updateTarjetaProv.StatusId;
-                tarjetaProv.UsuId = usuId;
-                tarjetaProv.TarjProvFechaExpiracion = fechaExpiracion;
-
-                _context.Entry(tarjetaProv).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
-                return Ok(tarjetaProv);
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (TarjetaProvExists(id))
-                {
-                    return NotFound("Tarjeta provisional no encontrada");
-                }
-                else
-                {
-                    throw;
-                }
+                return Ok("Correos enviados exitosamente.");
             }
             catch (Exception ex)
             {
