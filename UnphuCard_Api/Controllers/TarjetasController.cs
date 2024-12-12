@@ -99,6 +99,45 @@ namespace UnphuCard_Api.Controllers
             }
         }
 
+        [HttpPut("api/EditarTarjetaProv/{id}")]
+        public async Task<IActionResult> PutTarjetaProv(int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Tarjeta provisional no válida");
+            }
+            try
+            {
+                var tarjeta = await _context.TarjetasProvisionales.FirstOrDefaultAsync(t => t.TarjProvId == id);
+                if (tarjeta == null)
+                {
+                    return NotFound("Tarjeta provisional no encontrada");
+                }
+                tarjeta.UsuId = null;
+                tarjeta.TarjProvFechaExpiracion = null;
+                tarjeta.StatusId = 4;
+
+                _context.Entry(tarjeta).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+                return Ok(tarjeta);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (TarjetaProvExists(id))
+                {
+                    return NotFound("Tarjeta provisional no encontrada");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
         [HttpPut("api/ActivarTarjetaProv/{id}")]
         public async Task<IActionResult> ActivarTarjetaProv(int id, [FromBody] UpdateTarjetaProv updateTarjetaProv)
         {
@@ -161,7 +200,7 @@ namespace UnphuCard_Api.Controllers
                 DateTime fechaExpiracion = new(fechaEnRD.Year, fechaEnRD.Month, fechaEnRD.Day, 23, 0, 0);
                 var usuarioPendiente = await _context.TarjetasProvisionales
                     .Where(tp => tp.TarjProvFechaExpiracion < fechaEnRD && tp.TarjProvFechaExpiracion.HasValue && tp.StatusId == 3)
-                    .Select(tp => new { tp.UsuId, tp.StatusId, tp.TarjProvFechaExpiracion, tp.TarjProvCodigo })
+                    .Select(tp => new { tp.TarjProvId, tp.UsuId, tp.StatusId, tp.TarjProvFechaExpiracion, tp.TarjProvCodigo })
                     .ToListAsync();
                 foreach (var tarjeta in usuarioPendiente)
                 {
