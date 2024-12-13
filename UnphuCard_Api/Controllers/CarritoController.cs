@@ -146,6 +146,26 @@ namespace UnphuCard_Api.Controllers
                 {
                     return NotFound("Usuario no encontrado.");
                 }
+                var sesionIdCarrito = await _context.Carritos.Where(c => c.SesionId == insertCompra.SesionId).Select(s => s.SesionId).FirstOrDefaultAsync();
+                if (sesionIdCarrito == null)
+                {
+                    return NotFound("Sesión del carrito no encontrada.");
+                }
+                var sesionIdProducto = await _context.DetallesCompras.Where(dc => dc.SesionId == insertCompra.SesionId).Select(s => s.SesionId).FirstOrDefaultAsync();
+                if (sesionIdProducto == null)
+                {
+                    return NotFound("Sesión del detalle de la compra no encontrada.");
+                }
+                var tokenCompra = await _context.Sesions.Where(s => s.SesionId == insertCompra.SesionId).Select(t => t.SesionToken).FirstOrDefaultAsync();
+                if (tokenCompra == null)
+                {
+                    return NotFound("Token de la sesión de la compra no encontrado.");
+                }
+                var tokenCarrito = await _context.Sesions.Where(s => s.SesionId == sesionIdCarrito).Select(t => t.SesionToken).FirstOrDefaultAsync();
+                if (tokenCarrito == null)
+                {
+                    return NotFound("Token de la sesión del carrito no encontrado.");
+                }
 
                 // Verifica si el saldo del usuario es suficiente
                 if (usuario.UsuSaldo < insertCompra.CompMonto)
@@ -169,10 +189,6 @@ namespace UnphuCard_Api.Controllers
                 _context.Compras.Add(compra);
                 await _context.SaveChangesAsync();
 
-                var sesionIdCarrito = await _context.Carritos.Where(c => c.SesionId == compra.SesionId).Select(s => s.SesionId).FirstOrDefaultAsync();
-                var sesionIdProducto = await _context.DetallesCompras.Where(dc => dc.SesionId == compra.SesionId).Select(s => s.SesionId).FirstOrDefaultAsync();
-                var tokenCompra = await _context.Sesions.Where(s => s.SesionId == compra.SesionId).Select(t => t.SesionToken).FirstOrDefaultAsync();
-                var tokenCarrito = await _context.Sesions.Where(s => s.SesionId == sesionIdCarrito).Select(t => t.SesionToken).FirstOrDefaultAsync();
                 var itemsCarrito = await _context.Carritos.Where(c => tokenCarrito == tokenCompra).ToListAsync();
                 foreach (var item in itemsCarrito)
                 {
@@ -181,9 +197,9 @@ namespace UnphuCard_Api.Controllers
                     {
                         DetCompCantidad = item.CarCantidad,
                         DetCompPrecio = item.CarCantidad * producto.ProdPrecio,
-                        CompId = compra.CompId,
+                        CompId = insertCompra.CompId,
                         ProdId = item.ProdId,
-                        SesionId = compra.SesionId
+                        SesionId = insertCompra.SesionId
                     };
                     _context.DetallesCompras.Add(detalleCompra);
                 }
@@ -277,7 +293,7 @@ namespace UnphuCard_Api.Controllers
             </tbody>
         </table>
 
-        <p class=""total"">Total pagado: RD$ {compra.CompMonto:N2}</p>
+        <p class=""total"">Total pagado: RD$ {insertCompra.CompMonto:N2}</p>
     </div>
 </body>
 </html>
