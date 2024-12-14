@@ -4,7 +4,10 @@
 <PageTitle>UnphuCard_PagosFront</PageTitle>
 
 <div>
-    
+    <header class="bg-green-700 text-white p-4 text-left">
+        <h1 class="text-2xl font-bold">@establishmentName</h1>
+
+    </header>
     @Body
     <footer>
         <footer class="bg-green-800 text-white text-center p-4">
@@ -17,7 +20,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Simular la obtención del nombre del establecimiento
         establishmentName = "Tienda UNPHU";
         await Task.CompletedTask;
     }

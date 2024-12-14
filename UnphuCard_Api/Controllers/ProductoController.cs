@@ -177,6 +177,20 @@ namespace UnphuCard_Api.Controllers
                 return StatusCode(500, $"Error interno del servidor: {ex.Message}");
             }
         }
+        [HttpGet("api/ObtenerProductosPorCategoria/{categoriaId}")]
+        public async Task<ActionResult<IEnumerable<Producto>>> GetProductosPorCategoria(int categoriaId)
+        {
+            var productos = await _context.Productos
+                .Where(p => p.CatProdId == categoriaId)
+                .ToListAsync();
+
+            if (!productos.Any())
+            {
+                return NotFound("No se encontraron productos para esta categoría.");
+            }
+
+            return Ok(productos);
+        }
 
         private bool ProductoExists(int id)
         {

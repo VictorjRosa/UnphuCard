@@ -10,6 +10,9 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddBlazoredLocalStorage();
+builder.Services.AddScoped<Categoria>();
+builder.Services.AddScoped<ProductosService>();
+
 
 builder.Services.AddScoped(sp =>
     new HttpClient
