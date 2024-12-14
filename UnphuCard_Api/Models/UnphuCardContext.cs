@@ -67,6 +67,8 @@ public partial class UnphuCardContext : DbContext
 
     public virtual DbSet<VwInventarioEstablecimiento> VwInventarioEstablecimientos { get; set; }
 
+    public virtual DbSet<VwProducto> VwProductos { get; set; }
+
     public virtual DbSet<VwRecarga> VwRecargas { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -562,6 +564,36 @@ public partial class UnphuCardContext : DbContext
             entity.Property(e => e.PrecioDelProducto)
                 .HasColumnType("decimal(6, 2)")
                 .HasColumnName("Precio del Producto");
+        });
+
+        modelBuilder.Entity<VwProducto>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("vw_Productos");
+
+            entity.Property(e => e.DescripciónDeLaCategoríaDelProducto)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Descripción de la categoría del producto");
+            entity.Property(e => e.DescripciónDelEstadoDelProducto)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Descripción del estado del producto");
+            entity.Property(e => e.IdDeLaCategoríaDelProducto).HasColumnName("ID de la categoría del producto");
+            entity.Property(e => e.IdDelEstadoDelProducto).HasColumnName("ID del estado del producto");
+            entity.Property(e => e.IdDelProducto).HasColumnName("ID del producto");
+            entity.Property(e => e.ImagenDelProducto)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("Imagen del producto");
+            entity.Property(e => e.NombreDelProducto)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Nombre del producto");
+            entity.Property(e => e.PrecioDelProducto)
+                .HasColumnType("decimal(6, 2)")
+                .HasColumnName("Precio del producto");
         });
 
         modelBuilder.Entity<VwRecarga>(entity =>
