@@ -298,7 +298,6 @@ public partial class UnphuCardContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("Prod_Descripcion");
             entity.Property(e => e.ProdImagenes)
-                .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("Prod_Imagenes");
             entity.Property(e => e.ProdPrecio)
