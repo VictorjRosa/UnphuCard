@@ -47,14 +47,13 @@ namespace UnphuCard_Api.Controllers
             try
             {
                 // Verifica si el usuario existe en la base de datos
-                var usuario = await _context.Usuarios.SingleOrDefaultAsync(u => u.UsuUsuario == login.Usuario);
-                if (usuario == null)
+                var Usuario = await _context.Usuarios.SingleOrDefaultAsync(u => u.UsuUsuario == login.Usuario && u.RolId == login.RolId);
+                if (Usuario == null || Usuario.RolId != login.RolId)
                 {
                     return Unauthorized("Credenciales inválidas.");
                 }
-
                 // Generar el token JWT
-                var token = GenerateJwtToken(usuario);
+                var token = GenerateJwtToken(Usuario);
 
                 // Devolver el token al cliente
                 return Ok(new { access_token = token });
