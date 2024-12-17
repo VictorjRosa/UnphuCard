@@ -17,15 +17,15 @@ namespace UnphuCard_Api.Controllers
         }
 
         [HttpGet("api/ObtenerProductos")]
-        public async Task<ActionResult<IEnumerable<Producto>>> GetProductos()
+        public async Task<ActionResult<IEnumerable<VwProducto>>> GetProductos()
         {
-            return await _context.Productos.ToListAsync();
+            return await _context.VwProductos.ToListAsync();
         }
 
         [HttpGet("api/ObtenerProductos/{id}")]
-        public async Task<ActionResult<Producto>> GetProducto(int id)
+        public async Task<ActionResult<VwProducto>> GetProducto(int id)
         {
-            var producto = await _context.Productos.FirstOrDefaultAsync(p => p.ProdId == id);
+            var producto = await _context.VwProductos.FirstOrDefaultAsync(p => p.IdDelProducto == id);
             if (producto == null)
             {
                 return BadRequest("Producto no encontrado");
@@ -69,14 +69,14 @@ namespace UnphuCard_Api.Controllers
 
             // Generar un nombre único para la imagen para evitar colisiones
             string uniqueFileName = Guid.NewGuid().ToString() + "_" + foto.FileName;
-            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
             // Guardar la imagen en el servidor
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            using (var stream = new FileStream(uniqueFileName, FileMode.Create))
             {
                 await foto.CopyToAsync(stream);
             }
-
+            string baseUrl = Request.Scheme + "://" + Request.Host.Value; // Esto crea una URL completa, incluyendo el esquema (http/https) y el host
+            string imageUrl = $"{baseUrl}/Fotos/{uniqueFileName}";
             // Guardar el producto en la base de datos con la ruta de la imagen
             try
             {
@@ -84,9 +84,10 @@ namespace UnphuCard_Api.Controllers
                 {
                     ProdDescripcion = insertProducto.ProdDescripcion,
                     ProdPrecio = insertProducto.ProdPrecio,
-                    ProdImagenes = filePath,  // Guardar la ruta de la imagen
+                    ProdImagenes = $"/Fotos/{uniqueFileName}",  // Guardar la ruta de la imagen
                     StatusId = insertProducto.StatusId,
                     CatProdId = insertProducto.CatProdId
+
                 };
                 _context.Productos.Add(producto);
                 await _context.SaveChangesAsync();
@@ -178,10 +179,10 @@ namespace UnphuCard_Api.Controllers
             }
         }
         [HttpGet("api/ObtenerProductosPorCategoria/{categoriaId}")]
-        public async Task<ActionResult<IEnumerable<Producto>>> GetProductosPorCategoria(int categoriaId)
+        public async Task<ActionResult<IEnumerable<VwProducto>>> GetProductosPorCategoria(int categoriaId)
         {
-            var productos = await _context.Productos
-                .Where(p => p.CatProdId == categoriaId)
+            var productos = await _context.VwProductos
+                .Where(p => p.IdDeLaCategoríaDelProducto == categoriaId)
                 .ToListAsync();
 
             if (!productos.Any())

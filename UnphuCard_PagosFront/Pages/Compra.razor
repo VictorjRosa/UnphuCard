@@ -1,4 +1,4 @@
-﻿@* @page "/compras"
+﻿@page "/compras"
 @inject IJSRuntime JSRuntime
 @using UnphuCard_Api.DTOS
 @using UnphuCard_Api.Models
@@ -23,29 +23,33 @@
             </div>
             <select @onchange="FiltrarProductosPorCategoria" class="w-[180px] p-2 border rounded-md">
                 <option value="Todas">Todas</option>
-
+                @if (categorias != null)
+                                        {
                 @foreach (var categoria in categorias)
                 {
                     <option value="@categoria.CatProdId">@categoria.CatProdDescripcion</option>
-                }
+                    } }
             </select>
            
           
 
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            @if (filteredProducts != null)
+
             @foreach (var producto in filteredProducts)
             {
-                <div class="card cursor-pointer hover:shadow-lg transition-shadow" @onclick="() => OpenProductDialog(product)">
+                <div class="card cursor-pointer hover:shadow-lg transition-shadow" @onclick="() => OpenProductDialog(producto)">
                     <div class="p-4 flex flex-col items-center">
-                        <img src="@producto.ProdImagenes" alt="@producto.ProdImagenes" width="100" height="100" class="mb-2 rounded-md" />
-                        <h3 class="font-bold text-lg mb-1 text-center">@producto.ProdDescripcion</h3>
+                        <img src="@producto.ImagenDelProducto" alt="@producto.ImagenDelProducto" width="100" height="100" class="mb-2 rounded-md" />
+                        <h3 class="font-bold text-lg mb-1 text-center">@producto.NombreDelProducto</h3>
                         <p class="text-gray-600">
-                            $@(producto.ProdPrecio.HasValue ? producto.ProdPrecio.Value.ToString("F2") : "0.00")
+                            $@(producto.PrecioDelProducto.HasValue ? producto.PrecioDelProducto.Value.ToString("F2") : "0.00")
                         </p>
-                        <p class="text-sm text-gray-500">@producto.CatProdId</p>
+                        <p class="text-sm text-gray-500">@producto.IdDeLaCategoríaDelProducto</p>
                     </div>
                 </div>
+            }
             }
         </div>
     </main>
@@ -54,10 +58,12 @@
     {
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div class="bg-white p-4 rounded-md max-w-md w-full">
-                <h2 class="text-xl font-bold mb-4">@selectedProduct.Name</h2>
-                <img src="@selectedProduct.Image" alt="@selectedProduct.Name" width="200" height="200" class="mb-4 rounded-md mx-auto" />
-                <p class="text-lg font-semibold mb-4">Precio: $@selectedProduct.Price.ToString("F2")</p>
-                <p class="text-md text-gray-600 mb-4">Categoría: @selectedProduct.Category</p>
+                <h2 class="text-xl font-bold mb-4">@selectedProduct.NombreDelProducto</h2>
+                <img src="@selectedProduct.ImagenDelProducto" alt="@selectedProduct.NombreDelProducto" width="200" height="200" class="mb-4 rounded-md mx-auto" />
+                <p class="text-lg font-semibold mb-4">
+                    Precio: $@(selectedProduct.PrecioDelProducto.HasValue ? selectedProduct.PrecioDelProducto.Value.ToString("F2") : "0.00")
+                </p>
+                <p class="text-md text-gray-600 mb-4">Categoría: @selectedProduct.DescripciónDeLaCategoríaDelProducto</p>
                 <div class="flex items-center justify-center space-x-4 mb-4">
                     <button class="p-2 border rounded-md" @onclick="() => quantity = Math.Max(1, quantity - 1)">-</button>
                     <input type="number" @bind="quantity" class="w-20 text-center p-2 border rounded-md" />
@@ -86,17 +92,17 @@
                     {
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center">
-                                <img src="@item.Image" alt="@item.Name" width="50" height="50" class="rounded-md mr-4" />
+                                <img src="@item.ImagenDelProducto" alt="@item.NombreDelProducto" width="50" height="50" class="rounded-md mr-4" />
                                 <div>
-                                    <p class="font-semibold">@item.Name</p>
-                                    <p class="text-sm text-gray-600">$@item.Price.ToString("F2")</p>
+                                    <p class="font-semibold">@item.NombreDelProducto</p>
+                                    <p class="text-sm text-gray-600">$@(item.PrecioDelProducto.HasValue ? item.PrecioDelProducto.Value.ToString("F2") : "0.00")</p>
                                 </div>
                             </div>
                             <div class="flex items-center">
-                                <button class="p-1 border rounded-md" @onclick="() => UpdateCartItemQuantity(item.Id, item.Quantity - 1)">-</button>
+                                <button class="p-1 border rounded-md" @onclick="() => UpdateCartItemQuantity(item.IdDelProducto, item.Quantity - 1)">-</button>
                                 <span class="mx-2">@item.Quantity</span>
-                                <button class="p-1 border rounded-md" @onclick="() => UpdateCartItemQuantity(item.Id, item.Quantity + 1)">+</button>
-                                <button class="ml-2 text-red-500" @onclick="() => RemoveFromCart(item.Id)">&#128465;</button>
+                                <button class="p-1 border rounded-md" @onclick="() => UpdateCartItemQuantity(item.IdDelProducto, item.Quantity + 1)">+</button>
+                                <button class="ml-2 text-red-500" @onclick="() => RemoveFromCart(item.IdDelProducto)">&#128465;</button>
                             </div>
                         </div>
                     }
@@ -108,28 +114,34 @@
         </div>
     }
 
-    <footer class="bg-green-800 text-white text-center p-4">
-        <p>&copy; 2023 UNPHU - Plataforma de Compra. Todos los derechos reservados.</p>
-    </footer>
 </div>
 
 @code {
- 
-    private List<CategoriaProducto>? categorias;
-    private List<Producto> productos = new List<Producto>();
-    private List<Producto> filteredProducts = new List<Producto>();
+    private string errorMessage;
+
+    private List<CategoriaProducto> categorias;
+    private List<VwProducto> productos = new List<VwProducto>();
+    private List<VwProducto> filteredProducts = new List<VwProducto>();
 
     protected override async Task OnInitializedAsync()
     {
-        categorias = await Categoria.GetCategoriasProductosAsync();
-        productos = await Producto.TodoProducto();
-        filteredProducts = productos;
+        try
+        {
+
+            categorias = await Categoria.GetCategoriasProductosAsync();
+            productos = await Producto.TodoProducto();
+            filteredProducts = productos;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred while loading entities.";
+            Console.WriteLine(ex.Message);
+        }
     }
 
-    private List<string> categories = new List<string> { "Todas" };
     private string searchTerm = "";
     private string selectedCategory = "Todas";
-    private Producto selectedProduct;
+    private VwProducto selectedProduct;
     private int quantity = 1;
     private List<CartItem> cart = new List<CartItem>();
     private bool showCart = false;
@@ -151,17 +163,12 @@
             else
             {
                 Console.WriteLine("Error: El valor de categoría no es válido.");
-                filteredProducts = new List<Producto>();
+                filteredProducts = new List<VwProducto>();
             }
         }
     }
 
-    // private List<Product> filteredProducts => allProducts
-    //     .Where(p => p.Name.ToLower().Contains(searchTerm.ToLower()) &&
-    //                 (selectedCategory == "Todas" || p.Category == selectedCategory))
-    //     .ToList();
-
-    private void OpenProductDialog(Producto producto)
+    private void OpenProductDialog(VwProducto producto)
     {
         selectedProduct = producto;
         quantity = 1;
@@ -175,7 +182,7 @@
 
     private void AddToCart()
     {
-        var existingItem = cart.FirstOrDefault(item => item.Id == selectedProduct.Id);
+        var existingItem = cart.FirstOrDefault(item => item.IdDelProducto == selectedProduct.IdDelProducto);
         if (existingItem != null)
         {
             existingItem.Quantity += quantity;
@@ -184,10 +191,10 @@
         {
             cart.Add(new CartItem
                 {
-                    Id = selectedProduct.ProdId,
-                    Name = selectedProduct.ProdDescripcion,
-                    Price = selectedProduct.ProdPrecio,
-                    Image = selectedProduct.ProdImagenes,
+                    IdDelProducto = selectedProduct.IdDelProducto,
+                    NombreDelProducto = selectedProduct.NombreDelProducto,
+                    PrecioDelProducto = selectedProduct.PrecioDelProducto,
+                    ImagenDelProducto = selectedProduct.ImagenDelProducto,
                     Quantity = quantity
                 });
         }
@@ -196,7 +203,7 @@
 
     private void UpdateCartItemQuantity(int id, int newQuantity)
     {
-        var item = cart.FirstOrDefault(i => i.Id == id);
+        var item = cart.FirstOrDefault(i => i.IdDelProducto == id);
         if (item != null)
         {
             if (newQuantity <= 0)
@@ -212,20 +219,11 @@
 
     private void RemoveFromCart(int id)
     {
-        cart.RemoveAll(item => item.Id == id);
+        cart.RemoveAll(item => item.IdDelProducto == id);
     }
 
-    // public class Product
-    // {
-    //     public int Id { get; set; }
-    //     public string Name { get; set; }
-    //     public decimal Price { get; set; }
-    //     public string Image { get; set; }
-    //     public string Category { get; set; }
-    // }
-
-    public class CartItem : Producto
+    public class CartItem : VwProducto
     {
         public int Quantity { get; set; }
     }
-} *@
+} 

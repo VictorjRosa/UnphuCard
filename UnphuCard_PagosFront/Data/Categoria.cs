@@ -12,10 +12,10 @@ namespace UnphuCard_PagosFront.Data
             _httpClient = httpClient;
         }
 
+        
         public async Task<List<CategoriaProducto>> GetCategoriasProductosAsync()
         {
-            var response = await _httpClient.GetFromJsonAsync<List<CategoriaProducto>>("api/MostrarCategoriasProductos");
-            return response ?? new List<CategoriaProducto>();
+            return await _httpClient.GetFromJsonAsync<List<CategoriaProducto>>("api/MostrarCategoriasProductos");
         }
 
         public async Task<CategoriaProducto?> GetCategoriaProductoByIdAsync(int id)

@@ -12,15 +12,15 @@ namespace UnphuCard_PagosFront.Data
             _httpClient = httpClient;
         }
 
-        public async Task<List<Producto>> TodoProducto()
+        public async Task<List<VwProducto>> TodoProducto()
         {
-            var response = await _httpClient.GetFromJsonAsync<List<Producto>>("api/ObtenerProductos");
-            return response ?? new List<Producto>();
+            var response = await _httpClient.GetFromJsonAsync<List<VwProducto>>("api/ObtenerProductos");
+            return response ?? new List<VwProducto>();
         }
-        public async Task<List<Producto>> ProductoPorCategoria(int categoriaId)
+        public async Task<List<VwProducto>> ProductoPorCategoria(int categoriaId)
         {
-            var response = await _httpClient.GetFromJsonAsync<List<Producto>>($"api/ObtenerProductosPorCategoria/{categoriaId}");
-            return response ?? new List<Producto>();
+            var response = await _httpClient.GetFromJsonAsync<List<VwProducto>>($"api/ObtenerProductosPorCategoria/{categoriaId}");
+            return response ?? new List<VwProducto>();
         }
     }
 }
