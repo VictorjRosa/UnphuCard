@@ -26,6 +26,7 @@ namespace UnphuCard_RecargaFront.Data
 
         public async Task<string> Login(LoginModel loginModel)
         {
+            loginModel.RolId = 1;
             var response = await _httpClient.PostAsJsonAsync("api/Login", loginModel);
 
             if (response.IsSuccessStatusCode)
