@@ -67,6 +67,12 @@ app.UseCors(builder =>
            .AllowAnyMethod()
            .AllowAnyHeader()
 );
+var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "Fotos");
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(folderPath),
+    RequestPath = "/Fotos" // Ruta para acceder a las imágenes
+});
 
 app.UseAuthentication(); // Habilitar autenticación
 app.UseAuthorization();

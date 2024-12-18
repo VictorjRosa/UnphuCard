@@ -1,0 +1,229 @@
+﻿@page "/compras"
+@inject IJSRuntime JSRuntime
+@using UnphuCard_Api.DTOS
+@using UnphuCard_Api.Models
+@inject Categoria Categoria
+@inject ProductosService Producto
+
+<div class="min-h-screen bg-gray-50 flex flex-col">
+    <header class="bg-green-700 text-white p-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold">Tienda UNPHU</h1>
+        <button class="bg-white hover:bg-gray-100 text-black p-2 rounded-lg flex items-center gap-2 transition-colors duration-200 shadow-md hover:shadow-lg border border-gray-200"
+                @onclick="() => showCart = true">
+            <span class="text-xl">🛒</span>
+            Ver Carrito (@cart.Sum(item => item.Quantity))
+        </button>
+    </header>
+    <main class="flex-grow p-4">
+        <div class="mb-4 flex space-x-4">
+            <div class="relative flex-grow">
+                <input type="text" placeholder="Buscar productos..." @bind="searchTerm" @bind:event="oninput"
+                       class="pl-10 w-full p-2 border rounded-md" />
+                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">&#128269;</span>
+            </div>
+            <select @onchange="FiltrarProductosPorCategoria" class="w-[180px] p-2 border rounded-md">
+                <option value="Todas">Todas</option>
+                @if (categorias != null)
+                                        {
+                @foreach (var categoria in categorias)
+                {
+                    <option value="@categoria.CatProdId">@categoria.CatProdDescripcion</option>
+                    } }
+            </select>
+           
+          
+
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            @if (filteredProducts != null)
+
+            @foreach (var producto in filteredProducts)
+            {
+                <div class="card cursor-pointer hover:shadow-lg transition-shadow" @onclick="() => OpenProductDialog(producto)">
+                    <div class="p-4 flex flex-col items-center">
+                        <img src="@producto.ImagenDelProducto" alt="@producto.ImagenDelProducto" width="100" height="100" class="mb-2 rounded-md" />
+                        <h3 class="font-bold text-lg mb-1 text-center">@producto.NombreDelProducto</h3>
+                        <p class="text-gray-600">
+                            $@(producto.PrecioDelProducto.HasValue ? producto.PrecioDelProducto.Value.ToString("F2") : "0.00")
+                        </p>
+                        <p class="text-sm text-gray-500">@producto.IdDeLaCategoríaDelProducto</p>
+                    </div>
+                </div>
+            }
+            }
+        </div>
+    </main>
+
+    @if (selectedProduct != null)
+    {
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white p-4 rounded-md max-w-md w-full">
+                <h2 class="text-xl font-bold mb-4">@selectedProduct.NombreDelProducto</h2>
+                <img src="@selectedProduct.ImagenDelProducto" alt="@selectedProduct.NombreDelProducto" width="200" height="200" class="mb-4 rounded-md mx-auto" />
+                <p class="text-lg font-semibold mb-4">
+                    Precio: $@(selectedProduct.PrecioDelProducto.HasValue ? selectedProduct.PrecioDelProducto.Value.ToString("F2") : "0.00")
+                </p>
+                <p class="text-md text-gray-600 mb-4">Categoría: @selectedProduct.DescripciónDeLaCategoríaDelProducto</p>
+                <div class="flex items-center justify-center space-x-4 mb-4">
+                    <button class="p-2 border rounded-md" @onclick="() => quantity = Math.Max(1, quantity - 1)">-</button>
+                    <input type="number" @bind="quantity" class="w-20 text-center p-2 border rounded-md" />
+                    <button class="p-2 border rounded-md" @onclick="() => quantity++">+</button>
+                </div>
+                <div class="flex justify-end">
+                    <button class="bg-green-600 text-white p-2 rounded-md" @onclick="AddToCart">Agregar al Carrito</button>
+                </div>
+                <button class="absolute top-2 right-2 text-gray-500" @onclick="CloseProductDialog">&times;</button>
+            </div>
+        </div>
+    }
+
+    @if (showCart)
+    {
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white p-4 rounded-md max-w-md w-full">
+                <h2 class="text-xl font-bold mb-4">Carrito de Compras</h2>
+                @if (cart.Count == 0)
+                {
+                    <p>El carrito está vacío.</p>
+                }
+                else
+                {
+                    @foreach (var item in cart)
+                    {
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <img src="@item.ImagenDelProducto" alt="@item.NombreDelProducto" width="50" height="50" class="rounded-md mr-4" />
+                                <div>
+                                    <p class="font-semibold">@item.NombreDelProducto</p>
+                                    <p class="text-sm text-gray-600">$@(item.PrecioDelProducto.HasValue ? item.PrecioDelProducto.Value.ToString("F2") : "0.00")</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <button class="p-1 border rounded-md" @onclick="() => UpdateCartItemQuantity(item.IdDelProducto, item.Quantity - 1)">-</button>
+                                <span class="mx-2">@item.Quantity</span>
+                                <button class="p-1 border rounded-md" @onclick="() => UpdateCartItemQuantity(item.IdDelProducto, item.Quantity + 1)">+</button>
+                                <button class="ml-2 text-red-500" @onclick="() => RemoveFromCart(item.IdDelProducto)">&#128465;</button>
+                            </div>
+                        </div>
+                    }
+                }
+                <div class="flex justify-end mt-4">
+                    <button class="bg-gray-200 text-gray-800 p-2 rounded-md" @onclick="() => showCart = false">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
+
+@code {
+    private string errorMessage;
+
+    private List<CategoriaProducto> categorias;
+    private List<VwProducto> productos = new List<VwProducto>();
+    private List<VwProducto> filteredProducts = new List<VwProducto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+
+            categorias = await Categoria.GetCategoriasProductosAsync();
+            productos = await Producto.TodoProducto();
+            filteredProducts = productos;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred while loading entities.";
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private string searchTerm = "";
+    private string selectedCategory = "Todas";
+    private VwProducto selectedProduct;
+    private int quantity = 1;
+    private List<CartItem> cart = new List<CartItem>();
+    private bool showCart = false;
+
+    private async Task FiltrarProductosPorCategoria(ChangeEventArgs e)
+    {
+        var categoriaIdString = e.Value?.ToString();
+
+        if (string.IsNullOrEmpty(categoriaIdString) || categoriaIdString == "Todas")
+        {
+            filteredProducts = productos; 
+        }
+        else
+        {
+            if (int.TryParse(categoriaIdString, out int categoriaId))
+            {
+                filteredProducts = await Producto.ProductoPorCategoria(categoriaId);
+            }
+            else
+            {
+                Console.WriteLine("Error: El valor de categoría no es válido.");
+                filteredProducts = new List<VwProducto>();
+            }
+        }
+    }
+
+    private void OpenProductDialog(VwProducto producto)
+    {
+        selectedProduct = producto;
+        quantity = 1;
+    }
+
+    private void CloseProductDialog()
+    {
+        selectedProduct = null;
+        quantity = 1;
+    }
+
+    private void AddToCart()
+    {
+        var existingItem = cart.FirstOrDefault(item => item.IdDelProducto == selectedProduct.IdDelProducto);
+        if (existingItem != null)
+        {
+            existingItem.Quantity += quantity;
+        }
+        else
+        {
+            cart.Add(new CartItem
+                {
+                    IdDelProducto = selectedProduct.IdDelProducto,
+                    NombreDelProducto = selectedProduct.NombreDelProducto,
+                    PrecioDelProducto = selectedProduct.PrecioDelProducto,
+                    ImagenDelProducto = selectedProduct.ImagenDelProducto,
+                    Quantity = quantity
+                });
+        }
+        CloseProductDialog();
+    }
+
+    private void UpdateCartItemQuantity(int id, int newQuantity)
+    {
+        var item = cart.FirstOrDefault(i => i.IdDelProducto == id);
+        if (item != null)
+        {
+            if (newQuantity <= 0)
+            {
+                cart.Remove(item);
+            }
+            else
+            {
+                item.Quantity = newQuantity;
+            }
+        }
+    }
+
+    private void RemoveFromCart(int id)
+    {
+        cart.RemoveAll(item => item.IdDelProducto == id);
+    }
+
+    public class CartItem : VwProducto
+    {
+        public int Quantity { get; set; }
+    }
+} 
