@@ -46,8 +46,20 @@ namespace UnphuCard_Api.Controllers
         {
             try
             {
+                var rolId = await _context.Usuarios.Where(u => u.UsuUsuario == login.Usuario).Select(u => u.RolId).FirstOrDefaultAsync();
+                if (login.RolId is null)
+                {
+                    if (rolId == 1)
+                    {
+                        login.RolId = rolId;
+                    }
+                    else if (rolId == 3)
+                    {
+                        login.RolId = rolId;
+                    }
+                }
                 // Verifica si el usuario existe en la base de datos
-                var Usuario = await _context.Usuarios.SingleOrDefaultAsync(u => u.UsuUsuario == login.Usuario && u.RolId == login.RolId);
+                var Usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.UsuUsuario == login.Usuario && u.RolId == login.RolId);
                 if (Usuario == null || Usuario.RolId != login.RolId)
                 {
                     return Unauthorized("Credenciales inválidas.");

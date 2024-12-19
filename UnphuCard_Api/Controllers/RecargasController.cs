@@ -174,7 +174,7 @@ namespace UnphuCard_Api.Controllers
 
         public async Task<bool> ActualizarSaldoAsync(int usuarioId, decimal monto)
         {
-            var usuario = await _context.Usuarios.SingleOrDefaultAsync(u => u.UsuId == usuarioId);
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.UsuId == usuarioId);
 
             if (usuario == null)
             {

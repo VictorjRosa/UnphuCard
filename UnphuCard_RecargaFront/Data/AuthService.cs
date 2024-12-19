@@ -1,6 +1,8 @@
 ﻿using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
+using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Text.Json;
 using UnphuCard_Api.DTOS;
 using UnphuCard_Api.Models;
@@ -21,12 +23,10 @@ namespace UnphuCard_RecargaFront.Data
             _httpClient = httpClient;
             _localStorage = localStorage;
 
-
         }
 
         public async Task<string> Login(LoginModel loginModel)
         {
-            loginModel.RolId = 1;
             var response = await _httpClient.PostAsJsonAsync("api/Login", loginModel);
 
             if (response.IsSuccessStatusCode)

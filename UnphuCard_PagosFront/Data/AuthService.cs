@@ -21,6 +21,7 @@ namespace UnphuCard_PagosFront.Data
 
         public async Task<string> Login(LoginModel loginModel)
         {
+            loginModel.RolId = 4;
             var response = await _httpClient.PostAsJsonAsync("api/Login", loginModel);
 
             if (response.IsSuccessStatusCode)
