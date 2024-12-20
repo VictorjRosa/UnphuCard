@@ -1,0 +1,248 @@
+﻿@page "/resumen"
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject HttpClient Http
+@using UnphuCard_Api.Models
+
+
+<div class="min-h-screen bg-gray-50 flex flex-col">
+    <header class="bg-green-700 text-white p-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold">Tienda UNPHU</h1>
+    </header>
+
+    <main class="flex-grow p-4">
+        <button class="mb-4 text-green-600 hover:text-green-700" @onclick="GoBack">
+            <span class="mr-2">←</span> Volver a la tienda
+        </button>
+
+        <div class="card w-full max-w-2xl mx-auto">
+            <div class="card-header">
+                <h2 class="text-2xl font-bold">Resumen del Carrito</h2>
+            </div>
+            <div class="card-content">
+                @foreach (var item in cartItems)
+                {
+                    <div class="flex items-center justify-between mb-4 pb-4 border-b">
+                        <div class="flex items-center">
+                            <img src="@item.Image" alt="@item.Name" width="50" height="50" class="rounded-md mr-4" />
+                            <div>
+                                <p class="font-semibold">@item.Name</p>
+                                <p class="text-sm text-gray-600">Cantidad: @item.Quantity</p>
+                            </div>
+                        </div>
+                        <p class="font-semibold">$@((item.Price * item.Quantity).ToString("F2"))</p>
+                    </div>
+                }
+                <div class="flex justify-between items-center mt-6 pt-6 border-t">
+                    <p class="text-xl font-bold">Total:</p>
+                    <p class="text-xl font-bold">$@(total.ToString("F2"))</p>
+                </div>
+            </div>
+            <div class="card-footer flex flex-col items-stretch">
+                <h3 class="text-lg font-semibold mb-2">Método de Pago</h3>
+              XCVGBHNJKLÑ
+
+                @foreach (var metodo in MetodosPago)
+                {
+                    if (metodo.MetPagId != 5)
+                    {
+                        <div class="flex items-center space-x-2">
+                            <input type="radio" name="paymentMethod" @bind-value="@metodo.MetPagId" id="@metodo.MetPagId" />
+                            <label for="@metodo.MetPagId" class="flex items-center space-x-2">
+                                @if (metodo.MetPagId == 1)
+                                {
+                                    <span class="mr-2">💳</span>
+                                }
+                                else if (metodo.MetPagId == 2)
+                                {
+                                    <span class="mr-2">👛</span>
+                                }
+                                else if (metodo.MetPagId == 3)
+                                {
+                                    <span class="mr-2">💵</span>
+                                }
+                                @metodo.MetPagDescripcion
+                            </label>
+                        </div>
+                    }
+                }
+                <button class="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded" @onclick="HandleCheckout">
+                    Iniciar Pago
+                </button>
+            </div>
+        </div>
+    </main>
+
+    @if (isScanning)
+    {
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white p-4 rounded-md max-w-md w-full">
+                <h2 class="text-xl font-bold mb-4">
+                    @if (scanResult == "scanning")
+                    {
+                        <text>Esperando escaneo de QR</text>
+                    }
+                    else if (scanResult == "success")
+                    {
+                        <text>Escaneo Exitoso</text>
+                    }
+                    else if (scanResult == "error")
+                    {
+                        <text>Error en el Escaneo</text>
+                    }
+                    else if (scanResult == "payment_success")
+                    {
+                        <text>Pago Exitoso</text>
+                    }
+                    else if (scanResult == "insufficient_funds")
+                    {
+                        <text>Saldo Insuficiente</text>
+                    }
+                </h2>
+                <div class="flex flex-col items-center justify-center py-8">
+                    @if (scanResult == "scanning")
+                    {
+                        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-green-600"></div>
+                        <p class="mt-4 text-center text-gray-600">
+                            Por favor, escanee el código QR con su UnphuCard para completar el pago.
+                        </p>
+                    }
+                    else if (scanResult == "success")
+                    {
+                        <span class="text-green-600 text-6xl">✓</span>
+                        <p class="mt-4 text-center text-gray-600">
+                            Código QR escaneado correctamente.
+                        </p>
+                        <p class="mt-2 text-center text-xl font-semibold">
+                            Usuario: @userName
+                        </p>
+                        <button @onclick="HandleConfirmPayment" class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded">
+                            Confirmar Cobro
+                        </button>
+                    }
+                    else if (scanResult == "error")
+                    {
+                        <span class="text-red-600 text-6xl">✗</span>
+                        <p class="mt-4 text-center text-gray-600">
+                            Hubo un error al escanear el código QR. Por favor, intente nuevamente.
+                        </p>
+                    }
+                    else if (scanResult == "payment_success")
+                    {
+                        <span class="text-green-600 text-6xl">✓</span>
+                        <p class="mt-4 text-center text-gray-600">
+                            El pago se ha procesado con éxito.
+                        </p>
+                    }
+                    else if (scanResult == "insufficient_funds")
+                    {
+                        <span class="text-red-600 text-6xl">✗</span>
+                        <p class="mt-4 text-center text-gray-600">
+                            Saldo insuficiente. Por favor, recargue su UnphuCard e intente nuevamente.
+                        </p>
+                    }
+                </div>
+                @if (scanResult == "error" || scanResult == "payment_success" || scanResult == "insufficient_funds")
+                {
+                    <button @onclick="CloseDialog" class="w-full bg-gray-200 text-gray-800 p-2 rounded">
+                        Cerrar
+                    </button>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+
+    private List<MetodoPago> MetodosPago { get; set; } = new List<MetodoPago>();
+
+    private List<CartItem> cartItems = new List<CartItem>
+    {
+        new CartItem { Id = 1, Name = "Producto 1", Price = 10.99m, Quantity = 2, Image = "/placeholder.svg?height=50&width=50" },
+        new CartItem { Id = 2, Name = "Producto 2", Price = 15.99m, Quantity = 1, Image = "/placeholder.svg?height=50&width=50" },
+        new CartItem { Id = 3, Name = "Producto 3", Price = 20.99m, Quantity = 3, Image = "/placeholder.svg?height=50&width=50" },
+    };
+
+    private string paymentMethod = "unphucard";
+    private bool isScanning = false;
+    private string scanResult = null;
+    private string userName = "";
+    private decimal total => cartItems.Sum(item => item.Price * item.Quantity);
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/compras");
+    }
+
+    private void SetPaymentMethod(string method)
+    {
+        paymentMethod = method;
+    }
+
+    private async Task HandleCheckout()
+    {
+        if (paymentMethod == "unphucard")
+        {
+            isScanning = true;
+            scanResult = "scanning";
+            userName = "";
+            await Task.Delay(new Random().Next(2000, 7000));
+            if (new Random().NextDouble() > 0.3)
+            {
+                scanResult = "success";
+                userName = "Juan Pérez";
+            }
+            else
+            {
+                scanResult = "error";
+            }
+            StateHasChanged();
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("console.log", "Procesando pago con:", paymentMethod);
+        }
+    }
+
+    private async Task HandleConfirmPayment()
+    {
+        scanResult = "payment_success";
+        await Task.Delay(3000);
+        NavigationManager.NavigateTo("/menu-principal");
+    }
+
+    private void CloseDialog()
+    {
+        isScanning = false;
+        scanResult = null;
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        try
+        {
+            MetodosPago = new List<MetodoPago>();
+
+            MetodosPago = await Http.GetFromJsonAsync<List<MetodoPago>>("api/MostrarMetodoPago");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar los métodos de pago: {ex.Message}");
+        }
+
+    }
+
+
+    public class CartItem
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
+        public string Image { get; set; }
+    }
+}

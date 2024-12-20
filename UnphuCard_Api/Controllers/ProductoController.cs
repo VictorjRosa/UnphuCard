@@ -69,13 +69,14 @@ namespace UnphuCard_Api.Controllers
 
             // Generar un nombre único para la imagen para evitar colisiones
             string uniqueFileName = Guid.NewGuid().ToString() + "_" + foto.FileName;
+            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
             // Guardar la imagen en el servidor
-            using (var stream = new FileStream(uniqueFileName, FileMode.Create))
+            using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await foto.CopyToAsync(stream);
             }
-            string baseUrl = Request.Scheme + "://" + Request.Host.Value; // Esto crea una URL completa, incluyendo el esquema (http/https) y el host
+            string baseUrl = Request.Scheme + "://" + Request.Host.Value; 
             string imageUrl = $"{baseUrl}/Fotos/{uniqueFileName}";
             // Guardar el producto en la base de datos con la ruta de la imagen
             try
@@ -84,7 +85,7 @@ namespace UnphuCard_Api.Controllers
                 {
                     ProdDescripcion = insertProducto.ProdDescripcion,
                     ProdPrecio = insertProducto.ProdPrecio,
-                    ProdImagenes = $"/Fotos/{uniqueFileName}",  // Guardar la ruta de la imagen
+                    ProdImagenes = imageUrl,  // Guardar la ruta de la imagen
                     StatusId = insertProducto.StatusId,
                     CatProdId = insertProducto.CatProdId
 

@@ -19,17 +19,7 @@ namespace UnphuCard_Api.Controllers
             _emailService = emailService;
         }
 
-        [HttpGet("api/MostrarCarrito/{SesionToken}")]
-        public async Task<ActionResult<VwCarritoCompra>> GetCarrito(string SesionToken)
-        {
-            var carrito = await _context.VwCarritoCompras.Where(s => s.SesiónToken == SesionToken).OrderByDescending(s => s.FechaDeCompra).FirstOrDefaultAsync();
-            if (carrito == null)
-            {
-                return BadRequest("Carrito no encontrado");
-            }
-            return carrito;
-        }
-
+      
         [HttpDelete("api/EliminarCarrito/{SesionToken}")]
         public async Task<IActionResult> DeleteCarrito(string SesionToken)
         {
