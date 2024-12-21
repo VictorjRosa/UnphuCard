@@ -114,7 +114,7 @@ namespace UnphuCard_Api.Controllers
                 };
                 _context.Sesions.Add(sesion);
                 await _context.SaveChangesAsync();
-                return Ok(new { id = sesion.SesionToken, sesion });
+                return Ok(new { id = sesion.SesionId, sesion });
             }
             catch (Exception ex)
             {
