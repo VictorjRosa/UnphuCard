@@ -19,8 +19,6 @@ public partial class UnphuCardContext : DbContext
 
     public virtual DbSet<Aula> Aulas { get; set; }
 
-    public virtual DbSet<Carrito> Carritos { get; set; }
-
     public virtual DbSet<CategoriaProducto> CategoriaProductos { get; set; }
 
     public virtual DbSet<Compra> Compras { get; set; }
@@ -107,21 +105,6 @@ public partial class UnphuCardContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("Aula_Ubicacion");
-        });
-
-        modelBuilder.Entity<Carrito>(entity =>
-        {
-            entity.HasKey(e => e.CarId).HasName("PK__Carrito__523653D9381F0399");
-
-            entity.ToTable("Carrito");
-
-            entity.Property(e => e.CarId).HasColumnName("Car_ID");
-            entity.Property(e => e.CarCantidad).HasColumnName("Car_Cantidad");
-            entity.Property(e => e.CarFecha)
-                .HasColumnType("datetime")
-                .HasColumnName("Car_Fecha");
-            entity.Property(e => e.ProdId).HasColumnName("Prod_ID");
-            entity.Property(e => e.SesionId).HasColumnName("Sesion_ID");
         });
 
         modelBuilder.Entity<CategoriaProducto>(entity =>

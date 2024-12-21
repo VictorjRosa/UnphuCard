@@ -29,6 +29,18 @@ namespace UnphuCard_Api.Controllers
             return establecimiento;
         }
 
+        [HttpGet("api/MostrarEstId/{pcName}")]
+        public async Task<ActionResult<Establecimiento>> GetEstId(string pcName)
+        {
+            var estId = await _context.Establecimientos.FirstOrDefaultAsync(e => e.EstUbicacion == pcName);
+            if (estId == null)
+            {
+                return BadRequest("ID del establecimiento no encontrado");
+            }
+            return Ok(estId.EstId);
+        }
+
+
         [HttpGet("api/MostrarNombreEst/{id}")]
         public async Task<ActionResult<Establecimiento>> GetNombreEst(int id)
         {
