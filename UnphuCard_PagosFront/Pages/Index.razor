@@ -2,6 +2,7 @@
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 @layout TLayout
+@inject SesionService Sesion
 
 <div class="min-h-screen bg-gray-50 flex flex-col">
 
@@ -24,6 +25,7 @@
 
 @code {
     private string establishmentName = "";
+    private int estId = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -38,8 +40,17 @@
 
     }
 
-    private void HandleSaleClick()
+    private async Task HandleSaleClick()
     {
-        NavigationManager.NavigateTo("/compras");
+        var success = await Sesion.RegistrarSesionAsync(estId);
+
+        if (success)
+        {
+            NavigationManager.NavigateTo("/compras");
+        }
+        else
+        {
+            Console.WriteLine("Hubo un error al registrar la sesión.");
+        }
     }
 }

@@ -3,6 +3,8 @@
 @inject IJSRuntime JSRuntime
 @inject HttpClient Http
 @using UnphuCard_Api.Models
+@inject CartService CartService
+@inject SesionService Sesion
 
 
 <div class="min-h-screen bg-gray-50 flex flex-col">
@@ -20,34 +22,34 @@
                 <h2 class="text-2xl font-bold">Resumen del Carrito</h2>
             </div>
             <div class="card-content">
-                @foreach (var item in cartItems)
+                @foreach (var item in CartService.GetCartItems())
                 {
                     <div class="flex items-center justify-between mb-4 pb-4 border-b">
                         <div class="flex items-center">
-                            <img src="@item.Image" alt="@item.Name" width="50" height="50" class="rounded-md mr-4" />
+                            <img src="@item.ImagenDelProducto" alt="@item.NombreDelProducto" width="50" height="50" class="rounded-md mr-4" />
                             <div>
-                                <p class="font-semibold">@item.Name</p>
+                                <p class="font-semibold">@item.NombreDelProducto</p>
                                 <p class="text-sm text-gray-600">Cantidad: @item.Quantity</p>
                             </div>
                         </div>
-                        <p class="font-semibold">$@((item.Price * item.Quantity).ToString("F2"))</p>
+        <p class="font-semibold">$@((item.PrecioDelProducto.GetValueOrDefault() * item.Quantity).ToString("F2"))</p>
+
                     </div>
                 }
                 <div class="flex justify-between items-center mt-6 pt-6 border-t">
                     <p class="text-xl font-bold">Total:</p>
-                    <p class="text-xl font-bold">$@(total.ToString("F2"))</p>
+                    <p class="text-xl font-bold">$@(CartService.GetTotal().ToString("F2"))</p>
                 </div>
             </div>
             <div class="card-footer flex flex-col items-stretch">
                 <h3 class="text-lg font-semibold mb-2">Método de Pago</h3>
-              XCVGBHNJKLÑ
 
                 @foreach (var metodo in MetodosPago)
                 {
                     if (metodo.MetPagId != 5)
                     {
                         <div class="flex items-center space-x-2">
-                            <input type="radio" name="paymentMethod" @bind-value="@metodo.MetPagId" id="@metodo.MetPagId" />
+                            <input type="radio" name="paymentMethod" @bind-value="@selectedPaymentMethod" id="@metodo.MetPagId" />
                             <label for="@metodo.MetPagId" class="flex items-center space-x-2">
                                 @if (metodo.MetPagId == 1)
                                 {
@@ -156,19 +158,13 @@
 @code {
 
     private List<MetodoPago> MetodosPago { get; set; } = new List<MetodoPago>();
-
-    private List<CartItem> cartItems = new List<CartItem>
-    {
-        new CartItem { Id = 1, Name = "Producto 1", Price = 10.99m, Quantity = 2, Image = "/placeholder.svg?height=50&width=50" },
-        new CartItem { Id = 2, Name = "Producto 2", Price = 15.99m, Quantity = 1, Image = "/placeholder.svg?height=50&width=50" },
-        new CartItem { Id = 3, Name = "Producto 3", Price = 20.99m, Quantity = 3, Image = "/placeholder.svg?height=50&width=50" },
-    };
-
     private string paymentMethod = "unphucard";
     private bool isScanning = false;
     private string scanResult = null;
+    private int userId;
     private string userName = "";
-    private decimal total => cartItems.Sum(item => item.Price * item.Quantity);
+    private int selectedPaymentMethod = 0;
+    private bool userIdFound = false;
 
     private void GoBack()
     {
@@ -182,9 +178,11 @@
 
     private async Task HandleCheckout()
     {
-        if (paymentMethod == "unphucard")
+        if (selectedPaymentMethod == 1)
         {
             isScanning = true;
+            await CheckUserSessionAsync();
+
             scanResult = "scanning";
             userName = "";
             await Task.Delay(new Random().Next(2000, 7000));
@@ -202,6 +200,56 @@
         else
         {
             await JSRuntime.InvokeVoidAsync("console.log", "Procesando pago con:", paymentMethod);
+        }
+    }
+    private async Task CheckUserSessionAsync()
+    {
+        while (!userIdFound)
+        {
+            userIdFound = await CheckSessionForUserIdAsync();
+
+            if (!userIdFound)
+            {
+                await Task.Delay(2000); 
+            }
+        }
+        StateHasChanged(); 
+        await JSRuntime.InvokeVoidAsync("alert", "¡Usuario encontrado, puede proceder con el pago!");
+    }
+
+    private async Task<bool> CheckSessionForUserIdAsync()
+    {
+        try
+        {
+            var sesionToken = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "SesionToken");
+            if (string.IsNullOrEmpty(sesionToken))
+            {
+                Console.WriteLine("No se encontró el token de sesión.");
+                return false;
+            }
+
+            var response = await Sesion.SesionUser(sesionToken);
+
+            // Si el valor de respuesta no es null, significa que se encontró el userId
+            if (response.HasValue)
+            {
+                userIdFound = true;
+                // Almacenar el userId si es necesario
+                userId = response.Value;
+            }
+
+            else
+            {
+                userIdFound = false;
+            }
+
+            return userIdFound;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al consultar la sesión: {ex.Message}");
+            userIdFound = false;
+            return userIdFound;
         }
     }
 
@@ -237,12 +285,5 @@
     }
 
 
-    public class CartItem
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public decimal Price { get; set; }
-        public int Quantity { get; set; }
-        public string Image { get; set; }
-    }
+    
 }

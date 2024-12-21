@@ -24,7 +24,32 @@ namespace UnphuCard_Api.Controllers
             return sesion;
         }
 
-        [HttpPut("api/EditarSesion/{estId}")]
+        [HttpGet("api/CheckUserSession")]
+        public async Task<ActionResult<int?>> CheckUserSession(string sessionNumber)
+        {
+            try
+            {
+                var session = await _context.Sesions
+                                            .Where(s => s.SesionToken == sessionNumber)
+                                            .FirstOrDefaultAsync();
+
+                if (session != null && session.UsuId != 0) 
+                {
+                    return Ok(session.UsuId);  
+                }
+                else
+                {
+                    return NotFound("User not found or session is not valid.");
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+    
+
+    [HttpPut("api/EditarSesion/{estId}")]
         public async Task<IActionResult> PutSesion(int estId, [FromBody] UpdateSesion updateSesion)
         {
             if (!ModelState.IsValid)
@@ -89,7 +114,7 @@ namespace UnphuCard_Api.Controllers
                 };
                 _context.Sesions.Add(sesion);
                 await _context.SaveChangesAsync();
-                return Ok(new { id = sesion.SesionId, sesion });
+                return Ok(new { id = sesion.SesionToken, sesion });
             }
             catch (Exception ex)
             {
