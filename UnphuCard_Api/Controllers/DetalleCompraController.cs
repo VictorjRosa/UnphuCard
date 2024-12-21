@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using UnphuCard_Api.DTOS;
 using UnphuCard_Api.Models;
 
 namespace UnphuCard_Api.Controllers
@@ -30,7 +31,7 @@ namespace UnphuCard_Api.Controllers
         }
 
         [HttpPost("api/RegistrarDetalleCompra")]
-        public async Task<ActionResult> PostDetalleCompra([FromBody] DetallesCompra detallesCompra)
+        public async Task<ActionResult> PostDetalleCompra([FromBody] InsertDetalleCompra insertDetalleCompra)
         {
             if (!ModelState.IsValid)
             {
@@ -40,10 +41,11 @@ namespace UnphuCard_Api.Controllers
             {
                 var detalles = new DetallesCompra()
                 {
-                    DetCompCantidad = detallesCompra.DetCompCantidad,
-                    DetCompPrecio = detallesCompra.DetCompPrecio,
-                    CompId = detallesCompra.CompId,
-                    ProdId = detallesCompra.ProdId,
+                    DetCompCantidad = insertDetalleCompra.DetCompCantidad,
+                    DetCompPrecio = insertDetalleCompra.DetCompPrecio,
+                    CompId = insertDetalleCompra.CompId,
+                    ProdId = insertDetalleCompra.ProdId,
+                    SesionId = insertDetalleCompra.SesionId,
                 };
 
                 _context.DetallesCompras.Add(detalles);
