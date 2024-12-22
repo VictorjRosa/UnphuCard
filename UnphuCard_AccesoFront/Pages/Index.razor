@@ -71,7 +71,13 @@
                         maxlength="@(idType == "cedula" ? 13 : null)"
                         class="w-full p-2 border rounded" />
                     </div>
-
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="floating-alert">
+                            @errorMessage
+                            <span class="floating-alert-close">&times;</span>
+                        </div>
+                    }
                     <button class="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded"
                     @onclick="HandleAssignCard">
                         Asignar Tarjeta
