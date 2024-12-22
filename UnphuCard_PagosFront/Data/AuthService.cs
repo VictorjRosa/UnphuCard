@@ -60,7 +60,6 @@ namespace UnphuCard_PagosFront.Data
 
         private string DecodeJwtTokenForUserId(string token)
         {
-            // Decodificar el payload del token
             var parts = token.Split('.');
 
             if (parts.Length != 3)
