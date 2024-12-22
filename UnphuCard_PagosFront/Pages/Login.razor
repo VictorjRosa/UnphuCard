@@ -9,7 +9,7 @@
 
 <div class="login-container">
     <div class="left-panel wave-animation">
-        <h6 class="main-title">RECARGA UNPHUCARD</h6>
+        <h6 class="main-title">Tienda UNPHUCARD</h6>
     </div>
     <div class="right-panel">
         <div class="form-container">
@@ -26,6 +26,8 @@
                         </svg>
                     </div>
                     <InputText type="text" id="email" class="form-input" @bind-Value="LoginModel.Usuario" required />
+                    <ValidationMessage For="@(() => LoginModel.Usuario )" class="validation-message" />
+
                 </div>
                 <div style="position: relative;">
                     <label for="password" class="form-label">Contraseña</label>
@@ -35,6 +37,8 @@
                         </svg>
                     </div>
                     <InputText type="password" id="password" class="form-input" @bind-Value="LoginModel.Contraseña" required />
+                    <ValidationMessage For="@(() => LoginModel.Contraseña )" class="validation-message" />
+
                 </div>
 
                 <button @onclick="HandleLogin" type="button" class="form-button">Iniciar sesión</button>

@@ -2,6 +2,8 @@
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 @layout TLayout
+@inject SesionService Sesion 
+@inject AuthService AuthService
 
 <div class="min-h-screen bg-gray-50 flex flex-col">
 
@@ -24,10 +26,10 @@
 
 @code {
     private string establishmentName = "";
+    private int estId = 0;
 
     protected override async Task OnInitializedAsync()
     {
-        // Simular la obtención del nombre del establecimiento
         establishmentName = "Tienda UNPHU";
         await Task.CompletedTask;
     }
@@ -38,8 +40,30 @@
 
     }
 
-    private void HandleSaleClick()
+ 
+    private async Task HandleSaleClick()
     {
-        NavigationManager.NavigateTo("/compras");
+        int userId = await AuthService.GetUserIdFromTokenAsync();
+
+        var estId = await AuthService.GetEstIdByUserIdAsync(userId);
+
+        if (!estId.HasValue)
+        {
+            Console.WriteLine("No se pudo obtener el EstId del establecimiento.");
+            return;
+        }
+
+        var success = await Sesion.RegistrarSesionAsync(estId.Value);
+
+        if (success)
+        {
+            NavigationManager.NavigateTo("/compras");
+        }
+        else
+        {
+            Console.WriteLine("Hubo un error al registrar la sesión.");
+        }
     }
+
+
 }

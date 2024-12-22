@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using UnphuCard_Api.DTOS;
 using UnphuCard_Api.Models;
+using static System.Net.WebRequestMethods;
 
 namespace UnphuCard_PagosFront.Data
 {
@@ -60,7 +61,6 @@ namespace UnphuCard_PagosFront.Data
 
         private string DecodeJwtTokenForUserId(string token)
         {
-            // Decodificar el payload del token
             var parts = token.Split('.');
 
             if (parts.Length != 3)
@@ -91,5 +91,40 @@ namespace UnphuCard_PagosFront.Data
         {
             await _localStorage.RemoveItemAsync("authToken");
         }
+
+       
+        public async Task<int?> GetEstIdByUserIdAsync(int userId)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/MostrarNombreEst/{userId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+
+                    if (result != null && result.ContainsKey("estId") && int.TryParse(result["estId"]?.ToString(), out int estId))
+                    {
+                        return estId; // Retorna el valor de estId como entero
+                    }
+                    else
+                    {
+                        Console.WriteLine("La respuesta no contiene 'estId' válido.");
+                        return null;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Error al obtener EstId: {response.ReasonPhrase}");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en GetEstIdByUserIdAsync: {ex.Message}");
+                return null;
+            }
+        }
+
     }
 }
