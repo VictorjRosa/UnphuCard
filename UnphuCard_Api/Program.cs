@@ -13,6 +13,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();  // Agregar Swagger
 builder.Services.AddScoped<IServicioEmail, EmailService>();
 builder.Services.AddScoped<IVerificarCedula, VerificarCedulaServices>();
+builder.Services.AddSingleton<BlobStorageService>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
@@ -68,12 +69,6 @@ app.UseCors(builder =>
            .AllowAnyMethod()
            .AllowAnyHeader()
 );
-var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "Fotos");
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(folderPath),
-    RequestPath = "/Fotos" // Ruta para acceder a las imágenes
-});
 
 app.UseAuthentication(); // Habilitar autenticación
 app.UseAuthorization();

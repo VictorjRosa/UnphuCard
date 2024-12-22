@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -11,9 +12,11 @@ namespace UnphuCard_Api.Controllers
     public class ProductoController : Controller
     {
         private readonly UnphuCardContext _context;
-        public ProductoController(UnphuCardContext context)
+        private readonly IConfiguration _configuration;
+        public ProductoController(UnphuCardContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         [HttpGet("api/ObtenerProductos")]
@@ -60,35 +63,34 @@ namespace UnphuCard_Api.Controllers
                 return BadRequest("Debe proporcionar una imagen.");
             }
 
-            // Guardar la imagen en una carpeta local del servidor
-            string uploadsFolder = Path.Combine("Fotos"); // Carpeta donde se guardarán las imágenes
-            if (!Directory.Exists(uploadsFolder))
+            // Configurar el BlobServiceClient
+            string connectionString = _configuration["AzureBlobStorage:ConnectionString"];
+            string containerName = _configuration["AzureBlobStorage:ContainerName"];
+            var blobServiceClient = new BlobServiceClient(connectionString);
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+            // Generar un nombre único para el archivo
+            string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(foto.FileName);
+            var blobClient = blobContainerClient.GetBlobClient(uniqueFileName);
+
+            // Subir la imagen a Azure Blob Storage
+            using (var stream = foto.OpenReadStream())
             {
-                Directory.CreateDirectory(uploadsFolder);
+                await blobClient.UploadAsync(stream, true); // El "true" sobrescribe el archivo si ya existe
             }
 
-            // Generar un nombre único para la imagen para evitar colisiones
-            string uniqueFileName = Guid.NewGuid().ToString() + "_" + foto.FileName;
-            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+            string imageUrl = blobClient.Uri.ToString(); // Obtener la URL del archivo
 
-            // Guardar la imagen en el servidor
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await foto.CopyToAsync(stream);
-            }
-            string baseUrl = Request.Scheme + "://" + Request.Host.Value; 
-            string imageUrl = $"{baseUrl}/Fotos/{uniqueFileName}";
-            // Guardar el producto en la base de datos con la ruta de la imagen
+            // Guardar el producto en la base de datos con la URL de la imagen
             try
             {
                 var producto = new Producto
                 {
                     ProdDescripcion = insertProducto.ProdDescripcion,
                     ProdPrecio = insertProducto.ProdPrecio,
-                    ProdImagenes = imageUrl,  // Guardar la ruta de la imagen
+                    ProdImagenes = imageUrl,  // Guardar la URL de la imagen
                     StatusId = insertProducto.StatusId,
                     CatProdId = insertProducto.CatProdId
-
                 };
                 _context.Productos.Add(producto);
                 await _context.SaveChangesAsync();
@@ -136,26 +138,26 @@ namespace UnphuCard_Api.Controllers
                 // Procesar la nueva imagen si se proporciona
                 if (foto != null && foto.Length > 0)
                 {
-                    string uploadsFolder = "Fotos"; // Directorio para guardar las imágenes
-                    if (foto.FileName.Contains(".jp") || foto.FileName.Contains(".png") || foto.FileName.Contains(".bmp") || foto.FileName.Contains(".webp"))
+                    // Configurar el BlobServiceClient
+                    string connectionString = _configuration["AzureBlobStorage:ConnectionString"];
+                    string containerName = _configuration["AzureBlobStorage:ContainerName"];
+                    var blobServiceClient = new BlobServiceClient(connectionString);
+                    var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+                    // Generar un nombre único para el archivo
+                    string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(foto.FileName);
+                    var blobClient = blobContainerClient.GetBlobClient(uniqueFileName);
+
+                    // Subir la imagen a Azure Blob Storage
+                    using (var stream = foto.OpenReadStream())
                     {
-                        string rutaFoto = Path.Combine(uploadsFolder, foto.FileName);
-
-                        // Crear el directorio si no existe
-                        if (!Directory.Exists(uploadsFolder))
-                        {
-                            Directory.CreateDirectory(uploadsFolder);
-                        }
-
-                        // Guardar la imagen en el servidor
-                        using (var stream = new FileStream(rutaFoto, FileMode.Create))
-                        {
-                            await foto.CopyToAsync(stream);
-                        }
-
-                        // Actualizar la propiedad de la imagen del producto con la nueva ruta
-                        producto.ProdImagenes = rutaFoto;
+                        await blobClient.UploadAsync(stream, true); // El "true" sobrescribe el archivo si ya existe
                     }
+
+                    string imageUrl = blobClient.Uri.ToString(); // Obtener la URL del archivo
+
+                    // Actualizar la propiedad de la imagen del producto con la nueva URL
+                    producto.ProdImagenes = imageUrl;
                 }
 
                 // Actualizar el producto en la base de datos
@@ -179,6 +181,7 @@ namespace UnphuCard_Api.Controllers
                 return StatusCode(500, $"Error interno del servidor: {ex.Message}");
             }
         }
+
         [HttpGet("api/ObtenerProductosPorCategoria/{categoriaId}")]
         public async Task<ActionResult<IEnumerable<VwProducto>>> GetProductosPorCategoria(int categoriaId)
         {
