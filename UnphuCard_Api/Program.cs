@@ -12,6 +12,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();  // Agregar Swagger
 builder.Services.AddScoped<IServicioEmail, EmailService>();
+builder.Services.AddScoped<IVerificarCedula, VerificarCedulaServices>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);

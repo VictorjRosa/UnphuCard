@@ -41,6 +41,18 @@ namespace UnphuCard_Api.Controllers
             }
             return usuario;
         }
+
+        [HttpGet("api/ObtenerEstadoId/{cedula}")]
+        public async Task<ActionResult<Usuario>> GetEstadoId(string cedula)
+        {
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.UsuDocIdentidad == cedula);
+            if (usuario == null)
+            {
+                return BadRequest("Usuario no encontrado");
+            }
+            return Ok(usuario.StatusId);
+        }
+
         [HttpPost("api/Login")]
         public async Task<IActionResult> Login([FromBody] LoginModel login)
         {

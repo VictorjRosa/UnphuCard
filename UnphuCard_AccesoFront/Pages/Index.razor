@@ -1,9 +1,346 @@
 ﻿@page "/index"
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject TarjetasProvs tarjetasProvs
+@using UnphuCard_Api.Models
+@using UnphuCard_Api.DTOS
 
-<PageTitle>Index</PageTitle>
+<div class="min-h-screen bg-gray-50 flex flex-col">
+    <header class="bg-green-700 text-white p-4">
+        <h1 class="text-2xl font-bold">Plataforma de Acceso UNPHU</h1>
+        <button @onclick="Logout" class="logout-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>            Cerrar
+        </button>
+    </header>
 
-<h1>Hello, world!</h1>
+    <main class="flex-grow p-4 flex flex-col items-center">
+        <div class="w-full max-w-4xl space-y-8">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold">Gestión de Tarjetas de Acceso</h2>
+                <button class="bg-yellow-600 hover:bg-yellow-700 text-white p-2 rounded" @onclick="() => isReturnModalOpen = true">
+                    Devolver Tarjeta
+                </button>
+            </div>
 
-Welcome to your new app.
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-2xl font-bold text-center">Asignar Tarjeta de Acceso</h3>
+                </div>
+                <div class="card-content space-y-4">
+                    <div class="space-y-2">
+                        <label for="card-select">Seleccionar Tarjeta Provisional</label>
+                        <select id="card-select" @bind="tarjProvId" class="w-full p-2 border rounded">
+                            <option value="">Seleccione una tarjeta disponible</option>
+                            @if(TarjProv != null)
+                            {
+                                @foreach (var card in TarjProv)
+                                {
+                                    <option value="@card.TarjProvId">@card.TarjProvCodigo</option>
+                                }
+                            }
+                        </select>
+                    </div>
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+                    <div class="space-y-2">
+                        <label>Tipo de Identificación</label>
+                        <div class="flex space-x-4">
+                            <label>
+                                <input type="radio" name="idType" value="cedula" checked="@(idType == "cedula")" @onchange="@(e => idType = "cedula")" />
+                                Cédula
+                            </label>
+                            <label>
+                                <input type="radio" name="idType" value="pasaporte" checked="@(idType == "pasaporte")" @onchange="@(e => idType = "pasaporte")" />
+                                Pasaporte
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="id-number">@(idType == "cedula" ? "Cédula" : "Pasaporte")</label>
+                        <input id="id-number"
+                        type="text"
+                        placeholder="@(idType == "cedula" ? "123-1234567-1" : "Número de pasaporte")"
+                        @bind="@TarjP.UsuDocIdentidad"
+                        @bind:event="oninput"
+                        @onchange="HandleIdNumberChange"
+                        maxlength="@(idType == "cedula" ? 13 : null)"
+                        class="w-full p-2 border rounded" />
+                    </div>
+
+                    <button class="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded"
+                    @onclick="HandleAssignCard">
+                        Asignar Tarjeta
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-xl font-bold">Lista de Tarjetas</h3>
+                </div>
+                <div class="card-content">
+                    <div class="flex space-x-4 mb-4">
+                        <div class="flex-1">
+                            <input type="text"
+                            placeholder="Buscar por código o usuario..."
+                            @bind="searchTerm"
+                            @bind:event="oninput"
+                            class="w-full p-2 border rounded" />
+                        </div>
+                        <div class="w-48">
+                            <select @bind="statusFilter" class="w-full p-2 border rounded">
+                                <option value="all">Todas</option>
+                                <option value="habilitada">Habilitada</option>
+                                <option value="deshabilitada">Deshabilitada</option>
+                            </select>
+                        </div>
+                    </div>
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th>Código Tarjeta</th>
+                                <th>Usuario Asignado</th>
+                                <th>Fecha Asignación</th>
+                                <th>Fecha Expiración</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var card in filteredCards)
+                            {
+                                <tr class="@(card.assigned ? "bg-red-100" : "bg-green-100")">
+                                    <td>@card.code</td>
+                                    <td>@(card.user ?? "N/A")</td>
+                                    <td>@(card.assignedDate?.ToLocalTime().ToString() ?? "N/A")</td>
+                                    <td>@(card.expirationDate?.ToLocalTime().ToString() ?? "N/A")</td>
+                                    <td>@GetCardStatus(card)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-green-800 text-white text-center p-4 mt-8">
+        <p>&copy; 2023 UNPHU - Plataforma de Acceso. Todos los derechos reservados.</p>
+    </footer>
+</div>
+
+@if (isReturnModalOpen)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-4 rounded-lg max-w-md w-full">
+            <h2 class="text-xl font-bold mb-4">Devolver Tarjeta</h2>
+            <p class="mb-4">Ingrese el código de la tarjeta que desea devolver.</p>
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label for="return-card-code">Código de Tarjeta</label>
+                    <input id="return-card-code"
+                    type="text"
+                    placeholder="Ej. PROV001"
+                    @bind="returnCardCode"
+                    class="w-full p-2 border rounded" />
+                </div>
+                <button class="w-full bg-yellow-600 hover:bg-yellow-700 text-white p-2 rounded"
+                @onclick="HandleReturnCard"
+                disabled="@string.IsNullOrEmpty(returnCardCode)">
+                    Confirmar Devolución
+                </button>
+                <button class="w-full bg-gray-300 hover:bg-gray-400 text-gray-800 p-2 rounded"
+                @onclick="() => isReturnModalOpen = false">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string errorMessage;
+    private int tarjProvId;
+    private List<TarjetasProvisionale> TarjProv;
+    private VerificarCedulaDTO cedula = new VerificarCedulaDTO();
+    private Usuario usuario = new Usuario();
+    private UpdateTarjetaProv TarjP = new UpdateTarjetaProv();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+
+            TarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred while loading entities.";
+            Console.WriteLine(ex.Message);
+        }
+    }
+    private List<ProvisionalCard> provisionalCards = new List<ProvisionalCard>
+    {
+        new ProvisionalCard { id = "001", code = "PROV001", assigned = false },
+        new ProvisionalCard { id = "002", code = "PROV002", assigned = true, user = "Usuario 123-4567890-1", assignedDate = DateTime.Parse("2023-06-01T10:00:00Z"), expirationDate = DateTime.Parse("2023-12-01T10:00:00Z") },
+        new ProvisionalCard { id = "003", code = "PROV003", assigned = false },
+        new ProvisionalCard { id = "004", code = "PROV004", assigned = true, user = "Pasaporte AB123456", assignedDate = DateTime.Parse("2023-05-15T14:30:00Z"), expirationDate = DateTime.Parse("2023-11-15T14:30:00Z") },
+        new ProvisionalCard { id = "005", code = "PROV005", assigned = false },
+    };
+
+    private string selectedCard = "";
+    private string idType = "cedula";
+    private string searchTerm = "";
+    private string statusFilter = "all";
+    private bool isReturnModalOpen = false;
+    private string returnCardCode = "";
+
+    private List<ProvisionalCard> availableCards => provisionalCards.Where(card => !card.assigned).ToList();
+
+    private List<ProvisionalCard> filteredCards => provisionalCards
+        .Where(card => (card.code.ToLower().Contains(searchTerm.ToLower()) ||
+                        (card.user != null && card.user.ToLower().Contains(searchTerm.ToLower()))) &&
+                       (statusFilter == "all" || GetCardStatus(card).ToLower() == statusFilter.ToLower()))
+        .ToList();
+
+    private string GetCardStatus(ProvisionalCard card)
+    {
+        if (!card.assigned) return "Deshabilitada";
+
+        var currentDate = DateTime.Now;
+        return card.expirationDate > currentDate ? "Habilitada" : "Deshabilitada";
+    }
+
+    private async Task HandleIdNumberChange(ChangeEventArgs e)
+    {
+        try
+        {
+            if (idType == "cedula")
+            {
+                TarjP.UsuDocIdentidad = FormatCedula(e.Value.ToString());
+                var verificacionCedula = await tarjetasProvs.VerificarCedula(TarjP.UsuDocIdentidad);
+                if (verificacionCedula == null)
+                {
+                    errorMessage = "An unexpected error occurred.";
+                }
+                else
+                {
+                    if (!verificacionCedula.Value)
+                    {
+                        string cedulaNoValida = "Cédula No Válida.";
+                        errorMessage = cedulaNoValida;
+                    }
+                    else
+                    {
+                        usuario = await tarjetasProvs.GetEstadoId(TarjP.UsuDocIdentidad);
+                        if (cedula == null)
+                        {
+                            string cedulaNoEncontrada = "Cédula desconocida.";
+                            errorMessage = cedulaNoEncontrada;
+                        }
+                        else if (usuario.StatusId != 3)
+                        {
+                            string UsuarioDeshabilitado = "Usuario deshabilitado.";
+                            errorMessage = UsuarioDeshabilitado;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                TarjP.UsuDocIdentidad = e.Value.ToString();
+            }
+        }
+        catch (ApplicationException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An unexpected error occurred.";
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private string FormatCedula(string input)
+    {
+        var cleaned = new string(input.Where(c => char.IsDigit(c)).ToArray());
+        return $"{cleaned.Substring(0, 3)}-{cleaned.Substring(3, 7)}-{cleaned.Substring(10, 1)}";
+    }
+
+    private async Task HandleAssignCard()
+    {
+        try
+        {
+            var tarjProvCod = await tarjetasProvs.ActivarTarjetaProv(tarjProvId, TarjP);
+
+        }
+        catch (ApplicationException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An unexpected error occurred.";
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    // private void HandleAssignCard()
+    // {
+    //     if (!string.IsNullOrEmpty(selectedCard) && !string.IsNullOrEmpty(idNumber))
+    //     {
+    //         var card = provisionalCards.FirstOrDefault(c => c.code == selectedCard && !c.assigned);
+    //         if (card != null)
+    //         {
+    //             card.assigned = true;
+    //             card.user = idType == "cedula" ? $"Usuario {idNumber}" : $"Pasaporte {idNumber}";
+    //             card.assignedDate = DateTime.Now;
+    //             card.expirationDate = DateTime.Now.AddDays(180);
+
+    //             JSRuntime.InvokeVoidAsync("alert", "Tarjeta asignada con éxito");
+    //             selectedCard = "";
+    //             idNumber = "";
+    //         }
+    //     }
+    //     else
+    //     {
+    //         JSRuntime.InvokeVoidAsync("alert", "Por favor, seleccione una tarjeta disponible y ingrese un número de identificación");
+    //     }
+    // }
+
+    private void HandleReturnCard()
+    {
+        var card = provisionalCards.FirstOrDefault(c => c.code == returnCardCode && c.assigned);
+        if (card != null)
+        {
+            card.assigned = false;
+            card.user = null;
+            card.assignedDate = null;
+            card.expirationDate = null;
+
+            isReturnModalOpen = false;
+            returnCardCode = "";
+            JSRuntime.InvokeVoidAsync("alert", "Tarjeta devuelta con éxito");
+        }
+    }
+
+    private class ProvisionalCard
+    {
+        public string id { get; set; }
+        public string code { get; set; }
+        public bool assigned { get; set; }
+        public string user { get; set; }
+        public DateTime? assignedDate { get; set; }
+        public DateTime? expirationDate { get; set; }
+    }
+    private void Logout()
+    {
+        localStorage.RemoveItemAsync("authToken");
+        NavigationManager.NavigateTo("/");
+    }
+}

@@ -161,7 +161,7 @@ namespace UnphuCard_Api.Controllers
                 }
                 var usuId = await _context.Usuarios.Where(u => u.UsuDocIdentidad == updateTarjetaProv.UsuDocIdentidad).Select(u => u.UsuId).FirstOrDefaultAsync();
                 tarjetaProv.TarjProvFecha = fechaEnRD;
-                tarjetaProv.StatusId = updateTarjetaProv.StatusId;
+                tarjetaProv.StatusId = 3;
                 tarjetaProv.UsuId = usuId;
                 tarjetaProv.TarjProvFechaExpiracion = fechaExpiracion; 
 
