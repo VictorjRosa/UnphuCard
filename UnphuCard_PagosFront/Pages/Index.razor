@@ -40,11 +40,20 @@
 
     }
 
+ 
     private async Task HandleSaleClick()
     {
-        var userId = await AuthService.GetUserIdFromTokenAsync();
+        int userId = await AuthService.GetUserIdFromTokenAsync();
 
-        var success = await Sesion.RegistrarSesionAsync(estId);
+        var estId = await AuthService.GetEstIdByUserIdAsync(userId);
+
+        if (!estId.HasValue)
+        {
+            Console.WriteLine("No se pudo obtener el EstId del establecimiento.");
+            return;
+        }
+
+        var success = await Sesion.RegistrarSesionAsync(estId.Value);
 
         if (success)
         {
@@ -55,4 +64,6 @@
             Console.WriteLine("Hubo un error al registrar la sesión.");
         }
     }
+
+
 }

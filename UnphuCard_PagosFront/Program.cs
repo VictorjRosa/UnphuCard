@@ -13,6 +13,7 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<Categoria>();
 builder.Services.AddScoped<ProductosService>();
 builder.Services.AddScoped<CartService>();
+builder.Services.AddScoped<SesionService>();
 
 
 builder.Services.AddScoped(sp =>

@@ -39,7 +39,7 @@ namespace UnphuCard_PagosFront.Data
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("api/RegistrarSesion", new { estId });
+                var response = await _httpClient.PostAsJsonAsync("api/RegistrarSesion",estId);
 
                 if (response.IsSuccessStatusCode)
                 {
