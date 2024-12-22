@@ -50,7 +50,7 @@ namespace UnphuCard_Api.Controllers
             {
                 return BadRequest("Establecimiento no encontrado");
             }
-            return Ok(estNombre);
+            return Ok(new { estId, estNombre });
         }
     }
 }
