@@ -1,6 +1,7 @@
 ﻿@page "/index"
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
+@using System.Text.RegularExpressions
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 @inject TarjetasProvs tarjetasProvs
 @using UnphuCard_Api.Models
@@ -62,13 +63,12 @@
 
                     <div class="space-y-2">
                         <label for="id-number">@(idType == "cedula" ? "Cédula" : "Pasaporte")</label>
-                        <input id="id-number"
+                        <InputText id="id-number"
                         type="text"
-                        placeholder="@(idType == "cedula" ? "123-1234567-1" : "Número de pasaporte")"
-                        @bind="@TarjP.UsuDocIdentidad"
-                        @bind:event="oninput"
-                        @onchange="HandleIdNumberChange"
-                        maxlength="@(idType == "cedula" ? 13 : null)"
+                        placeholder="@(idType == "cedula" ? "12312345671" : "Número de pasaporte")"
+                        @bind-Value="TarjP.UsuDocIdentidad"
+                        @oninput="FormatCedulaOnInput"
+                        maxlength="@(idType == "cedula" ? 11 : null)"
                         class="w-full p-2 border rounded" />
                     </div>
                     @if (!string.IsNullOrEmpty(errorMessage))
@@ -172,6 +172,7 @@
     private string errorMessage;
     private int tarjProvId;
     private List<TarjetasProvisionale> TarjProv;
+    private List<TarjetasProvisionale> TarjProvNoAsignadas;
     private VerificarCedulaDTO cedula = new VerificarCedulaDTO();
     private Usuario usuario = new Usuario();
     private UpdateTarjetaProv TarjP = new UpdateTarjetaProv();
@@ -189,14 +190,6 @@
             Console.WriteLine(ex.Message);
         }
     }
-    private List<ProvisionalCard> provisionalCards = new List<ProvisionalCard>
-    {
-        new ProvisionalCard { id = "001", code = "PROV001", assigned = false },
-        new ProvisionalCard { id = "002", code = "PROV002", assigned = true, user = "Usuario 123-4567890-1", assignedDate = DateTime.Parse("2023-06-01T10:00:00Z"), expirationDate = DateTime.Parse("2023-12-01T10:00:00Z") },
-        new ProvisionalCard { id = "003", code = "PROV003", assigned = false },
-        new ProvisionalCard { id = "004", code = "PROV004", assigned = true, user = "Pasaporte AB123456", assignedDate = DateTime.Parse("2023-05-15T14:30:00Z"), expirationDate = DateTime.Parse("2023-11-15T14:30:00Z") },
-        new ProvisionalCard { id = "005", code = "PROV005", assigned = false },
-    };
 
     private string selectedCard = "";
     private string idType = "cedula";
@@ -205,7 +198,7 @@
     private bool isReturnModalOpen = false;
     private string returnCardCode = "";
 
-    private List<ProvisionalCard> availableCards => provisionalCards.Where(card => !card.assigned).ToList();
+    private List<TarjetasProvs> availableCards => TarjProvNoAsignadas.Where(card => !card.assigned).ToList();
 
     private List<ProvisionalCard> filteredCards => provisionalCards
         .Where(card => (card.code.ToLower().Contains(searchTerm.ToLower()) ||
@@ -221,13 +214,48 @@
         return card.expirationDate > currentDate ? "Habilitada" : "Deshabilitada";
     }
 
-    private async Task HandleIdNumberChange(ChangeEventArgs e)
+    private string FormatCedula(string value)
+    {
+        // Eliminar espacios y guiones del valor ingresado
+        value = Regex.Replace(value, @"\s+", "").Replace("-", "");
+
+        // Asegurarse de que el número tenga el formato correcto (11 dígitos)
+        if (value.Length > 11)
+        {
+            value = value.Substring(0, 11); // Limitar la longitud a 11
+        }
+
+        // Formatear en el formato requerido 402-1369763-0
+        if (value.Length <= 3)
+            return value;
+        else if (value.Length <= 10)
+            return $"{value.Substring(0, 3)}{value.Substring(3)}";
+        else
+            return $"{value.Substring(0, 3)}-{value.Substring(3, 7)}-{value.Substring(10, 1)}";
+    }
+
+    private void FormatCedulaOnInput(ChangeEventArgs e)
+    {
+        // Obtener el valor ingresado
+        string value = e.Value.ToString();
+        if (idType == "cedula")
+        {
+            // Formatear la cédula mientras se escribe
+            TarjP.UsuDocIdentidad = FormatCedula(value); // Aquí usamos FormatCedula
+        }
+        else
+        {
+            TarjP.UsuDocIdentidad = value;
+        }
+    }
+
+    private async Task HandleAssignCard()
     {
         try
         {
+            errorMessage = null;
             if (idType == "cedula")
             {
-                TarjP.UsuDocIdentidad = FormatCedula(e.Value.ToString());
                 var verificacionCedula = await tarjetasProvs.VerificarCedula(TarjP.UsuDocIdentidad);
                 if (verificacionCedula == null)
                 {
@@ -242,23 +270,24 @@
                     }
                     else
                     {
-                        usuario = await tarjetasProvs.GetEstadoId(TarjP.UsuDocIdentidad);
-                        if (cedula == null)
+                        usuario.StatusId = await tarjetasProvs.GetEstadoId(TarjP.UsuDocIdentidad);
+                        if (usuario.StatusId == null)
                         {
-                            string cedulaNoEncontrada = "Cédula desconocida.";
-                            errorMessage = cedulaNoEncontrada;
+                            errorMessage = "Cédula desconocida.";
                         }
                         else if (usuario.StatusId != 3)
                         {
-                            string UsuarioDeshabilitado = "Usuario deshabilitado.";
-                            errorMessage = UsuarioDeshabilitado;
+                            errorMessage = "Usuario deshabilitado.";
                         }
                     }
                 }
             }
             else
             {
-                TarjP.UsuDocIdentidad = e.Value.ToString();
+            }
+            if (errorMessage == null)
+            {
+                var tarjProvCod = await tarjetasProvs.ActivarTarjetaProv(tarjProvId, TarjP);
             }
         }
         catch (ApplicationException ex)
@@ -270,30 +299,7 @@
             errorMessage = "An unexpected error occurred.";
             Console.WriteLine(ex.Message);
         }
-    }
 
-    private string FormatCedula(string input)
-    {
-        var cleaned = new string(input.Where(c => char.IsDigit(c)).ToArray());
-        return $"{cleaned.Substring(0, 3)}-{cleaned.Substring(3, 7)}-{cleaned.Substring(10, 1)}";
-    }
-
-    private async Task HandleAssignCard()
-    {
-        try
-        {
-            var tarjProvCod = await tarjetasProvs.ActivarTarjetaProv(tarjProvId, TarjP);
-
-        }
-        catch (ApplicationException ex)
-        {
-            errorMessage = ex.Message;
-        }
-        catch (Exception ex)
-        {
-            errorMessage = "An unexpected error occurred.";
-            Console.WriteLine(ex.Message);
-        }
     }
 
     // private void HandleAssignCard()

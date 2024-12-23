@@ -68,6 +68,7 @@ namespace UnphuCard_Api.Controllers
                 return StatusCode(500, $"Error interno del servidor: {ex.Message}");
             }
         }
+
         [HttpPost("api/PagarCompra")]
         public async Task<ActionResult> ProcesarPago([FromBody] InsertCompra insertCompra)
         {
@@ -84,7 +85,7 @@ namespace UnphuCard_Api.Controllers
                 {
                     return NotFound("Usuario no encontrado.");
                 }
-                var sesionIdDetalleProd = await _context.DetallesCompras.Where(dc => dc.SesionId == insertCompra.SesionId).Select(s => s.SesionId).FirstOrDefaultAsync();
+                var sesionIdDetalleProd = await _context.DetallesCompras.Where(dc => dc.SesionId == insertCompra.SesionId).Select(dc => dc.SesionId).FirstOrDefaultAsync();
                 if (sesionIdDetalleProd == null)
                 {
                     return NotFound("Sesión del detalle de la compra no encontrada.");

@@ -46,11 +46,11 @@ namespace UnphuCard_AccesoFront.Data
             }
         }
 
-        public async Task<Usuario?> GetEstadoId(string cedula)
+        public async Task<int?> GetEstadoId(string cedula)
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<Usuario>($"api/ObtenerEstadoId/{cedula}");
+                var response = await _httpClient.GetFromJsonAsync<int>($"api/ObtenerEstadoId/{cedula}");
                 return response;
             }
             catch (HttpRequestException)

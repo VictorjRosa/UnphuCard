@@ -13,15 +13,15 @@ namespace UnphuCard_Api.Controllers
             _context = context;
         }
 
-        [HttpGet("api/MostrarSesion/{id}")]
-        public async Task<ActionResult<Sesion>> GetSesion(int id)
+        [HttpGet("api/MostrarSesion/{token}")]
+        public async Task<ActionResult<Sesion>> GetSesion(string token)
         {
-            var sesion = await _context.Sesions.Where(s => s.UsuId == id).OrderByDescending(s => s.SesionFecha).FirstOrDefaultAsync();
-            if (sesion == null)
+            var sesion = await _context.Sesions.Where(s => s.SesionToken == token).Select(s => s.SesionId).FirstOrDefaultAsync();
+            if (sesion == 0)
             {
                 return BadRequest("Sesión no encontrada");
             }
-            return sesion;
+            return Ok(sesion);
         }
 
         [HttpGet("api/CheckUserSession")]
