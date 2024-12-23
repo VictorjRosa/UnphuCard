@@ -224,6 +224,21 @@ namespace UnphuCard_Api.Controllers
             }
         }
 
+        [HttpGet("api/ObtenerTarjProv/{statusid}")]
+        public async Task<ActionResult<IEnumerable<TarjetasProvisionale>>> GetTarjProvPorEstado(int statusid)
+        {
+            var estado = await _context.TarjetasProvisionales
+                .Where(tp => tp.StatusId == statusid)
+                .ToListAsync();
+
+            if (!estado.Any())
+            {
+                return Ok();
+            }
+
+            return Ok(estado);
+        }
+
         private bool TarjetaExists(int id)
         {
             return _context.Tarjetas.Any(p => p.TarjId == id);

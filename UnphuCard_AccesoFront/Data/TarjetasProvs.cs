@@ -59,5 +59,19 @@ namespace UnphuCard_AccesoFront.Data
             }
         }
 
+        public async Task<List<TarjetasProvisionale>> TarjProvPorEstado(int statusId)
+        {
+            try
+            {
+            var response = await _httpClient.GetFromJsonAsync<List<TarjetasProvisionale>>($"api/ObtenerTarjProv/{statusId}");
+            return response ?? new List<TarjetasProvisionale>();
+            }
+            catch (Exception ex)
+            {
+                // Manejar cualquier excepción y devolver una lista vacía en caso de error
+                Console.WriteLine(ex.Message);
+                return new List<TarjetasProvisionale>();
+            }
+        }
     }
 }

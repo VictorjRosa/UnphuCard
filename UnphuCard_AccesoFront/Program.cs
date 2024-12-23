@@ -13,6 +13,7 @@ builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<TarjetasProvs>();
+builder.Services.AddScoped<Estados>();
 
 builder.Services.AddScoped(sp =>
     new HttpClient

@@ -4,6 +4,7 @@
 @using System.Text.RegularExpressions
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 @inject TarjetasProvs tarjetasProvs
+@inject Estados estados
 @using UnphuCard_Api.Models
 @using UnphuCard_Api.DTOS
 
@@ -99,10 +100,10 @@
                             class="w-full p-2 border rounded" />
                         </div>
                         <div class="w-48">
-                            <select @bind="statusFilter" class="w-full p-2 border rounded">
-                                <option value="all">Todas</option>
-                                <option value="habilitada">Habilitada</option>
-                                <option value="deshabilitada">Deshabilitada</option>
+                            <select @onchange="FiltrarTarjProvPorEstado" class="w-full p-2 border rounded">
+                                <option value="Todas">Todas</option>
+                                <option value="3">Habilitada</option>
+                                <option value="4">Deshabilitada</option>
                             </select>
                         </div>
                     </div>
@@ -117,15 +118,18 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var card in filteredCards)
+                            @if (filteredTarjProv != null)
                             {
-                                <tr class="@(card.assigned ? "bg-red-100" : "bg-green-100")">
-                                    <td>@card.code</td>
-                                    <td>@(card.user ?? "N/A")</td>
-                                    <td>@(card.assignedDate?.ToLocalTime().ToString() ?? "N/A")</td>
-                                    <td>@(card.expirationDate?.ToLocalTime().ToString() ?? "N/A")</td>
-                                    <td>@GetCardStatus(card)</td>
-                                </tr>
+                                @foreach (var card in filteredTarjProv)
+                                {
+                                    <tr class="@(true ? "bg-red-100" : "bg-green-100")">
+                                        <td>@(card.TarjProvCodigo?.ToString() ?? "N/A")</td>
+                                        <td>@(card.UsuId ?? 0)</td>
+                                        <td>@(card.TarjProvFecha?.ToString() ?? "N/A")</td>
+                                        <td>@(card.TarjProvFechaExpiracion?.ToString() ?? "N/A")</td>
+                                        <td>@(estadoNombres[card.TarjProvId-1]?.ToString() ?? "N/A")</td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
@@ -171,11 +175,12 @@
 @code {
     private string errorMessage;
     private int tarjProvId;
-    private List<TarjetasProvisionale> TarjProv;
-    private List<TarjetasProvisionale> TarjProvNoAsignadas;
+    private List<TarjetasProvisionale> TarjProv = new List<TarjetasProvisionale>();
     private VerificarCedulaDTO cedula = new VerificarCedulaDTO();
     private Usuario usuario = new Usuario();
     private UpdateTarjetaProv TarjP = new UpdateTarjetaProv();
+    private List<TarjetasProvisionale> filteredTarjProv = new List<TarjetasProvisionale>();
+    private List<string> estadoNombres = new List<string>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -183,6 +188,13 @@
         {
 
             TarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
+            filteredTarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
+            foreach (var card in filteredTarjProv)
+            {
+                var estadoNombre = await estados.GetEstadosAsync(card.StatusId ?? 0);
+                estadoNombres.Add(estadoNombre ?? "Desconocido");
+            }
+
         }
         catch (Exception ex)
         {
@@ -197,21 +209,47 @@
     private string statusFilter = "all";
     private bool isReturnModalOpen = false;
     private string returnCardCode = "";
+    private string prueba;
+    // private List<TarjetasProvisionale> availableCards => TarjProv.Where(tp => tp.UsuId == null).ToList();
 
-    private List<TarjetasProvs> availableCards => TarjProvNoAsignadas.Where(card => !card.assigned).ToList();
+    // private List<TarjetasProvisionale> filteredCards => TarjProv
+    //     .Where(card => (card.TarjProvCodigo.ToLower().Contains(searchTerm.ToLower()) ||
+    //                     (card.UsuId != null && card.UsuId.ToLower().Contains(searchTerm.ToLower()))) &&
+    //                    (statusFilter == "all" || GetCardStatus(card).ToLower() == statusFilter.ToLower()))
+    //     .ToList();
 
-    private List<ProvisionalCard> filteredCards => provisionalCards
-        .Where(card => (card.code.ToLower().Contains(searchTerm.ToLower()) ||
-                        (card.user != null && card.user.ToLower().Contains(searchTerm.ToLower()))) &&
-                       (statusFilter == "all" || GetCardStatus(card).ToLower() == statusFilter.ToLower()))
-        .ToList();
-
-    private string GetCardStatus(ProvisionalCard card)
+    private async Task FiltrarTarjProvPorEstado(ChangeEventArgs e)
     {
-        if (!card.assigned) return "Deshabilitada";
+        var EstadoIdString = e.Value?.ToString();
 
-        var currentDate = DateTime.Now;
-        return card.expirationDate > currentDate ? "Habilitada" : "Deshabilitada";
+        if (string.IsNullOrEmpty(EstadoIdString) || EstadoIdString == "Todas")
+        {
+            filteredTarjProv = TarjProv;
+            estadoNombres.Clear();
+            foreach (var card in filteredTarjProv)
+            {
+                var estadoNombre = await estados.GetEstadosAsync(card.StatusId ?? 0);
+                estadoNombres.Add(estadoNombre ?? "Desconocido");
+            }
+        }
+        else
+        {
+            if (int.TryParse(EstadoIdString, out int statusId))
+            {
+                filteredTarjProv = await tarjetasProvs.TarjProvPorEstado(statusId);
+                estadoNombres.Clear();
+                foreach (var card in filteredTarjProv)
+                {
+                    var estadoNombre = await estados.GetEstadosAsync(card.StatusId ?? 0);
+                    estadoNombres.Add(estadoNombre ?? "Desconocido");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Error: El valor de categoría no es válido.");
+                filteredTarjProv = new List<TarjetasProvisionale>();
+            }
+        }
     }
 
     private string FormatCedula(string value)
@@ -288,6 +326,14 @@
             if (errorMessage == null)
             {
                 var tarjProvCod = await tarjetasProvs.ActivarTarjetaProv(tarjProvId, TarjP);
+                TarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
+                filteredTarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
+                estadoNombres.Clear();
+                foreach (var card in filteredTarjProv)
+                {
+                    var estadoNombre = await estados.GetEstadosAsync(card.StatusId ?? 0);
+                    estadoNombres.Add(estadoNombre ?? "Desconocido");
+                }
             }
         }
         catch (ApplicationException ex)
@@ -327,18 +373,18 @@
 
     private void HandleReturnCard()
     {
-        var card = provisionalCards.FirstOrDefault(c => c.code == returnCardCode && c.assigned);
-        if (card != null)
-        {
-            card.assigned = false;
-            card.user = null;
-            card.assignedDate = null;
-            card.expirationDate = null;
+        // var card = provisionalCards.FirstOrDefault(c => c.code == returnCardCode && c.assigned);
+        // if (card != null)
+        // {
+        //     card.assigned = false;
+        //     card.user = null;
+        //     card.assignedDate = null;
+        //     card.expirationDate = null;
 
-            isReturnModalOpen = false;
-            returnCardCode = "";
-            JSRuntime.InvokeVoidAsync("alert", "Tarjeta devuelta con éxito");
-        }
+        //     isReturnModalOpen = false;
+        //     returnCardCode = "";
+        //     JSRuntime.InvokeVoidAsync("alert", "Tarjeta devuelta con éxito");
+        // }
     }
 
     private class ProvisionalCard

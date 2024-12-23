@@ -21,12 +21,12 @@ namespace UnphuCard_Api.Controllers
         [HttpGet("api/MostrarEstado/{id}")]
         public async Task<ActionResult<Estado>> GetEstado(int id)
         {
-            var estado = await _context.Estados.FirstOrDefaultAsync(e => e.StatusId == id);
+            var estado = await _context.Estados.Where(e => e.StatusId == id).Select(e => e.StatusDescripcion).FirstOrDefaultAsync();
             if (estado == null)
             {
                 return BadRequest("Estado no encontrado");
             }
-            return estado;
+            return Ok(estado);
         }
     }
 }
