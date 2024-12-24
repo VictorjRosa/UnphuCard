@@ -85,21 +85,6 @@ namespace UnphuCard_Api.Controllers
                 {
                     return NotFound("Usuario no encontrado.");
                 }
-                var sesionIdDetalleProd = await _context.DetallesCompras.Where(dc => dc.SesionId == insertCompra.SesionId).Select(dc => dc.SesionId).FirstOrDefaultAsync();
-                if (sesionIdDetalleProd == null)
-                {
-                    return NotFound("Sesión del detalle de la compra no encontrada.");
-                }
-                var tokenCompra = await _context.Sesions.Where(s => s.SesionId == insertCompra.SesionId).Select(t => t.SesionToken).FirstOrDefaultAsync();
-                if (tokenCompra == null)
-                {
-                    return NotFound("Token de la sesión de la compra no encontrado.");
-                }
-                var tokenDetalleProd = await _context.Sesions.Where(s => s.SesionId == sesionIdDetalleProd).Select(t => t.SesionToken).FirstOrDefaultAsync();
-                if (tokenDetalleProd == null)
-                {
-                    return NotFound("Token de la sesión del carrito no encontrado.");
-                }
 
                 // Verifica si el saldo del usuario es suficiente
                 if (usuario.UsuSaldo < insertCompra.CompMonto)
@@ -123,7 +108,7 @@ namespace UnphuCard_Api.Controllers
                 _context.Compras.Add(compra);
                 await _context.SaveChangesAsync();
 
-                var itemsDetalleProd = await _context.DetallesCompras.Where(c => tokenDetalleProd == tokenCompra).ToListAsync();
+                var itemsDetalleProd = await _context.DetallesCompras.Where(dc => dc.SesionId == compra.SesionId).ToListAsync();
                 List<InfoCarritoProducto> infoProducto = new List<InfoCarritoProducto>();
                 foreach (var item in itemsDetalleProd)
                 {

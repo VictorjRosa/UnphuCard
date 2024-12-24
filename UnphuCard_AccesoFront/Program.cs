@@ -14,6 +14,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<TarjetasProvs>();
 builder.Services.AddScoped<Estados>();
+builder.Services.AddScoped<Usuarios>();
 
 builder.Services.AddScoped(sp =>
     new HttpClient
