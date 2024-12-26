@@ -28,7 +28,7 @@ namespace UnphuCard_AccesoFront.Data
                 }
                 else
                 {
-                    return "Error: No se pudo obtener el estado";
+                    return null;
                 }
             }
             catch (Exception ex)

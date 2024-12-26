@@ -33,6 +33,22 @@ namespace UnphuCard_AccesoFront.Data
             }
         }
 
+        public async Task<string> DesactivarTarjetaProv(int tarjProvId)
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/DesactivarTarjetaProv/{tarjProvId}", tarjProvId);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var loginResponse = await response.Content.ReadFromJsonAsync<TokenResponse>();
+                return loginResponse.Access_token;
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                throw new ApplicationException(errorMessage);
+            }
+        }
+
         public async Task<bool?> VerificarCedula(string cedula)
         {
             try

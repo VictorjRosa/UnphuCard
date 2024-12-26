@@ -9,37 +9,38 @@
 @using UnphuCard_Api.Models
 @using UnphuCard_Api.DTOS
 
-<div class="min-h-screen bg-gray-50 flex flex-col">
-    <header class="bg-green-700 text-white p-4">
-        <h1 class="text-2xl font-bold">Plataforma de Acceso UNPHU</h1>
+<div class="assign-card-container">
+    <header class="header">
+        <h1>Plataforma de Acceso UNPHU</h1>
         <button @onclick="Logout" class="logout-button">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                 <polyline points="16 17 21 12 16 7"></polyline>
                 <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>            Cerrar
+            </svg>
+            Cerrar
         </button>
     </header>
 
-    <main class="flex-grow p-4 flex flex-col items-center">
-        <div class="w-full max-w-4xl space-y-8">
-            <div class="flex justify-between items-center">
-                <h2 class="text-2xl font-bold">Gestión de Tarjetas de Acceso</h2>
-                @*                 <button class="bg-yellow-600 hover:bg-yellow-700 text-white p-2 rounded" @onclick="() => isReturnModalOpen = true">
+    <main class="main-content">
+        <div class="content-wrapper">
+            <div class="title-section">
+                <h2>Gestión de Tarjetas de Acceso</h2>
+                <button class="button button-yellow" @onclick="() => isReturnModalOpen = true">
                     Devolver Tarjeta
                 </button>
- *@            </div>
+            </div>
 
             <div class="card">
                 <div class="card-header">
-                    <h3 class="text-2xl font-bold text-center">Asignar Tarjeta de Acceso</h3>
+                    <h3>Asignar Tarjeta de Acceso</h3>
                 </div>
-                <div class="card-content space-y-4">
-                    <div class="space-y-2">
+                <div class="card-content">
+                    <div class="form-group">
                         <label for="card-select">Seleccionar Tarjeta Provisional</label>
-                        <select id="card-select" @bind="tarjProvId" class="w-full p-2 border rounded">
+                        <select id="card-select" @bind="tarjProvId">
                             <option value="">Seleccione una tarjeta disponible</option>
-                            @if(TarjProv != null)
+                            @if (TarjProv != null)
                             {
                                 @foreach (var card in TarjProv)
                                 {
@@ -49,9 +50,9 @@
                         </select>
                     </div>
 
-                    <div class="space-y-2">
+                    <div class="form-group">
                         <label>Tipo de Identificación</label>
-                        <div class="flex space-x-4">
+                        <div class="radio-group">
                             <label>
                                 <input type="radio" name="idType" value="cedula" checked="@(idType == "cedula")" @onchange="@(e => idType = "cedula")" />
                                 Cédula
@@ -63,15 +64,14 @@
                         </div>
                     </div>
 
-                    <div class="space-y-2">
+                    <div class="form-group">
                         <label for="id-number">@(idType == "cedula" ? "Cédula" : "Pasaporte")</label>
                         <InputText id="id-number"
-                        type="text"
-                        placeholder="@(idType == "cedula" ? "12312345671" : "Número de pasaporte")"
-                        @bind-Value="TarjP.UsuDocIdentidad"
-                        @oninput="FormatCedulaOnInput"
-                        maxlength="@(idType == "cedula" ? 11 : null)"
-                        class="w-full p-2 border rounded" />
+                                   type="text"
+                                   placeholder="@(idType == "cedula" ? "12312345671" : "Número de pasaporte")"
+                                   @bind-Value="TarjP.UsuDocIdentidad"
+                                   @oninput="FormatCedulaOnInput"
+                                   maxlength="@(idType == "cedula" ? 11 : null)" />
                     </div>
                     @if (!string.IsNullOrEmpty(errorMessage))
                     {
@@ -80,8 +80,7 @@
                             <span class="floating-alert-close">&times;</span>
                         </div>
                     }
-                    <button class="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded"
-                    @onclick="HandleAssignCard">
+                    <button class="button button-green" @onclick="HandleAssignCard">
                         Asignar Tarjeta
                     </button>
                 </div>
@@ -89,28 +88,17 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h3 class="text-xl font-bold">Lista de Tarjetas</h3>
+                    <h3>Lista de Tarjetas</h3>
                 </div>
                 <div class="card-content">
-                    <div class="flex space-x-4 mb-4">
-                        <div class="flex-1">
-                            <InputText id="id-number"
-                            type="text"
-                            placeholder="Buscar por código o usuario..."
-                            @bind-Value="searchTerm"
-                            @oninput="OnSearchTermChanged"
-                            maxLength="20"
-                            class="w-full p-2 border rounded" />
-                        </div>
-                        <div class="w-48">
-                            <select @onchange="FiltrarTarjProvPorEstado" class="w-full p-2 border rounded">
-                                <option value="Todas">Todas</option>
-                                <option value="3">Habilitada</option>
-                                <option value="4">Deshabilitada</option>
-                            </select>
-                        </div>
+                    <div class="search-filter">
+                        <select @onchange="FiltrarTarjProvPorEstado">
+                            <option value="Todas">Todas</option>
+                            <option value="3">Habilitada</option>
+                            <option value="4">Deshabilitada</option>
+                        </select>
                     </div>
-                    <table class="w-full">
+                    <table>
                         <thead>
                             <tr>
                                 <th>Código Tarjeta</th>
@@ -126,27 +114,34 @@
                                 conteo = 0;
                                 @foreach (var card in filteredTarjProv)
                                 {
-                                    @if (estadoNombres[conteo] == "Habilitado")
+                                    if (conteo < estadoNombres.Count && conteo < usuariosNombres.Count)
                                     {
-                                        <tr class="@("bg-green-100")">
-                                            <td>@(card.TarjProvCodigo?.ToString() ?? null)</td>
-                                            <td>@(card.UsuId ?? null)</td>
-                                            <td>@(card.TarjProvFecha?.ToString() ?? null)</td>
-                                            <td>@(card.TarjProvFechaExpiracion?.ToString() ?? null)</td>
-                                            <td>@(estadoNombres[card.TarjProvId - 1]?.ToString() ?? null)</td>
-                                        </tr>
-                                        conteo++;
-                                    }
-                                    @if(estadoNombres[conteo] == "Deshabilitado")
-                                    {
-                                        <tr class="@("bg-red-100")">
-                                            <td>@(card.TarjProvCodigo?.ToString() ?? null)</td>
-                                            <td>@(card.UsuId ?? null)</td>
-                                            <td>@(card.TarjProvFecha?.ToString() ?? null)</td>
-                                            <td>@(card.TarjProvFechaExpiracion?.ToString() ?? null)</td>
-                                            <td>@(estadoNombres[card.TarjProvId - 1]?.ToString() ?? null)</td>
-                                        </tr>
-                                        conteo++;
+                                        @if (estadoNombres[conteo] == "Habilitado")
+                                        {
+                                            <tr class="enabled">
+                                                <td>@(card.TarjProvCodigo?.ToString() ?? null)</td>
+                                                <td>@(usuariosNombres[conteo]?.ToString() ?? "No asignado")</td>
+                                                <td>@(card.TarjProvFecha?.ToString() ?? "N/A")</td>
+                                                <td>@(card.TarjProvFechaExpiracion?.ToString() ?? "N/A")</td>
+                                                <td>@(estadoNombres[conteo]?.ToString() ?? null)</td>
+                                            </tr>
+                                            conteo++;
+                                        }
+                                        else if (estadoNombres[conteo] == "Deshabilitado")
+                                        {
+                                            <tr class="disabled">
+                                                <td>@(card.TarjProvCodigo?.ToString() ?? null)</td>
+                                                <td>@(usuariosNombres[conteo]?.ToString() ?? "No asignado")</td>
+                                                <td>@(card.TarjProvFecha?.ToString() ?? "N/A")</td>
+                                                <td>@(card.TarjProvFechaExpiracion?.ToString() ?? "N/A")</td>
+                                                <td>@(estadoNombres[conteo]?.ToString() ?? null)</td>
+                                            </tr>
+                                            conteo++;
+                                        }
+                                        else
+                                        {
+                                            conteo++;
+                                        }
                                     }
                                 }
                             }
@@ -157,39 +152,41 @@
         </div>
     </main>
 
-    <footer class="bg-green-800 text-white text-center p-4 mt-8">
+    <footer class="footer">
         <p>&copy; 2023 UNPHU - Plataforma de Acceso. Todos los derechos reservados.</p>
     </footer>
 </div>
 
-@* @if (isReturnModalOpen)
+@if (isReturnModalOpen)
 {
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white p-4 rounded-lg max-w-md w-full">
-            <h2 class="text-xl font-bold mb-4">Devolver Tarjeta</h2>
-            <p class="mb-4">Ingrese el código de la tarjeta que desea devolver.</p>
-            <div class="space-y-4">
-                <div class="space-y-2">
-                    <label for="return-card-code">Código de Tarjeta</label>
-                    <input id="return-card-code"
-                    type="text"
-                    placeholder="Ej. PROV001"
-                    @bind="returnCardCode"
-                    class="w-full p-2 border rounded" />
-                </div>
-                <button class="w-full bg-yellow-600 hover:bg-yellow-700 text-white p-2 rounded"
-                @onclick="HandleReturnCard"
-                disabled="@string.IsNullOrEmpty(returnCardCode)">
-                    Confirmar Devolución
-                </button>
-                <button class="w-full bg-gray-300 hover:bg-gray-400 text-gray-800 p-2 rounded"
-                @onclick="() => isReturnModalOpen = false">
-                    Cancelar
-                </button>
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <h2>Devolver Tarjeta</h2>
+            <p>Ingrese la cédula.</p>
+            <div class="form-group">
+                <label for="return-card-code">@(idType == "cedula" ? "Cédula" : "Pasaporte")</label>
+                <InputText id="return-card-code"
+                           type="text"
+                           placeholder="@(idType == "cedula" ? "12312345671" : "Número de pasaporte")"
+                           @bind-Value="TarjP.UsuDocIdentidad"
+                           @oninput="FormatCedulaOnInput" />
             </div>
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="floating-alert">
+                    @errorMessage
+                    <span class="floating-alert-close">&times;</span>
+                </div>
+            }
+            <button class="button button-yellow" @onclick="HandleReturnCard">
+                Confirmar Devolución
+            </button>
+            <button class="button button-gray" @onclick="() => isReturnModalOpen = false">
+                Cancelar
+            </button>
         </div>
     </div>
- *@}
+}
 
 @code {
     private string errorMessage;
@@ -204,6 +201,7 @@
     private List<string> usuariosNombres = new List<string>();
     private string idType = "cedula";
     private string searchTerm = "";
+    private bool isReturnModalOpen = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -220,7 +218,7 @@
             foreach (var card in filteredTarjProv)
             {
                 var usuarioNombre = await usuarios.GetUsuariosNombresAsync(card.UsuId ?? 0);
-                usuariosNombres.Add(usuarioNombre ?? "Nombre");
+                usuariosNombres.Add(usuarioNombre ?? "No asignado");
             }
         }
         catch (Exception ex)
@@ -228,43 +226,6 @@
             errorMessage = "An error occurred while loading entities.";
             Console.WriteLine(ex.Message);
         }
-    }
-
-    // private string selectedCard = "";
-    // private string idType = "cedula";
-    // private string statusFilter = "all";
-    // private bool isReturnModalOpen = false;
-    // private string returnCardCode = "";
-    // private string prueba;
-
-    // Método que filtra las tarjetas según el término de búsqueda
-    private async Task FilterTarjProv(string buscar)
-    {
-        conteo = 0;
-        searchTerm = buscar;
-        filteredTarjProv = filteredTarjProv
-            .Where((card, index) =>
-                card.TarjProvCodigo.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || // Filtrar por código de tarjeta
-                (usuariosNombres.Count > index && usuariosNombres[index].Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) // Filtrar por nombre de usuario
-            )
-            .ToList();
-        usuariosNombres.Clear();
-        foreach (var card in filteredTarjProv)
-        {
-            var estadoNombre = await estados.GetEstadosAsync(card.StatusId ?? 0);
-            estadoNombres.Add(estadoNombre ?? "Desconocido");
-        }
-        foreach (var card in filteredTarjProv)
-        {
-            var usuarioNombre = await usuarios.GetUsuariosNombresAsync(card.UsuId ?? 0);
-            usuariosNombres.Add(usuarioNombre ?? "Nombre");
-        }
-    }
-
-    // Se ejecuta cuando el usuario escribe en el input (y se actualiza searchTerm)
-    private void OnSearchTermChanged(ChangeEventArgs e)
-    {
-        FilterTarjProv(e.Value?.ToString()); // Llama al método para filtrar las tarjetas
     }
 
     private async Task FiltrarTarjProvPorEstado(ChangeEventArgs e)
@@ -285,7 +246,7 @@
             foreach (var card in filteredTarjProv)
             {
                 var usuarioNombre = await usuarios.GetUsuariosNombresAsync(card.UsuId ?? 0);
-                usuariosNombres.Add(usuarioNombre ?? "Nombre");
+                usuariosNombres.Add(usuarioNombre ?? "No asignado");
             }
         }
         else
@@ -304,7 +265,7 @@
                 foreach (var card in filteredTarjProv)
                 {
                     var usuarioNombre = await usuarios.GetUsuariosNombresAsync(card.UsuId ?? 0);
-                    usuariosNombres.Add(usuarioNombre ?? "Nombre");
+                    usuariosNombres.Add(usuarioNombre ?? "No asignado");
                 }
             }
             else
@@ -402,8 +363,9 @@
                 foreach (var card in filteredTarjProv)
                 {
                     var usuarioNombre = await usuarios.GetUsuariosNombresAsync(card.UsuId ?? 0);
-                    usuariosNombres.Add(usuarioNombre ?? "Nombre");
+                    usuariosNombres.Add(usuarioNombre ?? "No asignado");
                 }
+                await JSRuntime.InvokeVoidAsync("alert", "Tarjeta asignada con éxito");
             }
         }
         catch (ApplicationException ex)
@@ -418,20 +380,73 @@
 
     }
 
-    private void HandleReturnCard()
+    private async Task HandleReturnCard()
     {
-        // var card = provisionalCards.FirstOrDefault(c => c.code == returnCardCode && c.assigned);
-        // if (card != null)
-        // {
-        //     card.assigned = false;
-        //     card.user = null;
-        //     card.assignedDate = null;
-        //     card.expirationDate = null;
-
-        //     isReturnModalOpen = false;
-        //     returnCardCode = "";
-        //     JSRuntime.InvokeVoidAsync("alert", "Tarjeta devuelta con éxito");
-        // }
+        try
+        {
+            errorMessage = null;
+            if (idType == "cedula")
+            {
+                var verificacionCedula = await tarjetasProvs.VerificarCedula(TarjP.UsuDocIdentidad);
+                if (verificacionCedula == null)
+                {
+                    errorMessage = "An unexpected error occurred.";
+                }
+                else
+                {
+                    if (!verificacionCedula.Value)
+                    {
+                        string cedulaNoValida = "Cédula No Válida.";
+                        errorMessage = cedulaNoValida;
+                    }
+                    else
+                    {
+                        usuario.StatusId = await tarjetasProvs.GetEstadoId(TarjP.UsuDocIdentidad);
+                        if (usuario.StatusId == null)
+                        {
+                            errorMessage = "Cédula desconocida.";
+                        }
+                        else if (usuario.StatusId != 3)
+                        {
+                            errorMessage = "Usuario deshabilitado.";
+                        }
+                    }
+                }
+            }
+            else
+            {
+            }
+            if (errorMessage == null)
+            {
+                conteo = 0;
+                var tarjProvCod = await tarjetasProvs.DesactivarTarjetaProv(tarjProvId);
+                TarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
+                filteredTarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
+                estadoNombres.Clear();
+                usuariosNombres.Clear();
+                foreach (var card in filteredTarjProv)
+                {
+                    var estadoNombre = await estados.GetEstadosAsync(card.StatusId ?? 0);
+                    estadoNombres.Add(estadoNombre ?? "Desconocido");
+                }
+                foreach (var card in filteredTarjProv)
+                {
+                    var usuarioNombre = await usuarios.GetUsuariosNombresAsync(card.UsuId ?? 0);
+                    usuariosNombres.Add(usuarioNombre ?? "No asignado");
+                }
+            }
+            isReturnModalOpen = false;
+            await JSRuntime.InvokeVoidAsync("alert", "Tarjeta devuelta con éxito");
+        }
+        catch (ApplicationException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An unexpected error occurred.";
+            Console.WriteLine(ex.Message);
+        }
     }
 
     private void Logout()
