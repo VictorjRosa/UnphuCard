@@ -73,10 +73,10 @@
                         @oninput="FormatCedulaOnInput"
                         maxlength="@(idType == "cedula" ? 11 : null)" />
                     </div>
-                    @if (!string.IsNullOrEmpty(errorMessage))
+                    @if (!string.IsNullOrEmpty(errorMessageAssign))
                     {
                         <div class="floating-alert">
-                            @errorMessage
+                            @errorMessageAssign
                             <span class="floating-alert-close">&times;</span>
                         </div>
                     }
@@ -193,10 +193,10 @@
                 @bind-Value="TarjPReturn.UsuDocIdentidad"
                 @oninput="FormatCedulaOnInput" />
             </div>
-            @if (!string.IsNullOrEmpty(errorMessage))
+            @if (!string.IsNullOrEmpty(errorMessageReturn))
             {
                 <div class="floating-alert">
-                    @errorMessage
+                    @errorMessageReturn
                     <span class="floating-alert-close">&times;</span>
                 </div>
             }
@@ -211,7 +211,8 @@
 }
 
 @code {
-    private string errorMessage;
+    private string errorMessageAssign;
+    private string errorMessageReturn;
     private int tarjProvId;
     private int conteo = 0;
     private List<TarjetasProvisionale> TarjProv = new List<TarjetasProvisionale>();
@@ -248,7 +249,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = "An error occurred while loading entities.";
+            errorMessageAssign = "An error occurred while loading entities.";
             Console.WriteLine(ex.Message);
         }
     }
@@ -354,38 +355,38 @@
     {
         try
         {
-            errorMessage = null;
+            errorMessageAssign = null;
             if (idType == "cedula")
             {
                 var verificacionCedula = await tarjetasProvs.VerificarCedula(TarjPAssign.UsuDocIdentidad);
                 if (verificacionCedula == null)
                 {
-                    errorMessage = "An unexpected error occurred.";
+                    errorMessageAssign = "An unexpected error occurred.";
                 }
                 else
                 {
                     if (!verificacionCedula.Value)
                     {
                         string cedulaNoValida = "Cédula No Válida.";
-                        errorMessage = cedulaNoValida;
+                        errorMessageAssign = cedulaNoValida;
                     }
                     else
                     {
                         usuario.StatusId = await tarjetasProvs.GetEstadoId(TarjPAssign.UsuDocIdentidad);
                         if (usuario.StatusId == null)
                         {
-                            errorMessage = "Cédula desconocida.";
+                            errorMessageAssign = "Cédula desconocida.";
                         }
                         else if (usuario.StatusId != 3)
                         {
-                            errorMessage = "Usuario deshabilitado.";
+                            errorMessageAssign = "Usuario deshabilitado.";
                         }
                     }
                 }
             }
             else
             {
-                if (errorMessage == null)
+                if (errorMessageAssign == null)
                 {
                     conteo = 0;
                     var tarjProvCod = await tarjetasProvs.ActivarTarjetaProv(tarjProvId, TarjPAssign);
@@ -407,7 +408,7 @@
                     ShowAssignSuccessModal = true;
                 }
             }
-            if (errorMessage == null)
+            if (errorMessageAssign == null)
             {
                 conteo = 0;
                 var tarjProvCod = await tarjetasProvs.ActivarTarjetaProv(tarjProvId, TarjPAssign);
@@ -431,11 +432,11 @@
         }
         catch (ApplicationException ex)
         {
-            errorMessage = ex.Message;
+            errorMessageAssign = ex.Message;
         }
         catch (Exception ex)
         {
-            errorMessage = "An unexpected error occurred.";
+            errorMessageAssign = "An unexpected error occurred.";
             Console.WriteLine(ex.Message);
         }
 
@@ -455,38 +456,38 @@
     {
         try
         {
-            errorMessage = null;
+            errorMessageReturn = null;
             if (idType == "cedula")
             {
                 var verificacionCedula = await tarjetasProvs.VerificarCedula(TarjPReturn.UsuDocIdentidad);
                 if (verificacionCedula == null)
                 {
-                    errorMessage = "An unexpected error occurred.";
+                    errorMessageReturn = "An unexpected error occurred.";
                 }
                 else
                 {
                     if (!verificacionCedula.Value)
                     {
                         string cedulaNoValida = "Cédula No Válida.";
-                        errorMessage = cedulaNoValida;
+                        errorMessageReturn = cedulaNoValida;
                     }
                     else
                     {
                         usuario.StatusId = await tarjetasProvs.GetEstadoId(TarjPReturn.UsuDocIdentidad);
                         if (usuario.StatusId == null)
                         {
-                            errorMessage = "Cédula desconocida.";
+                            errorMessageReturn = "Cédula desconocida.";
                         }
                         else if (usuario.StatusId != 3)
                         {
-                            errorMessage = "Usuario deshabilitado.";
+                            errorMessageReturn = "Usuario deshabilitado.";
                         }
                     }
                 }
             }
             else
             {
-                if (errorMessage == null)
+                if (errorMessageReturn == null)
                 {
                     conteo = 0;
                     var tarjProvCod = await tarjetasProvs.DesactivarTarjetaProv(tarjProvId);
@@ -505,11 +506,11 @@
                         usuariosNombres.Add(usuarioNombre ?? "No asignado");
                     }
                     ShowReturnSuccessModal = true;
+                    TarjPReturn.UsuDocIdentidad = "";
+                    isReturnModalOpen = false;
                 }
-                TarjPReturn.UsuDocIdentidad = "";
-                isReturnModalOpen = false;
             }
-            if (errorMessage == null)
+            if (errorMessageReturn == null)
             {
                 conteo = 0;
                 var tarjProvCod = await tarjetasProvs.DesactivarTarjetaProv(tarjProvId);
@@ -528,17 +529,17 @@
                     usuariosNombres.Add(usuarioNombre ?? "No asignado");
                 }
                 ShowReturnSuccessModal = true;
+                TarjPReturn.UsuDocIdentidad = "";
+                isReturnModalOpen = false;
             }
-            TarjPReturn.UsuDocIdentidad = "";
-            isReturnModalOpen = false;
         }
         catch (ApplicationException ex)
         {
-            errorMessage = ex.Message;
+            errorMessageReturn = ex.Message;
         }
         catch (Exception ex)
         {
-            errorMessage = "An unexpected error occurred.";
+            errorMessageReturn = "An unexpected error occurred.";
             Console.WriteLine(ex.Message);
         }
     }
