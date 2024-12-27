@@ -67,11 +67,11 @@
                     <div class="form-group">
                         <label for="id-number">@(idType == "cedula" ? "Cédula" : "Pasaporte")</label>
                         <InputText id="id-number"
-                                   type="text"
-                                   placeholder="@(idType == "cedula" ? "12312345671" : "Número de pasaporte")"
-                                   @bind-Value="TarjP.UsuDocIdentidad"
-                                   @oninput="FormatCedulaOnInput"
-                                   maxlength="@(idType == "cedula" ? 11 : null)" />
+                        type="text"
+                        placeholder="@(idType == "cedula" ? "12312345671" : "Número de pasaporte")"
+                        @bind-Value="TarjPAssign.UsuDocIdentidad"
+                        @oninput="FormatCedulaOnInput"
+                        maxlength="@(idType == "cedula" ? 11 : null)" />
                     </div>
                     @if (!string.IsNullOrEmpty(errorMessage))
                     {
@@ -157,6 +157,28 @@
     </footer>
 </div>
 
+@if (ShowAssignSuccessModal) // Modal de asignación exitosa
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <h2>Asignación Exitosa</h2>
+            <p>La tarjeta se ha asignado correctamente.</p>
+            <button class="button button-green" @onclick="CloseAssignSuccessModal">Cerrar</button>
+        </div>
+    </div>
+}
+
+@if (ShowReturnSuccessModal) // Modal de asignación exitosa
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <h2>Retorno Exitoso</h2>
+            <p>Tarjeta devuelta con éxito.</p>
+            <button class="button button-green" @onclick="CloseReturnSuccessModal">Cerrar</button>
+        </div>
+    </div>
+}
+
 @if (isReturnModalOpen)
 {
     <div class="modal-overlay">
@@ -166,10 +188,10 @@
             <div class="form-group">
                 <label for="return-card-code">@(idType == "cedula" ? "Cédula" : "Pasaporte")</label>
                 <InputText id="return-card-code"
-                           type="text"
-                           placeholder="@(idType == "cedula" ? "12312345671" : "Número de pasaporte")"
-                           @bind-Value="TarjP.UsuDocIdentidad"
-                           @oninput="FormatCedulaOnInput" />
+                type="text"
+                placeholder="@(idType == "cedula" ? "12312345671" : "Número de pasaporte")"
+                @bind-Value="TarjPReturn.UsuDocIdentidad"
+                @oninput="FormatCedulaOnInput" />
             </div>
             @if (!string.IsNullOrEmpty(errorMessage))
             {
@@ -195,13 +217,16 @@
     private List<TarjetasProvisionale> TarjProv = new List<TarjetasProvisionale>();
     private VerificarCedulaDTO cedula = new VerificarCedulaDTO();
     private Usuario usuario = new Usuario();
-    private UpdateTarjetaProv TarjP = new UpdateTarjetaProv();
+    private UpdateTarjetaProv TarjPAssign = new UpdateTarjetaProv();
+    private UpdateTarjetaProv TarjPReturn = new UpdateTarjetaProv();
     private List<TarjetasProvisionale> filteredTarjProv = new List<TarjetasProvisionale>();
     private List<string> estadoNombres = new List<string>();
     private List<string> usuariosNombres = new List<string>();
     private string idType = "cedula";
     private string searchTerm = "";
     private bool isReturnModalOpen = false;
+    private bool ShowAssignSuccessModal = false;
+    private bool ShowReturnSuccessModal = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -300,14 +325,28 @@
     {
         // Obtener el valor ingresado
         string value = e.Value.ToString();
-        if (idType == "cedula")
+        if (isReturnModalOpen)
         {
-            // Formatear la cédula mientras se escribe
-            TarjP.UsuDocIdentidad = FormatCedula(value); // Aquí usamos FormatCedula
-        }
-        else
+            if (idType == "cedula")
+            {
+                // Formatear la cédula mientras se escribe
+                TarjPReturn.UsuDocIdentidad = FormatCedula(value); // Aquí usamos FormatCedula
+            }
+            else
+            {
+                TarjPReturn.UsuDocIdentidad = value;
+            }
+        }else
         {
-            TarjP.UsuDocIdentidad = value;
+            if (idType == "cedula")
+            {
+                // Formatear la cédula mientras se escribe
+                TarjPAssign.UsuDocIdentidad = FormatCedula(value); // Aquí usamos FormatCedula
+            }
+            else
+            {
+                TarjPAssign.UsuDocIdentidad = value;
+            }
         }
     }
 
@@ -318,7 +357,7 @@
             errorMessage = null;
             if (idType == "cedula")
             {
-                var verificacionCedula = await tarjetasProvs.VerificarCedula(TarjP.UsuDocIdentidad);
+                var verificacionCedula = await tarjetasProvs.VerificarCedula(TarjPAssign.UsuDocIdentidad);
                 if (verificacionCedula == null)
                 {
                     errorMessage = "An unexpected error occurred.";
@@ -332,7 +371,7 @@
                     }
                     else
                     {
-                        usuario.StatusId = await tarjetasProvs.GetEstadoId(TarjP.UsuDocIdentidad);
+                        usuario.StatusId = await tarjetasProvs.GetEstadoId(TarjPAssign.UsuDocIdentidad);
                         if (usuario.StatusId == null)
                         {
                             errorMessage = "Cédula desconocida.";
@@ -346,11 +385,32 @@
             }
             else
             {
+                if (errorMessage == null)
+                {
+                    conteo = 0;
+                    var tarjProvCod = await tarjetasProvs.ActivarTarjetaProv(tarjProvId, TarjPAssign);
+                    TarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
+                    filteredTarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
+                    estadoNombres.Clear();
+                    usuariosNombres.Clear();
+                    foreach (var card in filteredTarjProv)
+                    {
+                        var estadoNombre = await estados.GetEstadosAsync(card.StatusId ?? 0);
+                        estadoNombres.Add(estadoNombre ?? "Desconocido");
+                    }
+                    foreach (var card in filteredTarjProv)
+                    {
+                        var usuarioNombre = await usuarios.GetUsuariosNombresAsync(card.UsuId ?? 0);
+                        usuariosNombres.Add(usuarioNombre ?? "No asignado");
+                    }
+                    TarjPAssign.UsuDocIdentidad = "";
+                    ShowAssignSuccessModal = true;
+                }
             }
             if (errorMessage == null)
             {
                 conteo = 0;
-                var tarjProvCod = await tarjetasProvs.ActivarTarjetaProv(tarjProvId, TarjP);
+                var tarjProvCod = await tarjetasProvs.ActivarTarjetaProv(tarjProvId, TarjPAssign);
                 TarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
                 filteredTarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
                 estadoNombres.Clear();
@@ -365,7 +425,8 @@
                     var usuarioNombre = await usuarios.GetUsuariosNombresAsync(card.UsuId ?? 0);
                     usuariosNombres.Add(usuarioNombre ?? "No asignado");
                 }
-                await JSRuntime.InvokeVoidAsync("alert", "Tarjeta asignada con éxito");
+                TarjPAssign.UsuDocIdentidad = "";
+                ShowAssignSuccessModal = true;
             }
         }
         catch (ApplicationException ex)
@@ -379,6 +440,16 @@
         }
 
     }
+    
+    protected void CloseAssignSuccessModal()
+    {
+        ShowAssignSuccessModal = false;
+    }
+
+    protected void CloseReturnSuccessModal()
+    {
+        ShowReturnSuccessModal = false;
+    }
 
     private async Task HandleReturnCard()
     {
@@ -387,7 +458,7 @@
             errorMessage = null;
             if (idType == "cedula")
             {
-                var verificacionCedula = await tarjetasProvs.VerificarCedula(TarjP.UsuDocIdentidad);
+                var verificacionCedula = await tarjetasProvs.VerificarCedula(TarjPReturn.UsuDocIdentidad);
                 if (verificacionCedula == null)
                 {
                     errorMessage = "An unexpected error occurred.";
@@ -401,7 +472,7 @@
                     }
                     else
                     {
-                        usuario.StatusId = await tarjetasProvs.GetEstadoId(TarjP.UsuDocIdentidad);
+                        usuario.StatusId = await tarjetasProvs.GetEstadoId(TarjPReturn.UsuDocIdentidad);
                         if (usuario.StatusId == null)
                         {
                             errorMessage = "Cédula desconocida.";
@@ -415,6 +486,28 @@
             }
             else
             {
+                if (errorMessage == null)
+                {
+                    conteo = 0;
+                    var tarjProvCod = await tarjetasProvs.DesactivarTarjetaProv(tarjProvId);
+                    TarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
+                    filteredTarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
+                    estadoNombres.Clear();
+                    usuariosNombres.Clear();
+                    foreach (var card in filteredTarjProv)
+                    {
+                        var estadoNombre = await estados.GetEstadosAsync(card.StatusId ?? 0);
+                        estadoNombres.Add(estadoNombre ?? "Desconocido");
+                    }
+                    foreach (var card in filteredTarjProv)
+                    {
+                        var usuarioNombre = await usuarios.GetUsuariosNombresAsync(card.UsuId ?? 0);
+                        usuariosNombres.Add(usuarioNombre ?? "No asignado");
+                    }
+                    ShowReturnSuccessModal = true;
+                }
+                TarjPReturn.UsuDocIdentidad = "";
+                isReturnModalOpen = false;
             }
             if (errorMessage == null)
             {
@@ -434,9 +527,10 @@
                     var usuarioNombre = await usuarios.GetUsuariosNombresAsync(card.UsuId ?? 0);
                     usuariosNombres.Add(usuarioNombre ?? "No asignado");
                 }
+                ShowReturnSuccessModal = true;
             }
+            TarjPReturn.UsuDocIdentidad = "";
             isReturnModalOpen = false;
-            await JSRuntime.InvokeVoidAsync("alert", "Tarjeta devuelta con éxito");
         }
         catch (ApplicationException ex)
         {
