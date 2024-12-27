@@ -25,7 +25,7 @@
                 }
                 else
                 {
-                    return "Error: No se pudo obtener el nombre";
+                    return null;
                 }
             }
             catch (Exception ex)

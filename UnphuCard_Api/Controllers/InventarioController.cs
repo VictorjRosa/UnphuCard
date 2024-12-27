@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UnphuCard_Api.DTOS;
 using UnphuCard_Api.Models;
@@ -8,9 +9,11 @@ namespace UnphuCard_Api.Controllers
     public class InventarioController : Controller
     {
         private readonly UnphuCardContext _context;
-        public InventarioController(UnphuCardContext context)
+        private readonly IConfiguration _configuration;
+        public InventarioController(UnphuCardContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         [HttpGet("api/ObtenerInvEstablecimiento/{id}")]
@@ -49,7 +52,7 @@ namespace UnphuCard_Api.Controllers
         }
 
         [HttpPost("api/Registrarinventario")]
-        public async Task<ActionResult> PostInventario([FromBody] InsertInventario insertInventario)
+        public async Task<ActionResult> PostInventario([FromForm] InsertInventario insertInventario, IFormFile foto)
         {
             if (!ModelState.IsValid)
             {
@@ -57,23 +60,59 @@ namespace UnphuCard_Api.Controllers
             }
             try
             {
+                // Verificar si se ha proporcionado una imagen
+                if (foto == null || foto.Length == 0)
+                {
+                    return BadRequest("Debe proporcionar una imagen.");
+                }
+
+                // Configurar el BlobServiceClient
+                string connectionString = _configuration["AzureBlobStorage:ConnectionString"];
+                string containerName = _configuration["AzureBlobStorage:ContainerName"];
+                var blobServiceClient = new BlobServiceClient(connectionString);
+                var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+                // Generar un nombre único para el archivo
+                string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(foto.FileName);
+                var blobClient = blobContainerClient.GetBlobClient(uniqueFileName);
+
+                // Subir la imagen a Azure Blob Storage
+                using (var stream = foto.OpenReadStream())
+                {
+                    await blobClient.UploadAsync(stream, true); // El "true" sobrescribe el archivo si ya existe
+                }
+
+                string imageUrl = blobClient.Uri.ToString(); // Obtener la URL del archivo
+
                 // Obtener la zona horaria de República Dominicana (GMT-4)
                 TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
                 // Obtener la fecha y hora actual en UTC
                 DateTime fechaActualUtc = DateTime.UtcNow;
                 // Convertir la fecha a la zona horaria de República Dominicana
                 DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
+
+                var producto = new Producto
+                {
+                    ProdDescripcion = insertInventario.ProdDescripcion,
+                    ProdPrecio = insertInventario.ProdPrecio,
+                    ProdImagenes = imageUrl,  // Guardar la URL de la imagen
+                    StatusId = insertInventario.StatusId,
+                    CatProdId = insertInventario.CatProdId
+                };
+                _context.Productos.Add(producto);
+                await _context.SaveChangesAsync();
+
                 var inventario = new Inventario()
                 {
                     InvCantidad = insertInventario.InvCantidad,
                     InvFecha = fechaEnRD,
                     EstId = insertInventario.EstId,
-                    ProdId = insertInventario.ProdId,
+                    ProdId = producto.ProdId,
                 };
                 _context.Inventarios.Add(inventario);
                 await _context.SaveChangesAsync();
 
-                return Ok(new { id = inventario.InvId, inventario});
+                return Ok(new {producto, inventario});
             }
             catch (Exception ex)
             {

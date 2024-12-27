@@ -36,7 +36,7 @@ namespace UnphuCard_Api.Controllers
         [HttpGet("api/Obtenertarjeta/{id}")]
         public async Task<ActionResult<Tarjeta>> GetTarjeta(int id)
         {
-            var tarjeta = await _context.Tarjetas.FirstOrDefaultAsync(p => p.TarjId == id);
+            var tarjeta = await _context.Tarjetas.FirstOrDefaultAsync(t => t.TarjId == id);
             if (tarjeta == null)
             {
                 return BadRequest("Tarjeta no encontrada");
@@ -47,7 +47,7 @@ namespace UnphuCard_Api.Controllers
         [HttpGet("api/ObtenertarjetaProv/{id}")]
         public async Task<ActionResult<TarjetasProvisionale>> GetTarjetaProv(int id)
         {
-            var tarjetaProv = await _context.TarjetasProvisionales.FirstOrDefaultAsync(p => p.TarjProvId == id);
+            var tarjetaProv = await _context.TarjetasProvisionales.FirstOrDefaultAsync(tp => tp.TarjProvId == id);
             if (tarjetaProv == null)
             {
                 return BadRequest("Tarjeta provisional no encontrada");
@@ -108,6 +108,11 @@ namespace UnphuCard_Api.Controllers
             }
             try
             {
+                var revision = await _context.TarjetasProvisionales.Where(tp => tp.TarjProvId == id).Select(tp => tp.UsuId).FirstOrDefaultAsync();
+                if (revision == null)
+                {
+                    return BadRequest("El usuario no tiene una tarjeta provisional asignada");
+                }
                 var tarjeta = await _context.TarjetasProvisionales.FirstOrDefaultAsync(t => t.TarjProvId == id);
                 if (tarjeta == null)
                 {
@@ -147,6 +152,16 @@ namespace UnphuCard_Api.Controllers
             }
             try
             {
+                var usuario = await _context.Usuarios.Where(u => u.UsuDocIdentidad == updateTarjetaProv.UsuDocIdentidad).Select(u => u.UsuId).FirstOrDefaultAsync();
+                if (usuario == 0)
+                {
+                    return BadRequest("Usuario no encontrado");
+                }
+                var revision = await _context.TarjetasProvisionales.Where(tp => tp.UsuId == usuario).Select(tp => tp.UsuId).FirstOrDefaultAsync();
+                if (revision != null)
+                {
+                    return BadRequest("El usuario ya tiene una tarjeta provisional asignada");
+                }
                 // Obtener la zona horaria de República Dominicana (GMT-4)
                 TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
                 // Obtener la fecha y hora actual en UTC
