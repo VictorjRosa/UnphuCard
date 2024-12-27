@@ -1,6 +1,8 @@
 ﻿@page "/inventario"
 @inject NavigationManager NavigationManager
 @using System.ComponentModel.DataAnnotations
+@using UnphuCard_Api.DTOS
+@using UnphuCard_Api.Models
 
 <div class="inventory-management">
     <header>
@@ -18,60 +20,60 @@
         </div>
 
         <div class="product-grid">
-            @if(products != null)
+            @if (productosInv != null)
             {
-            @foreach (var product in products)
+                @foreach (var productosInv in productosInv)
             {
                 <div class="card">
                     <div class="card-header">
-                        <h3>@product.Name</h3>
+                            <h3>@productosInv.NombreDelProducto</h3>
                         <div class="card-actions">
-                            <button class="button button-icon" @onclick="() => ToggleProductEdit(product.Id)">
+                                <button class="button button-icon" @onclick="() => ToggleProductEdit(productosInv.Id)">
                                 <span class="icon edit-icon">✎</span>
                             </button>
-                            <button class="button button-icon" @onclick="() => HandleDelete(product.Id)">
+                                <button class="button button-icon" @onclick="() => HandleDelete(productosInv.Id)">
                                 <span class="icon delete-icon">🗑</span>
                             </button>
                         </div>
                     </div>
                     <div class="card-content">
                         <div class="product-image">
-                            <img src="@product.Image" alt="@product.Name" />
+                                <img src="@productosInv.ImagenDelProducto" alt="@productosInv.ImagenDelProducto" />
                         </div>
-                        @if (product.IsEditing)
+                        @if (IsEditing)
                         {
-                            <EditForm Model="@product" OnValidSubmit="() => ToggleProductEdit(product.Id)">
+                                <EditForm Model="@productosInv" OnValidSubmit="() => ToggleProductEdit(productosInv.Id)">
                                 <DataAnnotationsValidator />
                                 <div class="form-group">
-                                    <label for="@($"name-{product.Id}")">Nombre</label>
-                                    <InputText id="@($"name-{product.Id}")" @bind-Value="product.Name" />
+                                        <label for="@($"name-{productosInv.Id}")">Nombre</label>
+                                        <InputText id="@($"name-{productosInv.Id}")" @bind-Value="productosInv.NombreDelProducto" />
                                 </div>
                                 <div class="form-group">
-                                   
-                                    <label for="@($"price-{product.Id}")">Precio</label>
-                                    <InputNumber id="@($"price-{product.Id}")" @bind-Value="product.Price" />
+
+                                 <label for="@($"price-{productosInv.Id}")">Precio</label>
+                                 <InputNumber id="@($"price-{productosInv.Id}")" @bind-Value="productosInv.PrecioDelProducto" />
 
                                 </div>
                                 <div class="form-group">
-                                  <label for="@($"quantity-{product.Id}")">Cantidad</label>
-                                 <InputNumber id="@($"quantity-{product.Id}")" @bind-Value="product.Quantity" />
+                                        <label for="@($"quantity-{productosInv.Id}")">Cantidad</label>
+                                        <InputNumber id="@($"quantity-{productosInv.Id}")" @bind-Value="productosInv.CantidadEnElInventario" />
 
                                 </div>
                                 <div class="form-group">
-                                    <label for="@($"image-{product.Id}")">URL de la imagen</label>
-                                    <InputNumber id="@($"image-{product.Id}")" @bind-Value="product.Image" />
+                                        <label for="@($"image-{productosInv.Id}")">URL de la imagen</label>
+                                        <InputNumber id="@($"image-{productosInv.Id}")" @bind-Value="productosInv.ImagenDelProducto" />
                                 </div>
                                 <div class="form-actions">
-                                    <button type="button" class="button button-secondary" @onclick="() => ToggleProductEdit(product.Id)">Cancelar</button>
+                                        <button type="button" class="button button-secondary" @onclick="() => ToggleProductEdit(productosInv.Id)">Cancelar</button>
                                     <button type="submit" class="button button-primary">Guardar</button>
                                 </div>
                             </EditForm>
                         }
                         else
                         {
-                            <p class="product-name">@product.Name</p>
-                            <p class="product-price">Precio: $@product.Price.ToString("F2")</p>
-                            <p class="product-quantity">Cantidad: @product.Quantity</p>
+                                <p class="product-name">@productosInv.NombreDelProducto</p>
+                                <p class="product-price">Precio: $@(productosInv.PrecioDelProducto?.ToString("F2") ?? "0.00")</p>
+                                <p class="product-quantity">Cantidad: @productosInv.CantidadEnElInventario</p>
                         }
                     </div>
                 </div>
@@ -89,15 +91,15 @@
         <div class="modal-overlay">
             <div class="modal">
                 <h2>Agregar Nuevo Producto</h2>
-                <EditForm Model="@newProduct" OnValidSubmit="HandleAddProduct">
+                <EditForm Model="insertproductosInv" OnValidSubmit="HandleAddProduct">
                     <DataAnnotationsValidator />
                     <div class="form-group">
                         <label for="new-product-name">Nombre</label>
-                        <InputText id="new-product-name" @bind-Value="newProduct.Name" />
+                        <InputText id="new-product-name" @bind-Value="insertproductosInv." />
                     </div>
                     <div class="form-group">
                         <label for="new-product-price">Precio</label>
-                        <InputNumber id="new-product-price" @bind-Value="newProduct.Price" />
+                        <InputNumber id="new-product-price" @bind-Value="insertproductosInv." />
                     </div>
                     <div class="form-group">
                         <label for="new-product-quantity">Cantidad</label>
@@ -118,6 +120,8 @@
 </div>
 
 @code {
+    private List<VwInventarioEstablecimiento> productosInv = new List<VwInventarioEstablecimiento>();
+    private InsertInventario insertproductosInv = new InsertInventario();
     private List<Product> products = new List<Product>
     {
         new Product { Id = 1, Name = "Producto 1", Price = 10.99m, Quantity = 100, Image = "/placeholder.svg?height=300&width=300" },
@@ -126,6 +130,8 @@
     };
 
     private bool isAddProductDialogOpen = false;
+    private bool IsEditing = false;
+
     private Product newProduct = new Product();
 
     private void ToggleProductEdit(int id)
