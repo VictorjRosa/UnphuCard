@@ -1,5 +1,178 @@
-﻿<h3>Inventario</h3>
+﻿@page "/inventario"
+@inject NavigationManager NavigationManager
+@using System.ComponentModel.DataAnnotations
+
+<div class="inventory-management">
+    <header>
+        <h1>Gestión de Inventario</h1>
+    </header>
+
+    <main>
+        <div class="actions">
+            <button class="button button-ghost" @onclick="GoBack">
+                <span class="icon">←</span> Volver al menú principal
+            </button>
+            <button class="button button-primary" @onclick="() => isAddProductDialogOpen = true">
+                <span class="icon">+</span> Agregar Nuevo Producto
+            </button>
+        </div>
+
+        <div class="product-grid">
+            @if(products != null)
+            {
+            @foreach (var product in products)
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h3>@product.Name</h3>
+                        <div class="card-actions">
+                            <button class="button button-icon" @onclick="() => ToggleProductEdit(product.Id)">
+                                <span class="icon edit-icon">✎</span>
+                            </button>
+                            <button class="button button-icon" @onclick="() => HandleDelete(product.Id)">
+                                <span class="icon delete-icon">🗑</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="product-image">
+                            <img src="@product.Image" alt="@product.Name" />
+                        </div>
+                        @if (product.IsEditing)
+                        {
+                            <EditForm Model="@product" OnValidSubmit="() => ToggleProductEdit(product.Id)">
+                                <DataAnnotationsValidator />
+                                <div class="form-group">
+                                    <label for="@($"name-{product.Id}")">Nombre</label>
+                                    <InputText id="@($"name-{product.Id}")" @bind-Value="product.Name" />
+                                </div>
+                                <div class="form-group">
+                                   
+                                    <label for="@($"price-{product.Id}")">Precio</label>
+                                    <InputNumber id="@($"price-{product.Id}")" @bind-Value="product.Price" />
+
+                                </div>
+                                <div class="form-group">
+                                  <label for="@($"quantity-{product.Id}")">Cantidad</label>
+                                 <InputNumber id="@($"quantity-{product.Id}")" @bind-Value="product.Quantity" />
+
+                                </div>
+                                <div class="form-group">
+                                    <label for="@($"image-{product.Id}")">URL de la imagen</label>
+                                    <InputNumber id="@($"image-{product.Id}")" @bind-Value="product.Image" />
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="button button-secondary" @onclick="() => ToggleProductEdit(product.Id)">Cancelar</button>
+                                    <button type="submit" class="button button-primary">Guardar</button>
+                                </div>
+                            </EditForm>
+                        }
+                        else
+                        {
+                            <p class="product-name">@product.Name</p>
+                            <p class="product-price">Precio: $@product.Price.ToString("F2")</p>
+                            <p class="product-quantity">Cantidad: @product.Quantity</p>
+                        }
+                    </div>
+                </div>
+            }
+            }
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 UNPHU - Plataforma de Compra. Todos los derechos reservados.</p>
+    </footer>
+
+    @if (isAddProductDialogOpen)
+    {
+        <div class="modal-overlay">
+            <div class="modal">
+                <h2>Agregar Nuevo Producto</h2>
+                <EditForm Model="@newProduct" OnValidSubmit="HandleAddProduct">
+                    <DataAnnotationsValidator />
+                    <div class="form-group">
+                        <label for="new-product-name">Nombre</label>
+                        <InputText id="new-product-name" @bind-Value="newProduct.Name" />
+                    </div>
+                    <div class="form-group">
+                        <label for="new-product-price">Precio</label>
+                        <InputNumber id="new-product-price" @bind-Value="newProduct.Price" />
+                    </div>
+                    <div class="form-group">
+                        <label for="new-product-quantity">Cantidad</label>
+                        <InputNumber id="new-product-quantity" @bind-Value="newProduct.Quantity" />
+                    </div>
+                    <div class="form-group">
+                        <label for="new-product-image">Imagen URL</label>
+                        <InputText id="new-product-image" @bind-Value="newProduct.Image" />
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="button button-secondary" @onclick="() => isAddProductDialogOpen = false">Cancelar</button>
+                        <button type="submit" class="button button-primary">Agregar Producto</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    }
+</div>
 
 @code {
+    private List<Product> products = new List<Product>
+    {
+        new Product { Id = 1, Name = "Producto 1", Price = 10.99m, Quantity = 100, Image = "/placeholder.svg?height=300&width=300" },
+        new Product { Id = 2, Name = "Producto 2", Price = 15.99m, Quantity = 50, Image = "/placeholder.svg?height=300&width=300" },
+        new Product { Id = 3, Name = "Producto 3", Price = 20.99m, Quantity = 75, Image = "/placeholder.svg?height=300&width=300" },
+    };
 
+    private bool isAddProductDialogOpen = false;
+    private Product newProduct = new Product();
+
+    private void ToggleProductEdit(int id)
+    {
+        var product = products.FirstOrDefault(p => p.Id == id);
+        if (product != null)
+        {
+            product.IsEditing = !product.IsEditing;
+        }
+    }
+
+    private void HandleDelete(int id)
+    {
+        products.RemoveAll(p => p.Id == id);
+    }
+
+    private void HandleAddProduct()
+    {
+        int newId = products.Max(p => p.Id) + 1;
+        newProduct.Id = newId;
+        newProduct.Image = string.IsNullOrEmpty(newProduct.Image) ? "/placeholder.svg?height=300&width=300" : newProduct.Image;
+        products.Add(newProduct);
+        newProduct = new Product();
+        isAddProductDialogOpen = false;
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/menu-principal");
+    }
+
+    public class Product
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "El nombre es requerido")]
+        public string Name { get; set; }
+
+        [Required(ErrorMessage = "El precio es requerido")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El precio debe ser mayor que 0")]
+        public decimal Price { get; set; }
+
+        [Required(ErrorMessage = "La cantidad es requerida")]
+        [Range(0, int.MaxValue, ErrorMessage = "La cantidad debe ser un número positivo")]
+        public int Quantity { get; set; }
+
+        public string Image { get; set; }
+        public bool IsEditing { get; set; }
+    }
 }

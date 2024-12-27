@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.JSInterop;
 using System.Text.Json;
+using static UnphuCard_PagosFront.Data.CartService;
 
 namespace UnphuCard_PagosFront.Data
 {
@@ -27,7 +28,10 @@ namespace UnphuCard_PagosFront.Data
                 cart.AddRange(items);
             }
         }
-
+        public void ClearCart()
+        {
+            cart.Clear();
+        }
         public class CartItem : VwProducto
         {
             public int Quantity { get; set; }

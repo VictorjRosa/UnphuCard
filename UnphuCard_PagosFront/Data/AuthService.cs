@@ -92,30 +92,20 @@ namespace UnphuCard_PagosFront.Data
             await _localStorage.RemoveItemAsync("authToken");
         }
 
-       
+
         public async Task<int?> GetEstIdByUserIdAsync(int userId)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/MostrarNombreEst/{userId}");
+                var result = await _httpClient.GetFromJsonAsync<Dictionary<string, object>>($"api/MostrarNombreEst/{userId}");
 
-                if (response.IsSuccessStatusCode)
+                if (result != null && result.ContainsKey("estId") && int.TryParse(result["estId"]?.ToString(), out int estId))
                 {
-                    var result = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
-
-                    if (result != null && result.ContainsKey("estId") && int.TryParse(result["estId"]?.ToString(), out int estId))
-                    {
-                        return estId; // Retorna el valor de estId como entero
-                    }
-                    else
-                    {
-                        Console.WriteLine("La respuesta no contiene 'estId' válido.");
-                        return null;
-                    }
+                    return estId;
                 }
                 else
                 {
-                    Console.WriteLine($"Error al obtener EstId: {response.ReasonPhrase}");
+                    Console.WriteLine("La respuesta no contiene 'estId' válido.");
                     return null;
                 }
             }
@@ -123,6 +113,22 @@ namespace UnphuCard_PagosFront.Data
             {
                 Console.WriteLine($"Error en GetEstIdByUserIdAsync: {ex.Message}");
                 return null;
+            }
+        }
+
+
+        public async Task<Usuario> GetStudentInfoAsync(int id)
+        {
+            var response = await _httpClient.GetAsync($"api/MostrarUsuario/{id}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<Usuario>();
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                throw new ApplicationException($"Error al obtener información del estudiante: {errorMessage}");
             }
         }
 

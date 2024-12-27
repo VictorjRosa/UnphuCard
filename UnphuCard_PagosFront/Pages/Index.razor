@@ -1,9 +1,11 @@
 ﻿@page "/index"
+@using Blazored.SessionStorage
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 @layout TLayout
 @inject SesionService Sesion 
 @inject AuthService AuthService
+@inject Blazored.SessionStorage.ISessionStorageService SessionStorageService
 
 <div class="min-h-screen bg-gray-50 flex flex-col">
 
@@ -40,7 +42,7 @@
 
     }
 
- 
+
     private async Task HandleSaleClick()
     {
         int userId = await AuthService.GetUserIdFromTokenAsync();
@@ -52,6 +54,8 @@
             Console.WriteLine("No se pudo obtener el EstId del establecimiento.");
             return;
         }
+
+        await SessionStorageService.SetItemAsync("EstId", estId.Value);
 
         var success = await Sesion.RegistrarSesionAsync(estId.Value);
 

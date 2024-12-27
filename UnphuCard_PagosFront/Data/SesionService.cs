@@ -24,17 +24,28 @@ namespace UnphuCard_PagosFront.Data
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<int?>($"api/CheckUserSession?sessionNumber={sessionNumber}");
-                return response;
+                var response = await _httpClient.GetAsync($"api/CheckUserSession?sessionNumber={sessionNumber}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<int?>();
+                    return result;
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error en la respuesta: {error}");
+                    return null;
+                }
             }
-            catch (HttpRequestException)
+            catch (HttpRequestException ex)
             {
+                Console.WriteLine($"Error al realizar la solicitud: {ex.Message}");
                 return null;
             }
-
         }
 
-
+     
         public async Task<bool> RegistrarSesionAsync(int estId)
         {
             try
@@ -45,13 +56,13 @@ namespace UnphuCard_PagosFront.Data
                 {
                     var result = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
 
-                    if (result != null && result.ContainsKey("SesionToken"))
+                    if (result != null && result.ContainsKey("sesionToken"))
                     {
-                        string sesionToken = result["SesionToken"]?.ToString();
+                        string sesionToken = result["sesionToken"]?.ToString();
 
                         if (!string.IsNullOrEmpty(sesionToken))
-                        {
-                            await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", "SesionToken", sesionToken);
+                         {
+                            await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", "sesionToken", sesionToken);
                             return true;
                         }
                     }
@@ -72,6 +83,30 @@ namespace UnphuCard_PagosFront.Data
             }
         }
 
-    
+        public async Task<int?> ObtenerSesionPorTokenAsync(string token)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/MostrarSesion/{token}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var sesionId = await response.Content.ReadFromJsonAsync<int>();
+                    return sesionId;
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error al obtener la sesión: {error}");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error inesperado: {ex.Message}");
+                return null;
+            }
+        }
+
+
     }
 }

@@ -3,9 +3,13 @@
 @inject IJSRuntime JSRuntime
 @inject HttpClient Http
 @using UnphuCard_Api.Models
+@using UnphuCard_Api.DTOS
 @inject CartService CartService
 @inject SesionService Sesion
-
+@inject AuthService AuthService
+@inject CompraService Compra
+@inject SesionService Sesion
+@inject Blazored.SessionStorage.ISessionStorageService SessionStorageService
 
 <div class="min-h-screen bg-gray-50 flex flex-col">
     <header class="bg-green-700 text-white p-4 flex justify-between items-center">
@@ -32,7 +36,7 @@
                                 <p class="text-sm text-gray-600">Cantidad: @item.Quantity</p>
                             </div>
                         </div>
-        <p class="font-semibold">$@((item.PrecioDelProducto.GetValueOrDefault() * item.Quantity).ToString("F2"))</p>
+               <p class="font-semibold">$@((item.PrecioDelProducto.GetValueOrDefault() * item.Quantity).ToString("F2"))</p>
 
                     </div>
                 }
@@ -43,31 +47,34 @@
             </div>
             <div class="card-footer flex flex-col items-stretch">
                 <h3 class="text-lg font-semibold mb-2">Método de Pago</h3>
+                <InputRadioGroup @bind-Value="selectedPaymentMethod" name="metodoPago">
 
-                @foreach (var metodo in MetodosPago)
-                {
-                    if (metodo.MetPagId != 5)
+                    @foreach (var metodo in MetodosPago)
                     {
-                        <div class="flex items-center space-x-2">
-                            <input type="radio" name="paymentMethod" @bind-value="@selectedPaymentMethod" id="@metodo.MetPagId" />
-                            <label for="@metodo.MetPagId" class="flex items-center space-x-2">
-                                @if (metodo.MetPagId == 1)
-                                {
-                                    <span class="mr-2">💳</span>
-                                }
-                                else if (metodo.MetPagId == 2)
-                                {
-                                    <span class="mr-2">👛</span>
-                                }
-                                else if (metodo.MetPagId == 3)
-                                {
-                                    <span class="mr-2">💵</span>
-                                }
-                                @metodo.MetPagDescripcion
-                            </label>
-                        </div>
+                        if (metodo.MetPagId != 5)
+                        {
+                            <div class="flex items-center space-x-2">
+                                <InputRadio TValue="int" value="@metodo.MetPagId" id="@metodo.MetPagId" />
+                                <label for="@metodo.MetPagId" class="flex items-center space-x-2">
+                                    @if (metodo.MetPagId == 1)
+                                    {
+                                        <span class="mr-2">💳</span>
+                                    }
+                                    else if (metodo.MetPagId == 2)
+                                    {
+                                        <span class="mr-2">👛</span>
+                                    }
+                                    else if (metodo.MetPagId == 3)
+                                    {
+                                        <span class="mr-2">💵</span>
+                                    }
+                                    @metodo.MetPagDescripcion
+                                </label>
+                            </div>
+                        }
                     }
-                }
+                </InputRadioGroup>
+                
                 <button class="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded" @onclick="HandleCheckout">
                     Iniciar Pago
                 </button>
@@ -105,6 +112,27 @@
                     @if (scanResult == "scanning")
                     {
                         <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-green-600"></div>
+                        <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="spinnerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2E7D32;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#2E7D32;stop-opacity:0.3"/>
+    </linearGradient>
+  </defs>
+
+  <g class="spinner">
+    <circle 
+      cx="50" 
+      cy="50" 
+      r="40" 
+      fill="none" 
+      stroke="url(#spinnerGradient)" 
+      stroke-width="8" 
+      stroke-linecap="round"
+      stroke-dasharray="180 100"
+    />
+  </g>
+</svg>
                         <p class="mt-4 text-center text-gray-600">
                             Por favor, escanee el código QR con su UnphuCard para completar el pago.
                         </p>
@@ -143,14 +171,16 @@
                             Saldo insuficiente. Por favor, recargue su UnphuCard e intente nuevamente.
                         </p>
                     }
+                   
                 </div>
-                @if (scanResult == "error" || scanResult == "payment_success" || scanResult == "insufficient_funds")
+               @*  @if (scanResult == "error" || errorMessage == "Saldo insuficiente." || errorMessage == "Transacción exitosa.")
                 {
                     <button @onclick="CloseDialog" class="w-full bg-gray-200 text-gray-800 p-2 rounded">
                         Cerrar
                     </button>
-                }
+                } *@
             </div>
+            <button class="absolute top-2 right-2 text-gray-500" @onclick="CloseDialog">&times;</button>
         </div>
     }
 </div>
@@ -158,22 +188,21 @@
 @code {
 
     private List<MetodoPago> MetodosPago { get; set; } = new List<MetodoPago>();
-    private string paymentMethod = "unphucard";
     private bool isScanning = false;
     private string scanResult = null;
+    private string errorMessage = null;
+
     private int userId;
+    private int usercodigo;
+
     private string userName = "";
     private int selectedPaymentMethod = 0;
     private bool userIdFound = false;
+    private InsertCompra compra = new InsertCompra();
 
     private void GoBack()
     {
         NavigationManager.NavigateTo("/compras");
-    }
-
-    private void SetPaymentMethod(string method)
-    {
-        paymentMethod = method;
     }
 
     private async Task HandleCheckout()
@@ -181,27 +210,38 @@
         if (selectedPaymentMethod == 1)
         {
             isScanning = true;
+            scanResult = "scanning";
+
             await CheckUserSessionAsync();
 
-            scanResult = "scanning";
-            userName = "";
-            await Task.Delay(new Random().Next(2000, 7000));
-            if (new Random().NextDouble() > 0.3)
+            if (userIdFound)
             {
-                scanResult = "success";
-                userName = "Juan Pérez";
+                var usuario = await AuthService.GetStudentInfoAsync(userId);
+
+                if (usuario != null)
+                {
+                    userName = $"{usuario.UsuNombre} {usuario.UsuApellido}";
+                    usercodigo = usuario.UsuCodigo;
+                    scanResult = "success";
+                }
+                else
+                {
+                    scanResult = "error";
+                }
             }
             else
             {
                 scanResult = "error";
             }
+
             StateHasChanged();
         }
         else
         {
-            await JSRuntime.InvokeVoidAsync("console.log", "Procesando pago con:", paymentMethod);
+            await JSRuntime.InvokeVoidAsync("console.log", "Procesando pago con:");
         }
     }
+
     private async Task CheckUserSessionAsync()
     {
         while (!userIdFound)
@@ -214,14 +254,13 @@
             }
         }
         StateHasChanged(); 
-        await JSRuntime.InvokeVoidAsync("alert", "¡Usuario encontrado, puede proceder con el pago!");
     }
 
     private async Task<bool> CheckSessionForUserIdAsync()
     {
         try
         {
-            var sesionToken = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "SesionToken");
+            var sesionToken = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "sesionToken");
             if (string.IsNullOrEmpty(sesionToken))
             {
                 Console.WriteLine("No se encontró el token de sesión.");
@@ -230,11 +269,9 @@
 
             var response = await Sesion.SesionUser(sesionToken);
 
-            // Si el valor de respuesta no es null, significa que se encontró el userId
             if (response.HasValue)
             {
                 userIdFound = true;
-                // Almacenar el userId si es necesario
                 userId = response.Value;
             }
 
@@ -253,12 +290,71 @@
         }
     }
 
+
     private async Task HandleConfirmPayment()
     {
-        scanResult = "payment_success";
-        await Task.Delay(3000);
-        NavigationManager.NavigateTo("/menu-principal");
+        try
+        {
+            var sesionToken = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "sesionToken");
+            int? sesionid = await Sesion.ObtenerSesionPorTokenAsync(sesionToken);
+
+            compra.MetPagId = selectedPaymentMethod;
+            compra.SesionId = sesionid;
+            compra.EstId = await SessionStorageService.GetItemAsync<int>("EstId");
+            compra.UsuCodigo = usercodigo;
+            compra.CompMonto = CartService.GetTotal();
+            errorMessage = null;
+
+            foreach (var item in CartService.GetCartItems())
+            {
+                var detalleCompra = new InsertDetalleCompra
+                    {
+                        DetCompCantidad = item.Quantity,
+                        DetCompPrecio = item.PrecioDelProducto.GetValueOrDefault() * item.Quantity,
+                        ProdId = item.IdDelProducto,
+                        SesionId = sesionid
+                    };
+
+                var detalleResponse = await Compra.RegistrarDetalleCompra(detalleCompra);
+                if (!detalleResponse)
+                {
+                    throw new ApplicationException($"Error al registrar el producto: {item.NombreDelProducto}");
+                }
+            }
+
+            var result2 = await Compra.Pagar(compra);
+            if (!result2)
+            {
+                throw new ApplicationException("Error al procesar el pago.");
+            }
+
+
+            scanResult = "payment_success";
+            StateHasChanged();
+
+            await Task.Delay(3000);
+
+            CartService.ClearCartAsync();
+            NavigationManager.NavigateTo("/index");
+        }
+        catch (ApplicationException ex)
+        {
+            errorMessage = ex.Message;
+
+            if(errorMessage == "Saldo insuficiente.")
+            {
+                scanResult = "insufficient_funds";
+
+            }
+         
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An unexpected error occurred.";
+            Console.WriteLine(ex.Message);
+        }
     }
+
 
     private void CloseDialog()
     {
@@ -283,6 +379,7 @@
         }
 
     }
+   
 
 
     
