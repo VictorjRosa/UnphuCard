@@ -24,7 +24,10 @@
                         <option value="Tarjeta de Crédito o Débito">Tarjeta de Crédito/Débito</option>
                         <option value="PayPal">PayPal</option>
                     </select>
-                    <input type="date" @bind="SelectedDate" @bind:event="oninput" class="w-[180px] border rounded-md" />
+                        <input type="date" @bind="SelectedDate" class="w-[180px] border rounded-md" />
+                    <button @onclick="FiltroFecha" class="px-4 py-2 border rounded-md flex items-center">
+                        <span class="mr-2">↓</span> Buscar
+                    </button>
                     <button @onclick="OpenExportDialog" class="px-4 py-2 border rounded-md flex items-center">
                         <span class="mr-2">↓</span> Exportar
                     </button>
@@ -107,6 +110,7 @@
     private DateTime? ExportEndDate { get; set; }
     private bool IsExportDialogOpen { get; set; } = false;
     private bool IsFiltered { get; set; } = false;
+    private string metodoSeleccionado { get; set; } = "all";
 
     protected override async Task OnInitializedAsync()
     {
@@ -117,22 +121,107 @@
     private async Task FilterTransactions(ChangeEventArgs e)
     {
         var selectedMethod = e.Value?.ToString();
+        metodoSeleccionado = selectedMethod;
         var userId = await authService.GetUserIdFromTokenAsync();
-        if (string.IsNullOrEmpty(selectedMethod) || selectedMethod == "all")
+        if (SelectedDate.HasValue)
         {
-            AllTransactions = await historialRecarga.GetHistorialRecargaAsync(userId);
-        }
-        else
-        {
-            if (selectedMethod != null)
+            if (string.IsNullOrEmpty(selectedMethod) || selectedMethod == "all")
             {
-                FilteredTransactions = await historialRecarga.GetHistorialRecargaAsync(userId, selectedMethod ?? "");
+                FilteredTransactions = AllTransactions
+                    .Where(t => t.Fecha.HasValue && t.Fecha.Value.Date == SelectedDate.Value.Date)
+                    .ToList();
                 IsFiltered = true;
             }
             else
             {
-                Console.WriteLine("Error: El valor del método de pago no es válido.");
-                FilteredTransactions = new List<VwRecarga>();
+                if (selectedMethod != null)
+                {
+                    FilteredTransactions = AllTransactions
+                    .Where(t => t.Fecha.HasValue && t.Fecha.Value.Date == SelectedDate.Value.Date && t.MétodoDePago == selectedMethod && t.IdDelUsuario == userId)
+                    .ToList();
+                    IsFiltered = true;
+                }
+                else
+                {
+                    Console.WriteLine("Error: El valor del método de pago no es válido.");
+                    FilteredTransactions = new List<VwRecarga>();
+                }
+            }
+        }
+        else
+        {
+            if (string.IsNullOrEmpty(selectedMethod) || selectedMethod == "all")
+            {
+                AllTransactions = await historialRecarga.GetHistorialRecargaAsync(userId);
+                IsFiltered = false;
+            }
+            else
+            {
+                if (selectedMethod != null)
+                {
+                    FilteredTransactions = AllTransactions
+                    .Where(t => t.MétodoDePago == selectedMethod && t.IdDelUsuario == userId)
+                    .ToList();
+                    IsFiltered = true;
+                }
+                else
+                {
+                    Console.WriteLine("Error: El valor del método de pago no es válido.");
+                    FilteredTransactions = new List<VwRecarga>();
+                }
+            }
+        }
+    }
+
+    private async Task FiltroFecha()
+    {
+        var userId = await authService.GetUserIdFromTokenAsync();
+        if (SelectedDate.HasValue)
+        {
+            if (string.IsNullOrEmpty(metodoSeleccionado) || metodoSeleccionado == "all")
+            {
+                FilteredTransactions = AllTransactions
+                    .Where(t => t.Fecha.HasValue && t.Fecha.Value.Date == SelectedDate.Value.Date)
+                    .ToList();
+                IsFiltered = true;
+            }
+            else
+            {
+                if (metodoSeleccionado != null)
+                {
+                    FilteredTransactions = AllTransactions
+                    .Where(t => t.Fecha.HasValue && t.Fecha.Value.Date == SelectedDate.Value.Date && t.MétodoDePago == metodoSeleccionado && t.IdDelUsuario == userId)
+                    .ToList();
+                    IsFiltered = true;
+                }
+                else
+                {
+                    Console.WriteLine("Error: El valor del método de pago no es válido.");
+                    FilteredTransactions = new List<VwRecarga>();
+                }
+            }
+        }
+        else
+        {
+            if (string.IsNullOrEmpty(metodoSeleccionado) || metodoSeleccionado == "all")
+            {
+                AllTransactions = await historialRecarga.GetHistorialRecargaAsync(userId);
+                IsFiltered = false;
+            }
+            else
+            {
+                if (metodoSeleccionado != null)
+                {
+                    FilteredTransactions = AllTransactions
+                    .Where(t => t.MétodoDePago == metodoSeleccionado && t.IdDelUsuario == userId)
+                    .ToList();
+                    IsFiltered = true;
+                }
+                else
+                {
+                    Console.WriteLine("Error: El valor del método de pago no es válido.");
+                    FilteredTransactions = new List<VwRecarga>();
+                }
             }
         }
     }
@@ -173,13 +262,5 @@
     {
         return amount.ToString("C", new System.Globalization.CultureInfo("es-DO"));
     }
-    }
-
-    public class Transaction
-    {
-    public string Id { get; set; }
-    public DateTime Date { get; set; }
-    public decimal Amount { get; set; }
-    public string PaymentMethod { get; set; }
     }
 }
