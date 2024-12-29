@@ -14,7 +14,7 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LocalStorage>();
 builder.Services.AddScoped<Pago>();
-
+builder.Services.AddScoped<HistorialRecarga>();
 builder.Services.AddScoped<UsuarioService>();
 
 builder.Services.AddBlazoredLocalStorage(); 
