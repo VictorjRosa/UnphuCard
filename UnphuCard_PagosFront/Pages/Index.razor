@@ -28,34 +28,43 @@
 
 @code {
     private string establishmentName = "";
-    private int estId = 0;
+    private int? estId = null; 
 
     protected override async Task OnInitializedAsync()
     {
-        establishmentName = "Tienda UNPHU";
-        await Task.CompletedTask;
-    }
-
-    private void HandleInventoryClick()
-    {
-        NavigationManager.NavigateTo("/inventario");
-
-    }
-
-
-    private async Task HandleSaleClick()
-    {
         int userId = await AuthService.GetUserIdFromTokenAsync();
 
-        var estId = await AuthService.GetEstIdByUserIdAsync(userId);
+        var estIdResult = await AuthService.GetEstIdByUserIdAsync(userId);
 
-        if (!estId.HasValue)
+        if (!estIdResult.HasValue)
         {
             Console.WriteLine("No se pudo obtener el EstId del establecimiento.");
             return;
         }
 
-        await SessionStorageService.SetItemAsync("EstId", estId.Value);
+        estId = estIdResult.Value; 
+        establishmentName = "Tienda UNPHU";
+    }
+
+    private void HandleInventoryClick()
+    {
+       
+        if (estId.HasValue)
+        {
+            NavigationManager.NavigateTo($"/inventario?estId={estId}");
+        }
+        else
+        {
+            Console.WriteLine("El EstId no está disponible.");
+        }
+    }
+
+    private async Task HandleSaleClick()
+    {
+        if (!estId.HasValue)
+        {
+            return;
+        }
 
         var success = await Sesion.RegistrarSesionAsync(estId.Value);
 
@@ -68,6 +77,7 @@
             Console.WriteLine("Hubo un error al registrar la sesión.");
         }
     }
+
 
 
 }

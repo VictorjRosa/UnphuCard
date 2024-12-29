@@ -20,10 +20,22 @@ public class InventarioService
         return response ?? new List<VwInventarioEstablecimiento>();
     }
 
-    public async Task<bool?> RegistrarInventario(InsertInventario insertInventario)
+    public async Task<bool> RegistrarInventarioConImagen(InsertInventario insertInventario, Stream fileStream, string fileName)
     {
-        
-            var response = await _httpClient.PostAsJsonAsync("api/Registrarinventario", insertInventario);
+        try
+        {
+            using var content = new MultipartFormDataContent();
+
+            content.Add(new StringContent(insertInventario.ProdDescripcion ?? string.Empty), "ProdDescripcion");
+            content.Add(new StringContent(insertInventario.ProdPrecio?.ToString() ?? "0"), "ProdPrecio");
+            content.Add(new StringContent(insertInventario.InvCantidad?.ToString() ?? "0"), "InvCantidad");
+            content.Add(new StringContent(insertInventario.EstId?.ToString() ?? "0"), "EstId");
+            content.Add(new StringContent(insertInventario.StatusId?.ToString() ?? "0"), "StatusId");
+            content.Add(new StringContent(insertInventario.CatProdId?.ToString() ?? "0"), "CatProdId");
+
+            content.Add(new StreamContent(fileStream), "foto", fileName);
+
+            var response = await _httpClient.PostAsync("api/Registrarinventario", content);
 
             if (response.IsSuccessStatusCode)
             {
@@ -34,7 +46,13 @@ public class InventarioService
                 var errorMessage = await response.Content.ReadAsStringAsync();
                 throw new ApplicationException(errorMessage);
             }
-   
+        }
+        catch (Exception ex)
+        {
+            throw new ApplicationException($"Error al registrar el inventario: {ex.Message}");
+        }
     }
+
+
 }
 
