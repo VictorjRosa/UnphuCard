@@ -2,6 +2,7 @@
 @using UnphuCard_Api.Models
 @inject NavigationManager NavigationManager
 @inject HistorialRecarga historialRecarga
+@inject AuthService authService
 
 <div class="min-h-screen bg-gray-100 flex flex-col">
     <header class="bg-green-600 text-white px-4 py-3 flex justify-between items-center">
@@ -17,12 +18,11 @@
             <div class="flex flex-row items-center justify-between p-6 border-b">
                 <h2 class="text-2xl font-bold text-gray-800">Historial de Recargas</h2>
                 <div class="flex space-x-2">
-                    <select @onchange="HandleMethodChange" class="w-[180px] border rounded-md">
+                    <select @onchange="FilterTransactions" class="w-[180px] border rounded-md">
                         <option value="all">Todos los métodos</option>
-                        <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
-                        <option value="Tarjeta de Débito">Tarjeta de Débito</option>
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Tarjeta de Crédito o Débito">Tarjeta de Crédito/Débito</option>
                         <option value="PayPal">PayPal</option>
-                        <option value="Google Pay">Google Pay</option>
                     </select>
                     <input type="date" @bind="SelectedDate" @bind:event="oninput" class="w-[180px] border rounded-md" />
                     <button @onclick="OpenExportDialog" class="px-4 py-2 border rounded-md flex items-center">
@@ -41,14 +41,30 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var transaction in AllTransactions)
+                        @if (!IsFiltered)
                         {
-                            <tr>
-                                <td>@FormatDate(transaction.Fecha ?? DateTime.Today)</td>
-                                <td>Recarga tarjeta</td>
-                                <td>@transaction.MétodoDePago</td>
-                                <td class="text-right font-medium">@FormatAmount(transaction.Monto ?? 0)</td>
-                            </tr>
+                            @foreach (var transaction in AllTransactions)
+                            {
+                                <tr>
+                                    <td>@FormatDate(transaction.Fecha ?? DateTime.Today)</td>
+                                    <td>Recarga tarjeta</td>
+                                    <td>@transaction.MétodoDePago</td>
+                                    <td class="text-right font-medium">@FormatAmount(transaction.Monto ?? 0)</td>
+                                </tr>
+                            }                            
+                        }
+                        else
+                        {
+                            @foreach (var transaction in FilteredTransactions)
+                            {
+                                <tr>
+                                    <td>@FormatDate(transaction.Fecha ?? DateTime.Today)</td>
+                                    <td>Recarga tarjeta</td>
+                                    <td>@transaction.MétodoDePago</td>
+                                    <td class="text-right font-medium">@FormatAmount(transaction.Monto ?? 0)</td>
+                                </tr>
+                            }
+                            IsFiltered = false;
                         }
                     </tbody>
                 </table>
@@ -73,7 +89,7 @@
                     <input type="date" @bind="ExportStartDate" placeholder="Fecha inicial" class="border rounded-md p-2" />
                     <input type="date" @bind="ExportEndDate" placeholder="Fecha final" class="border rounded-md p-2" />
                 </div>
-                <button @onclick="HandleExport" class="bg-green-600 text-white px-4 py-2 rounded-md">Exportar</button>
+                <button @onclick="CloseExportDialog" class="bg-green-600 text-white px-4 py-2 rounded-md">Exportar</button>@*cambiar HandleExport*@
                 <button @onclick="CloseExportDialog" class="border px-4 py-2 rounded-md">Cancelar</button>
             </div>
         </div>
@@ -85,52 +101,45 @@
 
 
     private List<VwRecarga> AllTransactions { get; set; } = new List<VwRecarga>();
-    private List<VwRecarga> Transactions { get; set; } = new List<VwRecarga>();
-    private string SelectedMethod { get; set; } = "all";
+    private List<VwRecarga> FilteredTransactions { get; set; } = new List<VwRecarga>();
     private DateTime? SelectedDate { get; set; }
     private DateTime? ExportStartDate { get; set; }
     private DateTime? ExportEndDate { get; set; }
     private bool IsExportDialogOpen { get; set; } = false;
+    private bool IsFiltered { get; set; } = false;
 
     protected override async Task OnInitializedAsync()
     {
-        AllTransactions = await historialRecarga.GetHistorialRecargaAsync();
-        // AllTransactions = new List<VwRecarga>
-        // {
-        //     new VwRecarga { Id = "1", Date = new DateTime(2023, 5, 15), Amount = 500, PaymentMethod = "Tarjeta de Crédito" },
-        //     new VwRecarga { Id = "2", Date = new DateTime(2023, 5, 18), Amount = 200, PaymentMethod = "PayPal" },
-        //     new VwRecarga { Id = "3", Date = new DateTime(2023, 5, 22), Amount = 300, PaymentMethod = "Tarjeta de Débito" },
-        //     new VwRecarga { Id = "4", Date = new DateTime(2023, 5, 25), Amount = 100, PaymentMethod = "Google Pay" },
-        //     new VwRecarga { Id = "5", Date = new DateTime(2023, 5, 28), Amount = 150, PaymentMethod = "Tarjeta de Crédito" }
-        // };
-
-        // Transactions = new List<VwRecarga>(AllTransactions);
+        var userId = await authService.GetUserIdFromTokenAsync();
+        AllTransactions = await historialRecarga.GetHistorialRecargaAsync(userId);
     }
 
-    private void FilterTransactions()
+    private async Task FilterTransactions(ChangeEventArgs e)
     {
-        Transactions = AllTransactions;
-
-        if (SelectedMethod != "all")
+        var selectedMethod = e.Value?.ToString();
+        var userId = await authService.GetUserIdFromTokenAsync();
+        if (string.IsNullOrEmpty(selectedMethod) || selectedMethod == "all")
         {
-            Transactions = Transactions.Where(t => t.PaymentMethod == SelectedMethod).ToList();
+            AllTransactions = await historialRecarga.GetHistorialRecargaAsync(userId);
         }
-
-        if (SelectedDate.HasValue)
+        else
         {
-            Transactions = Transactions.Where(t => t.Date.Date == SelectedDate.Value.Date).ToList();
+            if (selectedMethod != null)
+            {
+                FilteredTransactions = await historialRecarga.GetHistorialRecargaAsync(userId, selectedMethod ?? "");
+                IsFiltered = true;
+            }
+            else
+            {
+                Console.WriteLine("Error: El valor del método de pago no es válido.");
+                FilteredTransactions = new List<VwRecarga>();
+            }
         }
-    }
-
-    private void HandleMethodChange(ChangeEventArgs e)
-    {
-        SelectedMethod = e.Value.ToString();
-        FilterTransactions();
     }
 
     private void GoBack()
     {
-        NavigationManager.NavigateTo("/dashboard");
+        NavigationManager.NavigateTo("/index");
     }
 
     private void OpenExportDialog()
@@ -143,17 +152,17 @@
         IsExportDialogOpen = false;
     }
 
-    private void HandleExport()
-    {
-        if (ExportStartDate.HasValue && ExportEndDate.HasValue)
-        {
-            var filteredTransactions = Transactions.Where(t =>
-                t.Date >= ExportStartDate.Value && t.Date <= ExportEndDate.Value).ToList();
-            Console.WriteLine($"Exporting {filteredTransactions.Count} transactions");
-            // Here you would implement the actual export logic
-        }
-        CloseExportDialog();
-    }
+    // private void HandleExport()
+    // {
+    //     if (ExportStartDate.HasValue && ExportEndDate.HasValue)
+    //     {
+    //         var filteredTransactions = Transactions.Where(t =>
+    //             t.Date >= ExportStartDate.Value && t.Date <= ExportEndDate.Value).ToList();
+    //         Console.WriteLine($"Exporting {filteredTransactions.Count} transactions");
+    //         // Here you would implement the actual export logic
+    //     }
+    //     CloseExportDialog();
+    // }
 
     private string FormatDate(DateTime date)
     {

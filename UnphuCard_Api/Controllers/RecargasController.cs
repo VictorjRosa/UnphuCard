@@ -11,13 +11,13 @@ namespace UnphuCard_Api.Controllers
     {
 
         private readonly UnphuCardContext _context;
-        private readonly CardnetService _cardnetService;
+        //private readonly CardnetService _cardnetService;
         private readonly IServicioEmail _emailService;
 
-        public RecargasController(UnphuCardContext context, CardnetService cardnetService, IServicioEmail emailService)
+        public RecargasController(UnphuCardContext context/*, CardnetService cardnetService*/, IServicioEmail emailService)
         {
             _context = context;
-            _cardnetService = cardnetService;
+            //_cardnetService = cardnetService;
             _emailService = emailService;
         }
 
@@ -34,12 +34,12 @@ namespace UnphuCard_Api.Controllers
 
                 if (request.MetodoPago == 3)
                 {
-                    var resultado = await _cardnetService.ProcesarPagoAsync(request);
+                    //var resultado = await _cardnetService.ProcesarPagoAsync(request);
 
-                    if (string.IsNullOrEmpty(resultado))
-                    {
-                        return BadRequest("El pago con tarjeta no fue exitoso.");
-                    }
+                    //if (string.IsNullOrEmpty(resultado))
+                    //{
+                    //    return BadRequest("El pago con tarjeta no fue exitoso.");
+                    //}
                 }
                 else if (request.MetodoPago == 2)
                 {
@@ -164,12 +164,39 @@ namespace UnphuCard_Api.Controllers
         [HttpGet("api/MostrarRecarga/{id}")]
         public async Task<ActionResult<VwRecarga>> GetRecarga(int id)
         {
-            var recarga = await _context.VwRecargas.FirstOrDefaultAsync(r => r.IdDelUsuario == id);
+            var recarga = await _context.VwRecargas.Where(r => r.IdDelUsuario == id).ToListAsync();
             if (recarga == null)
             {
                 return BadRequest("Recarga no encontrada");
             }
-            return recarga;
+            return Ok(recarga);
+        }
+
+        [HttpGet("api/MostrarRecargaPorMP/{id}/{metodoPago}")]
+        public async Task<ActionResult<VwRecarga>> GetRecargaPorMP(int id, string metodoPago)
+        {
+            if (metodoPago == "all")
+            {
+                var recargaAll = await _context.VwRecargas.Where(r => r.IdDelUsuario == id).ToListAsync();
+                if (recargaAll == null)
+                {
+                    return BadRequest("Recarga no encontrada");
+                }
+                return Ok(recargaAll);
+            }
+            else if(metodoPago != null)
+            {
+                var recargaFiltrada = await _context.VwRecargas.Where(r => r.IdDelUsuario == id && r.MétodoDePago == metodoPago).ToListAsync();
+                if (recargaFiltrada == null)
+                {
+                    return BadRequest("Recarga no encontrada");
+                }
+                return Ok(recargaFiltrada);
+            }
+            else
+            {
+                return BadRequest("Recarga no encontrada");
+            }
         }
 
         public async Task<bool> ActualizarSaldoAsync(int usuarioId, decimal monto)

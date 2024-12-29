@@ -10,10 +10,14 @@ namespace UnphuCard_RecargaFront.Data
         {
             _httpClient = httpClient;
         }
-        public async Task<List<VwRecarga>> GetHistorialRecargaAsync()
+        public async Task<List<VwRecarga>> GetHistorialRecargaAsync(int id)
         {
-            return await _httpClient.GetFromJsonAsync<List<VwRecarga>>("api/MostrarRecargas");
+            return await _httpClient.GetFromJsonAsync<List<VwRecarga>>($"api/MostrarRecarga/{id}");
         }
 
+        public async Task<List<VwRecarga>> GetHistorialRecargaAsync(int id, string metodoPago)
+        {
+            return await _httpClient.GetFromJsonAsync<List<VwRecarga>>($"api/MostrarRecargaPorMP/{id}/{metodoPago}");
+        }
     }
 }
