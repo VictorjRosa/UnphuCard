@@ -84,48 +84,62 @@
         </div>
     </main>
 
-    @if (isAddProductDialogOpen)
-    {
-        <div class="modal-overlay">
-            <div class="modal">
+ 
+</div>
+@if (isAddProductDialogOpen)
+{
+    <div class="modal-backdrop">
+        <div class="modal-content">
+            <header class="modal-header">
                 <h2>Agregar Nuevo Producto</h2>
-                <EditForm Model="insertproductosInv">
+                <button class="close-button" @onclick="() => isAddProductDialogOpen = false">×</button>
+            </header>
+            <main class="modal-body">
+                <EditForm Model="@insertproductosInv" >
                     <DataAnnotationsValidator />
                     <div class="form-group">
-                        <label for="new-product-name">Nombre</label>
-                        <InputText id="new-product-name" @bind-Value="insertproductosInv.ProdDescripcion" />
+                        <label for="nombreProducto">Nombre del Producto</label>
+                        <InputText id="nombreProducto" @bind-Value="insertproductosInv.ProdDescripcion" />
                     </div>
                     <div class="form-group">
-                        <label for="new-product-price">Precio</label>
-                        <InputNumber id="new-product-price" @bind-Value="insertproductosInv.ProdPrecio" />
+                        <label for="precioProducto">Precio</label>
+                        <InputNumber id="precioProducto" @bind-Value="insertproductosInv.ProdPrecio" />
                     </div>
                     <div class="form-group">
-                        <label for="new-product-quantity">Cantidad</label>
-                        <InputNumber id="new-product-quantity" @bind-Value="insertproductosInv.InvCantidad" />
+                        <label for="cantidadProducto">Cantidad</label>
+                        <InputNumber id="cantidadProducto" @bind-Value="insertproductosInv.InvCantidad" />
                     </div>
                     <div class="form-group">
-                        <label for="new-product-image">Imagen del Producto</label>
-                        <InputFile OnChange="HandleImageUpload" />
+                        <label for="imagenProducto">Subir Imagen</label>
+                        <InputFile id="imagenProducto" OnChange="HandleImageUpload" />
+                        @if (!string.IsNullOrEmpty(previewImageUrl))
+                        {
+                            <div class="image-preview">
+                                <img src="@previewImageUrl" alt="Vista previa de la imagen" />
+                            </div>
+                        }
                     </div>
+
                     <div class="form-actions">
                         <button type="button" class="button button-secondary" @onclick="() => isAddProductDialogOpen = false">Cancelar</button>
-                        <button type="submit" class="button button-primary">Agregar Producto</button>
+                        <button @onclick="HandleAddProduct" type="submit" class="button button-primary">Guardar</button>
                     </div>
                 </EditForm>
-            </div>
+            </main>
         </div>
-    }
-</div>
+    </div>
+}
+
 
 @code {
     private List<VwInventarioEstablecimiento> productosInv = new List<VwInventarioEstablecimiento>();
     private InsertInventario insertproductosInv = new InsertInventario();
     private Stream fileStream;
     private string fileName;
+    private string? previewImageUrl; 
 
     [Parameter]
     public int estId { get; set; }
-
     private bool isAddProductDialogOpen = false;
     private bool IsEditing = false;
 
@@ -146,8 +160,6 @@
                 return;
             }
         }
-
-        // Cargar el inventario si el estId es válido
         try
         {
             productosInv = await InventarioService.GetInventarioEstablecimientoAsync(estId);
@@ -162,8 +174,20 @@
     private async Task HandleImageUpload(InputFileChangeEventArgs e)
     {
         var file = e.File;
-        fileStream = file.OpenReadStream(maxAllowedSize: 1048576); 
-        fileName = file.Name;
+
+        if (file.ContentType.StartsWith("image/") && file.Size <= 1048576) // 1 MB máximo
+        {
+            using var memoryStream = new MemoryStream();
+            await file.OpenReadStream(maxAllowedSize: 1048576).CopyToAsync(memoryStream);
+            fileStream = new MemoryStream(memoryStream.ToArray());
+            fileName = file.Name;
+
+            previewImageUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(memoryStream.ToArray())}";
+        }
+        else
+        {
+            Console.WriteLine("Archivo no válido. Solo se permiten imágenes de hasta 1 MB.");
+        }
     }
   
     private void ToggleProductEdit(int id)
@@ -184,20 +208,22 @@
     {
         try
         {
-            if (fileStream != null && !string.IsNullOrEmpty(fileName))
+            if (fileStream != null)
             {
+                // Registrar el producto con la imagen subida
                 var result = await InventarioService.RegistrarInventarioConImagen(insertproductosInv, fileStream, fileName);
                 if (result)
                 {
                     insertproductosInv = new InsertInventario();
                     fileStream = null;
                     fileName = string.Empty;
+                    previewImageUrl = null;
                     isAddProductDialogOpen = false;
                 }
             }
             else
             {
-                throw new ApplicationException("Debe seleccionar una imagen antes de registrar el producto.");
+                throw new ApplicationException("Debe subir una imagen antes de registrar el producto.");
             }
         }
         catch (Exception ex)
