@@ -1,5 +1,7 @@
-﻿@* @page "/historial"
+﻿@page "/historial"
+@using UnphuCard_Api.Models
 @inject NavigationManager NavigationManager
+@inject HistorialRecarga historialRecarga
 
 <div class="min-h-screen bg-gray-100 flex flex-col">
     <header class="bg-green-600 text-white px-4 py-3 flex justify-between items-center">
@@ -39,13 +41,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var transaction in Transactions)
+                        @foreach (var transaction in AllTransactions)
                         {
                             <tr>
-                                <td>@FormatDate(transaction.Date)</td>
+                                <td>@FormatDate(transaction.Fecha ?? DateTime.Today)</td>
                                 <td>Recarga tarjeta</td>
-                                <td>@transaction.PaymentMethod</td>
-                                <td class="text-right font-medium">@FormatAmount(transaction.Amount)</td>
+                                <td>@transaction.MétodoDePago</td>
+                                <td class="text-right font-medium">@FormatAmount(transaction.Monto ?? 0)</td>
                             </tr>
                         }
                     </tbody>
@@ -77,98 +79,98 @@
         </div>
     </div>
 }
- *@
+
 
 @code {
 
 
-    // private List<Transaction> AllTransactions { get; set; } = new List<Transaction>();
-    // private List<Transaction> Transactions { get; set; } = new List<Transaction>();
-    // private string SelectedMethod { get; set; } = "all";
-    // private DateTime? SelectedDate { get; set; }
-    // private DateTime? ExportStartDate { get; set; }
-    // private DateTime? ExportEndDate { get; set; }
-    // private bool IsExportDialogOpen { get; set; } = false;
+    private List<VwRecarga> AllTransactions { get; set; } = new List<VwRecarga>();
+    private List<VwRecarga> Transactions { get; set; } = new List<VwRecarga>();
+    private string SelectedMethod { get; set; } = "all";
+    private DateTime? SelectedDate { get; set; }
+    private DateTime? ExportStartDate { get; set; }
+    private DateTime? ExportEndDate { get; set; }
+    private bool IsExportDialogOpen { get; set; } = false;
 
-    // protected override void OnInitialized()
-    // {
-    //     // Initialize with sample data
-    //     AllTransactions = new List<Transaction>
-    //     {
-    //         new Transaction { Id = "1", Date = new DateTime(2023, 5, 15), Amount = 500, PaymentMethod = "Tarjeta de Crédito" },
-    //         new Transaction { Id = "2", Date = new DateTime(2023, 5, 18), Amount = 200, PaymentMethod = "PayPal" },
-    //         new Transaction { Id = "3", Date = new DateTime(2023, 5, 22), Amount = 300, PaymentMethod = "Tarjeta de Débito" },
-    //         new Transaction { Id = "4", Date = new DateTime(2023, 5, 25), Amount = 100, PaymentMethod = "Google Pay" },
-    //         new Transaction { Id = "5", Date = new DateTime(2023, 5, 28), Amount = 150, PaymentMethod = "Tarjeta de Crédito" }
-    //     };
+    protected override async Task OnInitializedAsync()
+    {
+        AllTransactions = await historialRecarga.GetHistorialRecargaAsync();
+        // AllTransactions = new List<VwRecarga>
+        // {
+        //     new VwRecarga { Id = "1", Date = new DateTime(2023, 5, 15), Amount = 500, PaymentMethod = "Tarjeta de Crédito" },
+        //     new VwRecarga { Id = "2", Date = new DateTime(2023, 5, 18), Amount = 200, PaymentMethod = "PayPal" },
+        //     new VwRecarga { Id = "3", Date = new DateTime(2023, 5, 22), Amount = 300, PaymentMethod = "Tarjeta de Débito" },
+        //     new VwRecarga { Id = "4", Date = new DateTime(2023, 5, 25), Amount = 100, PaymentMethod = "Google Pay" },
+        //     new VwRecarga { Id = "5", Date = new DateTime(2023, 5, 28), Amount = 150, PaymentMethod = "Tarjeta de Crédito" }
+        // };
 
-    //     Transactions = new List<Transaction>(AllTransactions);
-    // }
+        // Transactions = new List<VwRecarga>(AllTransactions);
+    }
 
-    // private void FilterTransactions()
-    // {
-    //     Transactions = AllTransactions;
+    private void FilterTransactions()
+    {
+        Transactions = AllTransactions;
 
-    //     if (SelectedMethod != "all")
-    //     {
-    //         Transactions = Transactions.Where(t => t.PaymentMethod == SelectedMethod).ToList();
-    //     }
+        if (SelectedMethod != "all")
+        {
+            Transactions = Transactions.Where(t => t.PaymentMethod == SelectedMethod).ToList();
+        }
 
-    //     if (SelectedDate.HasValue)
-    //     {
-    //         Transactions = Transactions.Where(t => t.Date.Date == SelectedDate.Value.Date).ToList();
-    //     }
-    // }
+        if (SelectedDate.HasValue)
+        {
+            Transactions = Transactions.Where(t => t.Date.Date == SelectedDate.Value.Date).ToList();
+        }
+    }
 
-    // private void HandleMethodChange(ChangeEventArgs e)
-    // {
-    //     SelectedMethod = e.Value.ToString();
-    //     FilterTransactions();
-    // }
+    private void HandleMethodChange(ChangeEventArgs e)
+    {
+        SelectedMethod = e.Value.ToString();
+        FilterTransactions();
+    }
 
-    // private void GoBack()
-    // {
-    //     NavigationManager.NavigateTo("/dashboard");
-    // }
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/dashboard");
+    }
 
-    // private void OpenExportDialog()
-    // {
-    //     IsExportDialogOpen = true;
-    // }
+    private void OpenExportDialog()
+    {
+        IsExportDialogOpen = true;
+    }
 
-    // private void CloseExportDialog()
-    // {
-    //     IsExportDialogOpen = false;
-    // }
+    private void CloseExportDialog()
+    {
+        IsExportDialogOpen = false;
+    }
 
-    // private void HandleExport()
-    // {
-    //     if (ExportStartDate.HasValue && ExportEndDate.HasValue)
-    //     {
-    //         var filteredTransactions = Transactions.Where(t =>
-    //             t.Date >= ExportStartDate.Value && t.Date <= ExportEndDate.Value).ToList();
-    //         Console.WriteLine($"Exporting {filteredTransactions.Count} transactions");
-    //         // Here you would implement the actual export logic
-    //     }
-    //     CloseExportDialog();
-    // }
+    private void HandleExport()
+    {
+        if (ExportStartDate.HasValue && ExportEndDate.HasValue)
+        {
+            var filteredTransactions = Transactions.Where(t =>
+                t.Date >= ExportStartDate.Value && t.Date <= ExportEndDate.Value).ToList();
+            Console.WriteLine($"Exporting {filteredTransactions.Count} transactions");
+            // Here you would implement the actual export logic
+        }
+        CloseExportDialog();
+    }
 
-    // private string FormatDate(DateTime date)
-    // {
-    //     return date.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("es-ES"));
-    // }
+    private string FormatDate(DateTime date)
+    {
+        return date.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("es-ES"));
+    }
 
-    // private string FormatAmount(decimal amount)
-    // {
-    //     return amount.ToString("C", new System.Globalization.CultureInfo("es-DO"));
-    // }
-    // }
+    private string FormatAmount(decimal amount)
+    {
+        return amount.ToString("C", new System.Globalization.CultureInfo("es-DO"));
+    }
+    }
 
-    // public class Transaction
-    // {
-    // public string Id { get; set; }
-    // public DateTime Date { get; set; }
-    // public decimal Amount { get; set; }
-    // public string PaymentMethod { get; set; }
-    // }
+    public class Transaction
+    {
+    public string Id { get; set; }
+    public DateTime Date { get; set; }
+    public decimal Amount { get; set; }
+    public string PaymentMethod { get; set; }
+    }
 }
