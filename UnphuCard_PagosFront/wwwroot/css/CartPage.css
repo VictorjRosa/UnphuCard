@@ -193,7 +193,16 @@
         transform: rotate(360deg);
     }
 }
+@keyframes rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
 
+.spinner {
+    transform-origin: center;
+    animation: rotate 1.5s linear infinite;
+}
 .h-16 {
     height: 4rem;
 }
@@ -248,3 +257,4 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
+

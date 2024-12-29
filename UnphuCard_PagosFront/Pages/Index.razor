@@ -1,9 +1,11 @@
 ﻿@page "/index"
+@using Blazored.SessionStorage
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 @layout TLayout
 @inject SesionService Sesion 
 @inject AuthService AuthService
+@inject Blazored.SessionStorage.ISessionStorageService SessionStorageService
 
 <div class="min-h-screen bg-gray-50 flex flex-col">
 
@@ -26,30 +28,41 @@
 
 @code {
     private string establishmentName = "";
-    private int estId = 0;
+    private int? estId = null; 
 
     protected override async Task OnInitializedAsync()
     {
+        int userId = await AuthService.GetUserIdFromTokenAsync();
+
+        var estIdResult = await AuthService.GetEstIdByUserIdAsync(userId);
+
+        if (!estIdResult.HasValue)
+        {
+            Console.WriteLine("No se pudo obtener el EstId del establecimiento.");
+            return;
+        }
+
+        estId = estIdResult.Value; 
         establishmentName = "Tienda UNPHU";
-        await Task.CompletedTask;
     }
 
     private void HandleInventoryClick()
     {
-        NavigationManager.NavigateTo("/inventario");
-
+       
+        if (estId.HasValue)
+        {
+            NavigationManager.NavigateTo($"/inventario?estId={estId}");
+        }
+        else
+        {
+            Console.WriteLine("El EstId no está disponible.");
+        }
     }
 
- 
     private async Task HandleSaleClick()
     {
-        int userId = await AuthService.GetUserIdFromTokenAsync();
-
-        var estId = await AuthService.GetEstIdByUserIdAsync(userId);
-
         if (!estId.HasValue)
         {
-            Console.WriteLine("No se pudo obtener el EstId del establecimiento.");
             return;
         }
 
@@ -64,6 +77,7 @@
             Console.WriteLine("Hubo un error al registrar la sesión.");
         }
     }
+
 
 
 }

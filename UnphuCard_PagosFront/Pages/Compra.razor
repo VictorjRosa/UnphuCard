@@ -11,7 +11,7 @@
 <div class="min-h-screen bg-gray-50 flex flex-col">
     <header class="bg-green-700 text-white p-4 flex justify-between items-center">
         <h1 class="text-2xl font-bold">Tienda UNPHU</h1>
-        <button class="bg-white hover:bg-gray-100 text-black p-2 rounded-lg flex items-center gap-2 transition-colors duration-200 shadow-md hover:shadow-lg border border-gray-200"
+        <button class="bg-white hover:bg-gray-100 text-black p-2 rounded-lg flex items-center gap-2 transition-colors duration-200 "
                 @onclick="() => showCart = true">
             <span class="text-xl">🛒</span>
             Ver Carrito (@CartService.GetCartItems().Sum(item => item.Quantity))
@@ -35,6 +35,9 @@
                 }
             </select>
         </div>
+        <button class="mb-4 text-green-600 hover:text-green-700" @onclick="GoBack">
+            <span class="mr-2">←</span> Volver a inicio
+        </button>
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             @if (filteredProducts != null)
             {
@@ -207,5 +210,9 @@
     private void IraResumen()
     {
         NavigationManager.NavigateTo("/resumen");
+    }
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/index");
     }
 }

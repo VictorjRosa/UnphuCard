@@ -1,4 +1,5 @@
 using Blazored.LocalStorage;
+using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using UnphuCard_PagosFront.Data;
@@ -14,7 +15,10 @@ builder.Services.AddScoped<Categoria>();
 builder.Services.AddScoped<ProductosService>();
 builder.Services.AddScoped<CartService>();
 builder.Services.AddScoped<SesionService>();
+builder.Services.AddScoped<CompraService>();
+builder.Services.AddScoped<InventarioService>();
 
+builder.Services.AddBlazoredSessionStorage();
 
 builder.Services.AddScoped(sp =>
     new HttpClient

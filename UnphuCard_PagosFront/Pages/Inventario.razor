@@ -1,5 +1,215 @@
-﻿<h3>Inventario</h3>
+﻿@page "/inventario"
+@inject NavigationManager NavigationManager
+@using System.ComponentModel.DataAnnotations
+@using UnphuCard_Api.DTOS
+@using UnphuCard_Api.Models
+@inject InventarioService InventarioService
+
+
+<div class="inventory-management">
+    <header>
+        <h1>Gestión de Inventario</h1>
+    </header>
+
+    <main>
+        <div class="actions">
+            <button class="button button-ghost" @onclick="GoBack">
+                <span class="icon">←</span> Volver al menú principal
+            </button>
+            <button class="button button-primary" @onclick="() => isAddProductDialogOpen = true">
+                <span class="icon">+</span> Agregar Nuevo Producto
+            </button>
+        </div>
+
+        <div class="product-grid">
+            @if (productosInv != null)
+            {
+                @foreach (var productosInv in productosInv)
+            {
+                <div class="card">
+                    <div class="card-header">
+                            <h3>@productosInv.NombreDelProducto</h3>
+                        <div class="card-actions">
+                                <button class="button button-icon" @onclick="() => ToggleProductEdit(productosInv.Id)">
+                                <span class="icon edit-icon">✎</span>
+                            </button>
+                                <button class="button button-icon" @onclick="() => HandleDelete(productosInv.Id)">
+                                <span class="icon delete-icon">🗑</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="product-image">
+                                <img src="@productosInv.ImagenDelProducto" alt="@productosInv.ImagenDelProducto" />
+                        </div>
+                        @if (IsEditing)
+                        {
+                                <EditForm Model="@productosInv" OnValidSubmit="() => ToggleProductEdit(productosInv.Id)">
+                                <DataAnnotationsValidator />
+                                <div class="form-group">
+                                        <label for="@($"name-{productosInv.Id}")">Nombre</label>
+                                        <InputText id="@($"name-{productosInv.Id}")" @bind-Value="productosInv.NombreDelProducto" />
+                                </div>
+                                <div class="form-group">
+
+                                 <label for="@($"price-{productosInv.Id}")">Precio</label>
+                                 <InputNumber id="@($"price-{productosInv.Id}")" @bind-Value="productosInv.PrecioDelProducto" />
+
+                                </div>
+                                <div class="form-group">
+                                        <label for="@($"quantity-{productosInv.Id}")">Cantidad</label>
+                                        <InputNumber id="@($"quantity-{productosInv.Id}")" @bind-Value="productosInv.CantidadEnElInventario" />
+
+                                </div>
+                                <div class="form-group">
+                                        <label for="@($"image-{productosInv.Id}")">URL de la imagen</label>
+                                        <InputText id="@($"image-{productosInv.Id}")" @bind-Value="productosInv.ImagenDelProducto" />
+                                </div>
+                                <div class="form-actions">
+                                        <button type="button" class="button button-secondary" @onclick="() => ToggleProductEdit(productosInv.Id)">Cancelar</button>
+                                    <button type="submit" class="button button-primary">Guardar</button>
+                                </div>
+                            </EditForm>
+                        }
+                        else
+                        {
+                                <p class="product-name">@productosInv.NombreDelProducto</p>
+                                <p class="product-price">Precio: $@(productosInv.PrecioDelProducto?.ToString("F2") ?? "0.00")</p>
+                                <p class="product-quantity">Cantidad: @productosInv.CantidadEnElInventario</p>
+                        }
+                    </div>
+                </div>
+            }
+            }
+        </div>
+    </main>
+
+    @if (isAddProductDialogOpen)
+    {
+        <div class="modal-overlay">
+            <div class="modal">
+                <h2>Agregar Nuevo Producto</h2>
+                <EditForm Model="insertproductosInv">
+                    <DataAnnotationsValidator />
+                    <div class="form-group">
+                        <label for="new-product-name">Nombre</label>
+                        <InputText id="new-product-name" @bind-Value="insertproductosInv.ProdDescripcion" />
+                    </div>
+                    <div class="form-group">
+                        <label for="new-product-price">Precio</label>
+                        <InputNumber id="new-product-price" @bind-Value="insertproductosInv.ProdPrecio" />
+                    </div>
+                    <div class="form-group">
+                        <label for="new-product-quantity">Cantidad</label>
+                        <InputNumber id="new-product-quantity" @bind-Value="insertproductosInv.InvCantidad" />
+                    </div>
+                    <div class="form-group">
+                        <label for="new-product-image">Imagen del Producto</label>
+                        <InputFile OnChange="HandleImageUpload" />
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="button button-secondary" @onclick="() => isAddProductDialogOpen = false">Cancelar</button>
+                        <button type="submit" class="button button-primary">Agregar Producto</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    }
+</div>
 
 @code {
+    private List<VwInventarioEstablecimiento> productosInv = new List<VwInventarioEstablecimiento>();
+    private InsertInventario insertproductosInv = new InsertInventario();
+    private Stream fileStream;
+    private string fileName;
 
+    [Parameter]
+    public int estId { get; set; }
+
+    private bool isAddProductDialogOpen = false;
+    private bool IsEditing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (estId == 0)
+        {
+            var uri = new Uri(NavigationManager.Uri);
+            var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
+            if (query.TryGetValue("estId", out var estIdValue) && int.TryParse(estIdValue, out var parsedEstId))
+            {
+                estId = parsedEstId;
+            }
+            else
+            {
+                Console.WriteLine("El ID del establecimiento no fue proporcionado o es inválido.");
+                return;
+            }
+        }
+
+        // Cargar el inventario si el estId es válido
+        try
+        {
+            productosInv = await InventarioService.GetInventarioEstablecimientoAsync(estId);
+            Console.WriteLine($"Inventario cargado: {productosInv.Count} productos.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar el inventario: {ex.Message}");
+        }
+    }
+
+    private async Task HandleImageUpload(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        fileStream = file.OpenReadStream(maxAllowedSize: 1048576); 
+        fileName = file.Name;
+    }
+  
+    private void ToggleProductEdit(int id)
+    {
+        var product = productosInv.FirstOrDefault(p => p.Id == id);
+        if (product != null)
+        {
+            IsEditing = !IsEditing;
+        }
+    }
+
+    private void HandleDelete(int id)
+    {
+        productosInv.RemoveAll(p => p.Id == id);
+    }
+
+    private async Task HandleAddProduct()
+    {
+        try
+        {
+            if (fileStream != null && !string.IsNullOrEmpty(fileName))
+            {
+                var result = await InventarioService.RegistrarInventarioConImagen(insertproductosInv, fileStream, fileName);
+                if (result)
+                {
+                    insertproductosInv = new InsertInventario();
+                    fileStream = null;
+                    fileName = string.Empty;
+                    isAddProductDialogOpen = false;
+                }
+            }
+            else
+            {
+                throw new ApplicationException("Debe seleccionar una imagen antes de registrar el producto.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/index");
+    }
+
+   
 }
