@@ -19,12 +19,12 @@ namespace UnphuCard_Api.Controllers
         [HttpGet("api/ObtenerInvEstablecimiento/{id}")]
         public async Task<ActionResult<VwInventarioEstablecimiento>> GetInvEstablecimiento(int id)
         {
-            var establecimiento = await _context.VwInventarioEstablecimientos.FirstOrDefaultAsync(i => i.IdDelEstablecimiento == id);
+            var establecimiento = await _context.VwInventarioEstablecimientos.Where(i => i.IdDelEstablecimiento == id).ToListAsync();
             if (establecimiento == null)
             {
                 return BadRequest("Producto no encontrado");
             }
-            return establecimiento;
+            return Ok(establecimiento);
         }
 
         [HttpGet("api/ObtenerInvProducto/{id}")]

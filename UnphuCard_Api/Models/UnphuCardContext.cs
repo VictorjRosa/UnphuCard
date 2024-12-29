@@ -253,7 +253,7 @@ public partial class UnphuCardContext : DbContext
 
         modelBuilder.Entity<Inventario>(entity =>
         {
-            entity.HasKey(e => e.InvId).HasName("PK__Inventar__FCAFBC7B6380AA6E");
+            entity.HasKey(e => e.InvId).HasName("PK__Inventar__FCAFBC7B2959EE4B");
 
             entity.ToTable("Inventario");
 
