@@ -24,14 +24,14 @@
                         <option value="Tarjeta de Crédito o Débito">Tarjeta de Crédito/Débito</option>
                         <option value="PayPal">PayPal</option>
                     </select>
-                        <input type="date" @bind="SelectedDate" class="w-[180px] border rounded-md" />
+                    <input type="date" @bind="SelectedDate" class="w-[180px] border rounded-md" />
                     <button @onclick="FiltroFecha" class="px-4 py-2 border rounded-md flex items-center">
-                        <span class="mr-2">↓</span> Buscar
+                        <span class="mr-2"></span> Buscar
                     </button>
-                    <button @onclick="OpenExportDialog" class="px-4 py-2 border rounded-md flex items-center">
+@*                     <button @onclick="OpenExportDialog" class="px-4 py-2 border rounded-md flex items-center">
                         <span class="mr-2">↓</span> Exportar
                     </button>
-                </div>
+ *@                </div>
             </div>
             <div class="p-6">
                 <table class="w-full">
@@ -46,15 +46,30 @@
                     <tbody>
                         @if (!IsFiltered)
                         {
-                            @foreach (var transaction in AllTransactions)
+                            if (SelectedDate == CambiarDate)
                             {
-                                <tr>
-                                    <td>@FormatDate(transaction.Fecha ?? DateTime.Today)</td>
-                                    <td>Recarga tarjeta</td>
-                                    <td>@transaction.MétodoDePago</td>
-                                    <td class="text-right font-medium">@FormatAmount(transaction.Monto ?? 0)</td>
-                                </tr>
-                            }                            
+                                @foreach (var transaction in AllTransactions)
+                                {
+                                    <tr>
+                                        <td>@FormatDate(transaction.Fecha ?? DateTime.Today)</td>
+                                        <td>Recarga tarjeta</td>
+                                        <td>@transaction.MétodoDePago</td>
+                                        <td class="text-right font-medium">@FormatAmount(transaction.Monto ?? 0)</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                @foreach (var transaction in FilteredTransactions)
+                                {
+                                    <tr>
+                                        <td>@FormatDate(transaction.Fecha ?? DateTime.Today)</td>
+                                        <td>Recarga tarjeta</td>
+                                        <td>@transaction.MétodoDePago</td>
+                                        <td class="text-right font-medium">@FormatAmount(transaction.Monto ?? 0)</td>
+                                    </tr>
+                                }
+                            }
                         }
                         else
                         {
@@ -82,6 +97,7 @@
     </footer>
 </div>
 
+@* 
 @if (IsExportDialogOpen)
 {
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -92,13 +108,12 @@
                     <input type="date" @bind="ExportStartDate" placeholder="Fecha inicial" class="border rounded-md p-2" />
                     <input type="date" @bind="ExportEndDate" placeholder="Fecha final" class="border rounded-md p-2" />
                 </div>
-                <button @onclick="CloseExportDialog" class="bg-green-600 text-white px-4 py-2 rounded-md">Exportar</button>@*cambiar HandleExport*@
+                <button @onclick="CloseExportDialog" class="bg-green-600 text-white px-4 py-2 rounded-md">Exportar</button>
                 <button @onclick="CloseExportDialog" class="border px-4 py-2 rounded-md">Cancelar</button>
             </div>
         </div>
     </div>
-}
-
+}*@
 
 @code {
 
@@ -106,9 +121,10 @@
     private List<VwRecarga> AllTransactions { get; set; } = new List<VwRecarga>();
     private List<VwRecarga> FilteredTransactions { get; set; } = new List<VwRecarga>();
     private DateTime? SelectedDate { get; set; }
-    private DateTime? ExportStartDate { get; set; }
-    private DateTime? ExportEndDate { get; set; }
-    private bool IsExportDialogOpen { get; set; } = false;
+    private DateTime? CambiarDate { get; set; }
+    // private DateTime? ExportStartDate { get; set; }
+    // private DateTime? ExportEndDate { get; set; }
+    // private bool IsExportDialogOpen { get; set; } = false;
     private bool IsFiltered { get; set; } = false;
     private string metodoSeleccionado { get; set; } = "all";
 
@@ -122,6 +138,7 @@
     {
         var selectedMethod = e.Value?.ToString();
         metodoSeleccionado = selectedMethod;
+        CambiarDate = SelectedDate;
         var userId = await authService.GetUserIdFromTokenAsync();
         if (SelectedDate.HasValue)
         {
@@ -176,6 +193,7 @@
     private async Task FiltroFecha()
     {
         var userId = await authService.GetUserIdFromTokenAsync();
+        CambiarDate = SelectedDate;
         if (SelectedDate.HasValue)
         {
             if (string.IsNullOrEmpty(metodoSeleccionado) || metodoSeleccionado == "all")
@@ -231,15 +249,15 @@
         NavigationManager.NavigateTo("/index");
     }
 
-    private void OpenExportDialog()
-    {
-        IsExportDialogOpen = true;
-    }
+    // private void OpenExportDialog()
+    // {
+    //     IsExportDialogOpen = true;
+    // }
 
-    private void CloseExportDialog()
-    {
-        IsExportDialogOpen = false;
-    }
+    // private void CloseExportDialog()
+    // {
+    //     IsExportDialogOpen = false;
+    // }
 
     // private void HandleExport()
     // {
