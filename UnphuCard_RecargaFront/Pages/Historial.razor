@@ -5,10 +5,6 @@
 @inject AuthService authService
 
 <div class="min-h-screen bg-gray-100 flex flex-col">
-    <header class="bg-green-600 text-white px-4 py-3 flex justify-between items-center">
-        <h1 class="text-xl font-semibold">Recarga UnphuCard</h1>
-    </header>
-
     <main class="flex-1 container mx-auto px-4 py-6">
         <button class="mb-4 text-green-600 hover:text-green-700" @onclick="GoBack">
             <span class="mr-2">←</span> Volver al dashboard
@@ -89,12 +85,6 @@
             </div>
         </div>
     </main>
-
-    <footer class="bg-blue-900 text-white p-4">
-        <div class="container mx-auto">
-            <p class="text-sm">UNPHU | Recarga UnphuCard</p>
-        </div>
-    </footer>
 </div>
 
 @* 
@@ -113,7 +103,8 @@
             </div>
         </div>
     </div>
-}*@
+}
+*@
 
 @code {
 
@@ -279,6 +270,5 @@
     private string FormatAmount(decimal amount)
     {
         return amount.ToString("C", new System.Globalization.CultureInfo("es-DO"));
-    }
     }
 }
