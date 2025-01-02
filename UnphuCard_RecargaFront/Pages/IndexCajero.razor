@@ -1,0 +1,119 @@
+﻿@page "/IndexCajero"
+@inject NavigationManager NavigationManager
+
+<div class="cashier-page">
+    <header class="header">
+        <h1>Recarga UnphuCard - Caja</h1>
+    </header>
+
+     <main class="main-content">
+        <button class="back-button" @onclick="GoBack">
+            <svg xmlns="http://www.w3.org/2000/svg" class="back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Volver
+        </button>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Ingreso de Información del Estudiante</h2>
+            </div>
+            <div class="card-content">
+                <form @onsubmit="HandleSubmit">
+                    <div class="form-group">
+                        <label for="matricula">Matrícula del Estudiante:</label>
+                        <input id="matricula"
+                               type="text"
+                               @bind="matricula"
+                               @bind:event="oninput"
+                               @onkeyup="FormatMatricula"
+                               placeholder="12-3456"
+                               maxlength="7" />
+                        <p class="input-hint">Formato: 12-3456</p>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer">
+                <button class="submit-button" @onclick="HandleSubmit">
+                    Continuar
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2023 UNPHU | Sistema de Cajero</p>
+        </div>
+    </footer>
+</div>
+
+@if (showErrorModal)
+{
+    <div class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    Error
+                </h3>
+            </div>
+            <div class="modal-body">
+                <p>Por favor, ingrese una matrícula válida.</p>
+            </div>
+            <div class="modal-footer">
+                <button @onclick="CloseErrorModal" class="close-button">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string matricula = "";
+    private bool showErrorModal = false;
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void FormatMatricula(KeyboardEventArgs e)
+    {
+        matricula = FormatMatriculaValue(matricula);
+    }
+
+    private string FormatMatriculaValue(string value)
+    {
+        var cleaned = new string(value.Where(char.IsDigit).ToArray());
+        if (cleaned.Length >= 2)
+        {
+            return $"{cleaned.Substring(0, 2)}-{cleaned.Substring(2)}";
+        }
+        return cleaned;
+    }
+
+    private void HandleSubmit()
+    {
+        if (matricula.Length == 7)
+        {
+            // Aquí iría la lógica para procesar la información del estudiante
+            Console.WriteLine($"Procesando: Matrícula: {matricula}");
+        }
+        else
+        {
+            showErrorModal = true;
+        }
+    }
+
+    private void CloseErrorModal()
+    {
+        showErrorModal = false;
+    }
+}
