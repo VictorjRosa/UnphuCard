@@ -4,5 +4,6 @@
     {
         public string? Access_token { get; set; }
         public int Expires_in { get; set; }
+        public int RolId { get; set; }
     }
 }

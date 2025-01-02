@@ -4,6 +4,7 @@
 @inject AuthService AuthService
 @inject NavigationManager NavigationManager
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject Blazored.SessionStorage.ISessionStorageService sesionStorage
 @layout SecondaryLayout
 
 <div class="login-container">
@@ -56,6 +57,7 @@
     private string errorMessage;
     private LoginModel LoginModel = new LoginModel();
     private bool showPassword = false;
+    private int rolId;
     private void TogglePasswordVisibility()
     {
         showPassword = !showPassword;
@@ -63,15 +65,37 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        try
         {
-            var token = await localStorage.GetItemAsync<string>("authToken");
-            isAuthenticated = !string.IsNullOrEmpty(token);
-
-            if (isAuthenticated)
+            if (firstRender)
             {
-                NavigationManager.NavigateTo("/index");
+                var token = await localStorage.GetItemAsync<string>("authToken");
+                isAuthenticated = !string.IsNullOrEmpty(token);
+                await sesionStorage.GetItemAsync<int>("rolId");
+                if (rolId == 1)
+                {
+                    if (isAuthenticated)
+                    {
+                        NavigationManager.NavigateTo("/index");
+                    }
+                }
+                else if (rolId == 3)
+                {
+                    if (isAuthenticated)
+                    {
+                        NavigationManager.NavigateTo("/IndexCajero");
+                    }
+                }
             }
+        }
+        catch (ApplicationException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An unexpected error occurred.";
+            Console.WriteLine(ex.Message);
         }
     }
 
@@ -81,14 +105,14 @@
         try
         {
             errorMessage = null;
-            var token = await AuthService.Login(LoginModel);
-            await localStorage.SetItemAsync("authToken", token);
-            var userId = await AuthService.GetUserIdFromTokenAsync();
-            if (userId == 1)
+            var rolId = await AuthService.Login(LoginModel);
+            await sesionStorage.SetItemAsync("rolId", rolId);
+
+            if (rolId == 1)
             {
                 NavigationManager.NavigateTo("/index");
             }
-            else
+            else if (rolId == 3)
             {
                 NavigationManager.NavigateTo("/IndexCajero");
             }

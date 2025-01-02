@@ -91,7 +91,7 @@ namespace UnphuCard_Api.Controllers
                 var token = GenerateJwtToken(Usuario);
 
                 // Devolver el token al cliente
-                return Ok(new { access_token = token });
+                return Ok(new { access_token = token, rolId = login.RolId });
             }
             catch (Exception ex)
             {

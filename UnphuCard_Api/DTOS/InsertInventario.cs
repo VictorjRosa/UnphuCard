@@ -6,7 +6,6 @@
         public int? EstId { get; set; }
         public string? ProdDescripcion { get; set; }
         public int? ProdPrecio { get; set; }
-        public string? ProdImagenes { get; set; }
         public int? StatusId { get; set; }
         public int? CatProdId { get; set; }
     }

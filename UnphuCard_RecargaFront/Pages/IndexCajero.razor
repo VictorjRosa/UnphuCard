@@ -2,19 +2,7 @@
 @inject NavigationManager NavigationManager
 
 <div class="cashier-page">
-    <header class="header">
-        <h1>Recarga UnphuCard - Caja</h1>
-    </header>
-
      <main class="main-content">
-        <button class="back-button" @onclick="GoBack">
-            <svg xmlns="http://www.w3.org/2000/svg" class="back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="19" y1="12" x2="5" y2="12"></line>
-                <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            Volver
-        </button>
-
         <div class="card">
             <div class="card-header">
                 <h2 class="card-title">Ingreso de Información del Estudiante</h2>
@@ -23,13 +11,12 @@
                 <form @onsubmit="HandleSubmit">
                     <div class="form-group">
                         <label for="matricula">Matrícula del Estudiante:</label>
-                        <input id="matricula"
+                        <InputText id="matricula"
                                type="text"
-                               @bind="matricula"
-                               @bind:event="oninput"
-                               @onkeyup="FormatMatricula"
-                               placeholder="12-3456"
-                               maxlength="7" />
+                                   @bind-Value="matricula"
+                               @oninput="FormatMatricula"
+                               placeholder="123456"
+                               maxlength="6" />
                         <p class="input-hint">Formato: 12-3456</p>
                     </div>
                 </form>
@@ -41,12 +28,6 @@
             </div>
         </div>
     </main>
-
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2023 UNPHU | Sistema de Cajero</p>
-        </div>
-    </footer>
 </div>
 
 @if (showErrorModal)
@@ -79,20 +60,17 @@
     private string matricula = "";
     private bool showErrorModal = false;
 
-    private void GoBack()
+    private void FormatMatricula(ChangeEventArgs e)
     {
-        NavigationManager.NavigateTo("/");
-    }
+        string value = e.Value.ToString();
 
-    private void FormatMatricula(KeyboardEventArgs e)
-    {
-        matricula = FormatMatriculaValue(matricula);
+        matricula = FormatMatriculaValue(value ?? "");
     }
 
     private string FormatMatriculaValue(string value)
     {
         var cleaned = new string(value.Where(char.IsDigit).ToArray());
-        if (cleaned.Length >= 2)
+        if (cleaned.Length == 6)
         {
             return $"{cleaned.Substring(0, 2)}-{cleaned.Substring(2)}";
         }

@@ -1,8 +1,10 @@
 ﻿using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using UnphuCard_Api.DTOS;
 using UnphuCard_Api.Models;
+using UnphuCard_Api.Service;
 
 namespace UnphuCard_Api.Controllers
 {
@@ -10,10 +12,12 @@ namespace UnphuCard_Api.Controllers
     {
         private readonly UnphuCardContext _context;
         private readonly IConfiguration _configuration;
-        public InventarioController(UnphuCardContext context, IConfiguration configuration)
+        private readonly ProductoService _productoService;
+        public InventarioController(UnphuCardContext context, IConfiguration configuration, ProductoService productoService)
         {
             _context = context;
             _configuration = configuration;
+            _productoService = productoService;
         }
 
         [HttpGet("api/ObtenerInvEstablecimiento/{id}")]
@@ -60,57 +64,71 @@ namespace UnphuCard_Api.Controllers
             }
             try
             {
-                // Verificar si se ha proporcionado una imagen
-                if (foto == null || foto.Length == 0)
-                {
-                    return BadRequest("Debe proporcionar una imagen.");
-                }
-
-                // Configurar el BlobServiceClient
-                string connectionString = _configuration["AzureBlobStorage:ConnectionString"];
-                string containerName = _configuration["AzureBlobStorage:ContainerName"];
-                var blobServiceClient = new BlobServiceClient(connectionString);
-                var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
-
-                // Generar un nombre único para el archivo
-                string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(foto.FileName);
-                var blobClient = blobContainerClient.GetBlobClient(uniqueFileName);
-
-                // Subir la imagen a Azure Blob Storage
-                using (var stream = foto.OpenReadStream())
-                {
-                    await blobClient.UploadAsync(stream, true); // El "true" sobrescribe el archivo si ya existe
-                }
-
-                string imageUrl = blobClient.Uri.ToString(); // Obtener la URL del archivo
-
                 // Obtener la zona horaria de República Dominicana (GMT-4)
                 TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
                 // Obtener la fecha y hora actual en UTC
                 DateTime fechaActualUtc = DateTime.UtcNow;
                 // Convertir la fecha a la zona horaria de República Dominicana
                 DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
+                Producto producto = new Producto();
+                Inventario inventario = new Inventario();
+                var nombreProducto = await _productoService.ValidarProductoExistente(insertInventario.ProdDescripcion);
 
-                var producto = new Producto
+                if (nombreProducto == null)  // Si no se pudo insertar el producto (significa que ya existe)
                 {
-                    ProdDescripcion = insertInventario.ProdDescripcion,
-                    ProdPrecio = insertInventario.ProdPrecio,
-                    ProdImagenes = imageUrl,  // Guardar la URL de la imagen
-                    StatusId = insertInventario.StatusId,
-                    CatProdId = insertInventario.CatProdId
-                };
-                _context.Productos.Add(producto);
-                await _context.SaveChangesAsync();
+                    // Verificar si se ha proporcionado una imagen
+                    if (foto == null || foto.Length == 0)
+                    {
+                        return BadRequest("Debe proporcionar una imagen.");
+                    }
 
-                var inventario = new Inventario()
+                    // Configurar el BlobServiceClient
+                    string connectionString = _configuration["AzureBlobStorage:ConnectionString"];
+                    string containerName = _configuration["AzureBlobStorage:ContainerName"];
+                    var blobServiceClient = new BlobServiceClient(connectionString);
+                    var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+                    // Generar un nombre único para el archivo
+                    string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(foto.FileName);
+                    var blobClient = blobContainerClient.GetBlobClient(uniqueFileName);
+
+                    // Subir la imagen a Azure Blob Storage
+                    using (var stream = foto.OpenReadStream())
+                    {
+                        await blobClient.UploadAsync(stream, true); // El "true" sobrescribe el archivo si ya existe
+                    }
+
+                    string imageUrl = blobClient.Uri.ToString(); // Obtener la URL del archivo
+
+                    producto.ProdDescripcion = insertInventario.ProdDescripcion;
+                    producto.ProdPrecio = insertInventario.ProdPrecio;
+                    producto.ProdImagenes = imageUrl;  // Guardar la URL de la imagen
+                    producto.StatusId = insertInventario.StatusId;
+                    producto.CatProdId = insertInventario.CatProdId;
+                    _context.Productos.Add(producto);
+                    await _context.SaveChangesAsync();
+
+                    inventario.InvCantidad = insertInventario.InvCantidad;
+                    inventario.InvFecha = fechaEnRD;
+                    inventario.EstId = insertInventario.EstId;
+                    inventario.ProdId = producto.ProdId;
+                    _context.Inventarios.Add(inventario);
+                    await _context.SaveChangesAsync();
+                }
+                else
                 {
-                    InvCantidad = insertInventario.InvCantidad,
-                    InvFecha = fechaEnRD,
-                    EstId = insertInventario.EstId,
-                    ProdId = producto.ProdId,
-                };
-                _context.Inventarios.Add(inventario);
-                await _context.SaveChangesAsync();
+                    var prodId = await _context.Productos
+                        .Where(p => p.ProdDescripcion == nombreProducto)
+                        .Select(p => p.ProdId)
+                        .FirstOrDefaultAsync();
+
+                    inventario.InvCantidad = insertInventario.InvCantidad;
+                    inventario.InvFecha = fechaEnRD;
+                    inventario.EstId = insertInventario.EstId;
+                    inventario.ProdId = prodId;
+                    _context.Inventarios.Add(inventario);
+                    await _context.SaveChangesAsync();
+                }
 
                 return Ok(new {producto, inventario});
             }

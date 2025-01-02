@@ -1,4 +1,5 @@
 using Blazored.LocalStorage;
+using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using NuGet.Common;
@@ -12,12 +13,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<LocalStorage>();
 builder.Services.AddScoped<Pago>();
 builder.Services.AddScoped<HistorialRecarga>();
 builder.Services.AddScoped<UsuarioService>();
 
-builder.Services.AddBlazoredLocalStorage(); 
+builder.Services.AddBlazoredLocalStorage();
+builder.Services.AddBlazoredSessionStorage();
 
 
 builder.Services.AddScoped(sp =>
