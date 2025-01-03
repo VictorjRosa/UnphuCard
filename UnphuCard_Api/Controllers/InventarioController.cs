@@ -70,11 +70,15 @@ namespace UnphuCard_Api.Controllers
                 DateTime fechaActualUtc = DateTime.UtcNow;
                 // Convertir la fecha a la zona horaria de República Dominicana
                 DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
+                var prodId = await _productoService.ValidarProductoExistente(insertInventario.ProdDescripcion);
+                var existeProducto = await _context.Inventarios
+                    .Where(i => i.ProdId == prodId && i.EstId == insertInventario.EstId)
+                    .Select(i => i.InvId)
+                    .FirstOrDefaultAsync();
                 Producto producto = new Producto();
                 Inventario inventario = new Inventario();
-                var nombreProducto = await _productoService.ValidarProductoExistente(insertInventario.ProdDescripcion);
 
-                if (nombreProducto == null)  // Si no se pudo insertar el producto (significa que ya existe)
+                if (prodId == 0 && existeProducto == 0)
                 {
                     // Verificar si se ha proporcionado una imagen
                     if (foto == null || foto.Length == 0)
@@ -115,21 +119,20 @@ namespace UnphuCard_Api.Controllers
                     _context.Inventarios.Add(inventario);
                     await _context.SaveChangesAsync();
                 }
-                else
+                else if(prodId != 0 && existeProducto == 0)
                 {
-                    var prodId = await _context.Productos
-                        .Where(p => p.ProdDescripcion == nombreProducto)
-                        .Select(p => p.ProdId)
-                        .FirstOrDefaultAsync();
-
                     inventario.InvCantidad = insertInventario.InvCantidad;
                     inventario.InvFecha = fechaEnRD;
                     inventario.EstId = insertInventario.EstId;
                     inventario.ProdId = prodId;
                     _context.Inventarios.Add(inventario);
                     await _context.SaveChangesAsync();
+                    return Ok(inventario);
                 }
-
+                else
+                {
+                    return BadRequest("El producto ya existe en el inventario");
+                }
                 return Ok(new {producto, inventario});
             }
             catch (Exception ex)
@@ -171,10 +174,22 @@ namespace UnphuCard_Api.Controllers
                 {
                     inventario.ProdId = updateInventario.ProdId;
                 }
-
                 _context.Entry(inventario).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
-                return Ok(inventario);
+
+                var producto = await _context.Productos.FirstOrDefaultAsync(p => p.ProdId == updateInventario.ProdId);
+                if (inventario == null)
+                {
+                    return NotFound("Producto no encontrado");
+                }
+                if (updateInventario.ProdPrecio.HasValue && updateInventario.ProdPrecio.Value > 0)
+                {
+                    producto.ProdPrecio = updateInventario.ProdPrecio;
+                }
+                _context.Entry(producto.ProdPrecio).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { inventario, producto });
 
             }
             catch (DbUpdateConcurrencyException)

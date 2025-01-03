@@ -13,18 +13,22 @@ namespace UnphuCard_Api.Service
         }
 
         // Método para validar si un producto existe y retornar su nombre o null si no existe
-        public async Task<string> ValidarProductoExistente(string productoDescripcion)
+        public async Task<int> ValidarProductoExistente(string productoDescripcion)
         {
             // Normalizamos la descripción del producto
 
             // Realizamos la consulta en la base de datos y obtenemos el producto
-            var productoExistente = await _context.Productos
-                .Where(p => p.ProdDescripcion == productoDescripcion)  // Normalizamos las descripciones en C#
-                .Select(p => p.ProdDescripcion)  // Solo seleccionamos el nombre del producto
-                .FirstOrDefaultAsync();  // Usamos FirstOrDefaultAsync porque la consulta se hace sobre IQueryable
-            string descripcionNormalizada = NormalizarDescripcion(productoDescripcion);
-            string productoNormalizada = NormalizarDescripcion(productoExistente ?? "skip");
-            return productoExistente;    // Si existe, retorna el nombre del producto; si no, retorna null
+            var producto = await _context.Productos.ToListAsync();
+            string descripcionNormalizada;
+            foreach (var item in producto)
+            {
+                descripcionNormalizada = NormalizarDescripcion(item.ProdDescripcion ?? "skip");
+                if (descripcionNormalizada == productoDescripcion)
+                {
+                    return item.ProdId;
+                }
+            }
+            return 0;
         }
 
         // Método para normalizar la descripción del producto
