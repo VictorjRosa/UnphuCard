@@ -1,0 +1,97 @@
+﻿@page "/IndexCajero"
+@inject NavigationManager NavigationManager
+
+<div class="cashier-page">
+     <main class="main-content">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Ingreso de Información del Estudiante</h2>
+            </div>
+            <div class="card-content">
+                <form @onsubmit="HandleSubmit">
+                    <div class="form-group">
+                        <label for="matricula">Matrícula del Estudiante:</label>
+                        <InputText id="matricula"
+                               type="text"
+                                   @bind-Value="matricula"
+                               @oninput="FormatMatricula"
+                               placeholder="123456"
+                               maxlength="6" />
+                        <p class="input-hint">Formato: 12-3456</p>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer">
+                <button class="submit-button" @onclick="HandleSubmit">
+                    Continuar
+                </button>
+            </div>
+        </div>
+    </main>
+</div>
+
+@if (showErrorModal)
+{
+    <div class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    Error
+                </h3>
+            </div>
+            <div class="modal-body">
+                <p>Por favor, ingrese una matrícula válida.</p>
+            </div>
+            <div class="modal-footer">
+                <button @onclick="CloseErrorModal" class="close-button">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string matricula = "";
+    private bool showErrorModal = false;
+
+    private void FormatMatricula(ChangeEventArgs e)
+    {
+        string value = e.Value.ToString();
+
+        matricula = FormatMatriculaValue(value ?? "");
+    }
+
+    private string FormatMatriculaValue(string value)
+    {
+        var cleaned = new string(value.Where(char.IsDigit).ToArray());
+        if (cleaned.Length == 6)
+        {
+            return $"{cleaned.Substring(0, 2)}-{cleaned.Substring(2)}";
+        }
+        return cleaned;
+    }
+
+    private void HandleSubmit()
+    {
+        if (matricula.Length == 7)
+        {
+            // Aquí iría la lógica para procesar la información del estudiante
+            Console.WriteLine($"Procesando: Matrícula: {matricula}");
+        }
+        else
+        {
+            showErrorModal = true;
+        }
+    }
+
+    private void CloseErrorModal()
+    {
+        showErrorModal = false;
+    }
+}

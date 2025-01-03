@@ -16,23 +16,26 @@ namespace UnphuCard_RecargaFront.Data
     {
         private readonly HttpClient _httpClient;
         private readonly ILocalStorageService _localStorage;
+        private readonly NavigationManager _navigationManager;
 
 
-        public AuthService(HttpClient httpClient, ILocalStorageService localStorage)
+        public AuthService(HttpClient httpClient, ILocalStorageService localStorage, NavigationManager navigationManager)
         {
             _httpClient = httpClient;
             _localStorage = localStorage;
-
+            _navigationManager = navigationManager;
         }
 
-        public async Task<string> Login(LoginModel loginModel)
+        public async Task<int> Login(LoginModel loginModel)
         {
             var response = await _httpClient.PostAsJsonAsync("api/Login", loginModel);
 
             if (response.IsSuccessStatusCode)
             {
                 var loginResponse = await response.Content.ReadFromJsonAsync<TokenResponse>();
-                return loginResponse.Access_token;
+                await _localStorage.SetItemAsync("authToken", loginResponse.Access_token);
+
+                return loginResponse.RolId;
 
 
             }

@@ -13,6 +13,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();  // Agregar Swagger
 builder.Services.AddScoped<IServicioEmail, EmailService>();
 builder.Services.AddScoped<IVerificarCedula, VerificarCedulaServices>();
+builder.Services.AddScoped<ProductoService, ProductoService>();
 builder.Services.AddSingleton<BlobStorageService>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
