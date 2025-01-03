@@ -1,5 +1,8 @@
-﻿using System.Net.Http;
+﻿using Newtonsoft.Json;
+using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using UnphuCard_Api.DTOS;
 using UnphuCard_Api.Models;
@@ -53,6 +56,36 @@ public class InventarioService
         }
     }
 
+    public async Task<HttpResponseMessage> EliminarProducto(int id)
+    {
+        var url = $"api/EliminarInventario/{id}";
+        return await _httpClient.DeleteAsync(url);
+    }
+
+
+    public async Task<bool> EditarProducto(int id, UpdateInventario updateInventario)
+    {
+        try
+        {
+            var content = new StringContent(JsonConvert.SerializeObject(updateInventario), Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PutAsync($"api/EditarInventario/{id}", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                throw new ApplicationException(errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new ApplicationException($"Error al editar el producto: {ex.Message}");
+        }
+    }
 
 }
 

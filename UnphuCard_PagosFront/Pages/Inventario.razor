@@ -4,6 +4,7 @@
 @using UnphuCard_Api.DTOS
 @using UnphuCard_Api.Models
 @inject InventarioService InventarioService
+@inject Categoria Categoria
 
 
 <div class="inventory-management">
@@ -30,21 +31,21 @@
                     <div class="card-header">
                             <h3>@productosInv.NombreDelProducto</h3>
                         <div class="card-actions">
-                                <button class="button button-icon" @onclick="() => ToggleProductEdit(productosInv.Id)">
+                            <button class="button button-icon" @onclick="() => ToggleProductEdit(productosInv.Id)">
                                 <span class="icon edit-icon">✎</span>
                             </button>
-                                <button class="button button-icon" @onclick="() => HandleDelete(productosInv.Id)">
+                               @*  <button class="button button-icon" @onclick="() => HandleDelete(productosInv.Id)">
                                 <span class="icon delete-icon">🗑</span>
-                            </button>
+                            </button> *@
                         </div>
                     </div>
                     <div class="card-content">
                         <div class="product-image">
                                 <img src="@productosInv.ImagenDelProducto" alt="@productosInv.ImagenDelProducto" />
                         </div>
-                        @if (IsEditing)
+                            @if (editingProductId == productosInv.Id)
                         {
-                                <EditForm Model="@productosInv" OnValidSubmit="() => ToggleProductEdit(productosInv.Id)">
+                                <EditForm Model="@productosInv">
                                 <DataAnnotationsValidator />
                                 <div class="form-group">
                                         <label for="@($"name-{productosInv.Id}")">Nombre</label>
@@ -67,7 +68,7 @@
                                 </div>
                                 <div class="form-actions">
                                         <button type="button" class="button button-secondary" @onclick="() => ToggleProductEdit(productosInv.Id)">Cancelar</button>
-                                    <button type="submit" class="button button-primary">Guardar</button>
+                                        <button @onclick="() => HandleEditProduct(productosInv.Id)" type="submit" class="button button-primary">Guardar</button>
                                 </div>
                             </EditForm>
                         }
@@ -110,6 +111,16 @@
                         <InputNumber id="cantidadProducto" @bind-Value="insertproductosInv.InvCantidad" />
                     </div>
                     <div class="form-group">
+                        <label for="categoriaProducto">Categoría</label>
+                        <InputSelect id="categoriaProducto" @bind-Value="insertproductosInv.CatProdId">
+                            <option value="" disabled selected>Seleccione una categoría</option>
+                            @foreach (var categoria in categorias)
+                            {
+                                <option value="@categoria.CatProdId">@categoria.CatProdDescripcion</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="form-group">
                         <label for="imagenProducto">Subir Imagen</label>
                         <InputFile id="imagenProducto" OnChange="HandleImageUpload" />
                         @if (!string.IsNullOrEmpty(previewImageUrl))
@@ -137,14 +148,19 @@
     private Stream fileStream;
     private string fileName;
     private string? previewImageUrl; 
+    private List<CategoriaProducto> categorias;
+    private int? editingProductId = null;
 
     [Parameter]
     public int estId { get; set; }
     private bool isAddProductDialogOpen = false;
     private bool IsEditing = false;
+    private string errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
+        categorias = await Categoria.GetCategoriasProductosAsync();
+
         if (estId == 0)
         {
             var uri = new Uri(NavigationManager.Uri);
@@ -175,7 +191,7 @@
     {
         var file = e.File;
 
-        if (file.ContentType.StartsWith("image/") && file.Size <= 1048576) // 1 MB máximo
+        if (file.ContentType.StartsWith("image/") && file.Size <= 1048576) 
         {
             using var memoryStream = new MemoryStream();
             await file.OpenReadStream(maxAllowedSize: 1048576).CopyToAsync(memoryStream);
@@ -189,20 +205,81 @@
             Console.WriteLine("Archivo no válido. Solo se permiten imágenes de hasta 1 MB.");
         }
     }
-  
+
     private void ToggleProductEdit(int id)
     {
-        var product = productosInv.FirstOrDefault(p => p.Id == id);
-        if (product != null)
+        if (editingProductId == id)
         {
-            IsEditing = !IsEditing;
+            editingProductId = null; 
+        }
+        else
+        {
+            editingProductId = id; 
+        }
+    }
+    private async Task HandleEditProduct(int id)
+    {
+        try
+        {
+            var producto = productosInv.FirstOrDefault(p => p.Id == id);
+            if (producto == null || producto.CantidadEnElInventario < 0 || estId <= 0 || producto.Id <= 0)
+            {
+                errorMessage = "Los datos del producto no son válidos.";
+                return;
+            }
+
+            var updateInventario = new UpdateInventario
+                {
+                    InvCantidad = producto.CantidadEnElInventario,
+                    EstId = estId,
+                    ProdId = producto.Id,
+                };
+
+            var isSuccessful = await InventarioService.EditarProducto(id, updateInventario);
+            if (isSuccessful)
+            {
+                var productoActualizado = productosInv.FirstOrDefault(p => p.Id == id);
+                if (productoActualizado != null)
+                {
+                    productoActualizado.CantidadEnElInventario = updateInventario.InvCantidad.GetValueOrDefault();
+                    // productoActualizado. = updateInventario.EstId.GetValueOrDefault();
+                }
+
+                await InvokeAsync(StateHasChanged);
+                ToggleProductEdit(id);
+            }
+            else
+            {
+                errorMessage = $"Error al editar el producto con ID {id}.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error inesperado: {ex.Message}";
         }
     }
 
-    private void HandleDelete(int id)
-    {
-        productosInv.RemoveAll(p => p.Id == id);
-    }
+
+    // private async Task HandleDelete(int id)
+    // {
+    //     try
+    //     {
+    //         var response = await InventarioService.EliminarProducto(id);
+    //         if (response.IsSuccessStatusCode)
+    //         {
+    //             productosInv.RemoveAll(p => p.Id == id);
+    //         }
+    //         else
+    //         {
+    //             Console.WriteLine($"Error al eliminar el producto con ID {id}: {response.ReasonPhrase}");
+    //         }
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine($"Error: {ex.Message}");
+    //     }
+    // }
+
 
     private async Task HandleAddProduct()
     {
@@ -210,7 +287,8 @@
         {
             if (fileStream != null)
             {
-                // Registrar el producto con la imagen subida
+                insertproductosInv.EstId = estId;
+                insertproductosInv.StatusId = 1;
                 var result = await InventarioService.RegistrarInventarioConImagen(insertproductosInv, fileStream, fileName);
                 if (result)
                 {
@@ -218,7 +296,10 @@
                     fileStream = null;
                     fileName = string.Empty;
                     previewImageUrl = null;
+                    productosInv = await InventarioService.GetInventarioEstablecimientoAsync(estId);
+
                     isAddProductDialogOpen = false;
+
                 }
             }
             else
