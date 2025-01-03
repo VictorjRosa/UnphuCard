@@ -9,6 +9,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Identity.Data;
+using UnphuCard_Api.Service;
 
 
 namespace UnphuCard_Api.Controllers
@@ -17,12 +18,13 @@ namespace UnphuCard_Api.Controllers
     {
         private readonly UnphuCardContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IServicioEmail _emailService;
 
-        public UsuarioController(UnphuCardContext context, IConfiguration configuration)
+        public UsuarioController(UnphuCardContext context, IConfiguration configuration, IServicioEmail emailService)
         {
             _context = context;
             _configuration = configuration;
-
+            _emailService = emailService;
         }
 
         [HttpGet("api/MostrarUsuarios")]
@@ -69,6 +71,7 @@ namespace UnphuCard_Api.Controllers
         {
             try
             {
+                string errorMessage = "";
                 var rolId = await _context.Usuarios.Where(u => u.UsuUsuario == login.Usuario).Select(u => u.RolId).FirstOrDefaultAsync();
                 if (login.RolId is null)
                 {
@@ -89,6 +92,27 @@ namespace UnphuCard_Api.Controllers
                 }
                 // Generar el token JWT
                 var token = GenerateJwtToken(Usuario);
+
+                var random = new Random();
+                var verificationCode = random.Next(100000, 999999).ToString();
+
+                var subject = "Código de verificación para inicio de sesión";
+                var message = $"<h1>Hola {Usuario.UsuNombre} {Usuario.UsuApellido}, </h1>" +
+                              $"<p>Se ha recibido una solicitud para iniciar sesión en tu cuenta en nuestra aplicación.</p>" +
+                              $"<p>Por favor, ingresa el siguiente código de verificación para completar el inicio de sesión:</p>" +
+                              $"<h2><strong>{verificationCode}</strong></h2>" +
+                              $"<p>Si no fuiste tú quien intentó iniciar sesión, por favor ignora este mensaje. En caso de que no hayas realizado esta solicitud, te recomendamos cambiar tu contraseña para asegurar la seguridad de tu cuenta.</p>" +
+                              $"<p>Si tienes alguna duda o inquietud, no dudes en contactarnos.</p>";
+
+                try
+                {
+                    await _emailService.SendEmailAsync(Usuario.UsuCorreo ?? "", subject, message);
+                }
+                catch (Exception ex)
+                {
+                    errorMessage = "Error al enviar el correo electrónico de verificación.";
+                    return StatusCode(500, new { Error = errorMessage });
+                }
 
                 // Devolver el token al cliente
                 return Ok(new { access_token = token, rolId = login.RolId });
