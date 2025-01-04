@@ -1,8 +1,9 @@
 ﻿@page "/IndexCajero"
 @inject NavigationManager NavigationManager
+@inject UsuarioService usuarioService
 
 <div class="cashier-page">
-     <main class="main-content">
+    <main class="main-content">
         <div class="card">
             <div class="card-header">
                 <h2 class="card-title">Ingreso de Información del Estudiante</h2>
@@ -12,17 +13,23 @@
                     <div class="form-group">
                         <label for="matricula">Matrícula del Estudiante:</label>
                         <InputText id="matricula"
-                               type="text"
-                                   @bind-Value="matricula"
-                               @oninput="FormatMatricula"
-                               placeholder="123456"
-                               maxlength="6" />
+                        type="text"
+                        @bind-Value="matricula"
+                        @oninput="FormatMatricula"
+                        placeholder="12-3456"
+                        maxlength="7" />
+                        <button type="button" @onclick="ComprobarMatricula" class="check-button">
+                            Comprobar
+                        </button>
                         <p class="input-hint">Formato: 12-3456</p>
+                        <p>@nombreCompleto</p>
                     </div>
                 </form>
             </div>
             <div class="card-footer">
-                <button class="submit-button" @onclick="HandleSubmit">
+                <button class="submit-button"
+                @onclick="HandleSubmit"
+                disabled="@isSubmitDisabled">
                     Continuar
                 </button>
             </div>
@@ -58,12 +65,14 @@
 
 @code {
     private string matricula = "";
+    private string nombreCompleto = "";
     private bool showErrorModal = false;
+    private bool isSubmitDisabled = true;
 
     private void FormatMatricula(ChangeEventArgs e)
     {
+        nombreCompleto = "";
         string value = e.Value.ToString();
-
         matricula = FormatMatriculaValue(value ?? "");
     }
 
@@ -77,12 +86,36 @@
         return cleaned;
     }
 
+    private async Task ComprobarMatricula()
+    {
+        if (!string.IsNullOrWhiteSpace(matricula) && matricula.Length == 7)
+        {
+            // Verifica si la matrícula existe y obtiene el nombre completo
+            nombreCompleto = await usuarioService.GetInfoByMatriculaAsync(matricula);
+
+            // Si el nombre completo está vacío, la matrícula no es válida
+            if (!string.IsNullOrEmpty(nombreCompleto))
+            {
+                isSubmitDisabled = false; // Habilitar el botón "Continuar"
+            }
+            else
+            {
+                showErrorModal = true; // Mostrar un modal de error si la matrícula no es válida
+                isSubmitDisabled = true; // Asegurarse de que el botón "Continuar" esté deshabilitado
+            }
+        }
+        else
+        {
+            showErrorModal = true; // Mostrar un modal de error si la matrícula es incorrecta
+            isSubmitDisabled = true; // Asegurarse de que el botón "Continuar" esté deshabilitado
+        }
+    }
+
     private void HandleSubmit()
     {
-        if (matricula.Length == 7)
+        if (matricula.Length == 7 && !string.IsNullOrEmpty(nombreCompleto))
         {
-            // Aquí iría la lógica para procesar la información del estudiante
-            Console.WriteLine($"Procesando: Matrícula: {matricula}");
+            NavigationManager.NavigateTo("/recarga");
         }
         else
         {

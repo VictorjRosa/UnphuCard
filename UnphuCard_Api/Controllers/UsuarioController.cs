@@ -55,6 +55,17 @@ namespace UnphuCard_Api.Controllers
             return Ok(usuario);
         }
 
+        [HttpGet("api/MostrarUsuNombreConNombre/{matricula}")]
+        public async Task<ActionResult<Usuario>> GetUsuarioNombre(string matricula)
+        {
+            var usuario = await _context.Usuarios.Where(u => u.UsuMatricula == matricula).Select(u => new{u.UsuNombre, u.UsuApellido}).FirstOrDefaultAsync();
+            if (usuario == null)
+            {
+                return BadRequest("Usuario no encontrado");
+            }
+            return Ok(usuario);
+        }
+
         [HttpGet("api/ObtenerEstadoId/{cedula}")]
         public async Task<ActionResult<Usuario>> GetEstadoId(string cedula)
         {
