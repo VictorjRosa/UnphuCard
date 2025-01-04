@@ -1,6 +1,7 @@
 ﻿@page "/IndexCajero"
 @inject NavigationManager NavigationManager
 @inject UsuarioService usuarioService
+@inject Blazored.SessionStorage.ISessionStorageService sesionStorage
 
 <div class="cashier-page">
     <main class="main-content">
@@ -91,7 +92,7 @@
         if (!string.IsNullOrWhiteSpace(matricula) && matricula.Length == 7)
         {
             // Verifica si la matrícula existe y obtiene el nombre completo
-            nombreCompleto = await usuarioService.GetInfoByMatriculaAsync(matricula);
+            nombreCompleto = await usuarioService.GetUsuNombreByMatriculaAsync(matricula);
 
             // Si el nombre completo está vacío, la matrícula no es válida
             if (!string.IsNullOrEmpty(nombreCompleto))
@@ -111,10 +112,11 @@
         }
     }
 
-    private void HandleSubmit()
+    private async Task HandleSubmit()
     {
         if (matricula.Length == 7 && !string.IsNullOrEmpty(nombreCompleto))
         {
+            await sesionStorage.SetItemAsync("usuMatricula", matricula);
             NavigationManager.NavigateTo("/recarga");
         }
         else

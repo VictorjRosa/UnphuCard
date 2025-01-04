@@ -449,7 +449,7 @@ public partial class UnphuCardContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("Usu_Nombre");
             entity.Property(e => e.UsuSaldo)
-                .HasColumnType("decimal(6, 2)")
+                .HasColumnType("decimal(8, 2)")
                 .HasColumnName("Usu_Saldo");
             entity.Property(e => e.UsuUsuario)
                 .HasMaxLength(9)

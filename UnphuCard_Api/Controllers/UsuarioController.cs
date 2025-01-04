@@ -55,11 +55,22 @@ namespace UnphuCard_Api.Controllers
             return Ok(usuario);
         }
 
-        [HttpGet("api/MostrarUsuNombreConNombre/{matricula}")]
+        [HttpGet("api/MostrarUsuNombreConMatricula/{matricula}")]
         public async Task<ActionResult<Usuario>> GetUsuarioNombre(string matricula)
         {
             var usuario = await _context.Usuarios.Where(u => u.UsuMatricula == matricula).Select(u => new{u.UsuNombre, u.UsuApellido}).FirstOrDefaultAsync();
             if (usuario == null)
+            {
+                return BadRequest("Usuario no encontrado");
+            }
+            return Ok(usuario);
+        }
+
+        [HttpGet("api/MostrarUsuIdConMatricula/{matricula}")]
+        public async Task<ActionResult<Usuario>> GetUsuarioId(string matricula)
+        {
+            var usuario = await _context.Usuarios.Where(u => u.UsuMatricula == matricula).Select(u => u.UsuId).FirstOrDefaultAsync();
+            if (usuario == 0)
             {
                 return BadRequest("Usuario no encontrado");
             }
