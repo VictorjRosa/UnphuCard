@@ -1,6 +1,7 @@
 ﻿using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Protocol.Plugins;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Text.Json;
@@ -26,6 +27,18 @@ namespace UnphuCard_RecargaFront.Data
             _navigationManager = navigationManager;
         }
 
+        public async Task<bool> VerifyCode(string code)
+        {
+            var verificationCode = await _localStorage.GetItemAsync<string>("verificationCode");
+            if (verificationCode == code)
+            {
+                await _localStorage.SetItemAsync("salio", 1);
+                return true;
+            }
+            await _localStorage.SetItemAsync("salio", 1);
+            return false;
+        }
+
         public async Task<int> Login(LoginModel loginModel)
         {
             var response = await _httpClient.PostAsJsonAsync("api/Login", loginModel);
@@ -34,6 +47,7 @@ namespace UnphuCard_RecargaFront.Data
             {
                 var loginResponse = await response.Content.ReadFromJsonAsync<TokenResponse>();
                 await _localStorage.SetItemAsync("authToken", loginResponse.Access_token);
+                await _localStorage.SetItemAsync("verificationCode", loginResponse.VerificationCode);
 
                 return loginResponse.RolId;
 

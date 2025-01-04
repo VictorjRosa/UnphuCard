@@ -12,7 +12,7 @@
         <button class="mb-4 text-green-600 hover:text-green-700" @onclick="GoBack">
             <span class="mr-2">←</span> Volver
         </button>
-        
+
         <div class="card w-full max-w-md mx-auto">
             <div class="card-header">
                 <h2 class="card-title text-2xl font-bold text-gray-800">Recargar UNPHUCard</h2>
@@ -35,18 +35,18 @@
                 <div class="space-y-2">
                     <label>Método de pago</label>
                     <div class="radio-group">
-                     <InputRadioGroup @bind-Value="PaymentMethod" name="metodoPago">
+                        <InputRadioGroup @bind-Value="PaymentMethod" name="metodoPago">
 
-                        @foreach (var metodo in MetodosPago)
-                        {
-                            if (@metodo.MetPagId != 1 && @metodo.MetPagId != 2)
+                            @foreach (var metodo in MetodosPago)
                             {
-                                <div class="flex items-center space-x-2">
+                                if (@metodo.MetPagId != 1 && @metodo.MetPagId != 2)
+                                {
+                                    <div class="flex items-center space-x-2">
                                         <InputRadio TValue="int" value="@metodo.MetPagId" id="@metodo.MetPagId" />
-                                <label  for="@metodo.MetPagId">@metodo.MetPagDescripcion</label>
-                            </div>
+                                        <label  for="@metodo.MetPagId">@metodo.MetPagDescripcion</label>
+                                    </div>
+                                }
                             }
-                        }
                         </InputRadioGroup>
 
                     </div>
@@ -59,8 +59,8 @@
             </div>
         </div>
     </main>
-    
-    
+
+
 </div>
 @code {
 
@@ -68,7 +68,7 @@
     private decimal Amount { get; set; }
     private List<int> QuickAmounts { get; set; } = new List<int> { 100, 200, 300, 500 };
     private List<MetodoPago> MetodosPago { get; set; } = new List<MetodoPago>();
-
+    private int rolId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -105,9 +105,18 @@
     }
 
   
-    private void GoBack()
+    private async Task GoBack()
     {
-        NavigationManager.NavigateTo("/index");
+        rolId = await localStorage.GetItemAsync<int>("rolId");
+
+        if (rolId == 1)
+        {
+            NavigationManager.NavigateTo("/index");
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/IndexCajero");
+        }
     }
     private async Task GoContinuar()
     {
@@ -118,7 +127,7 @@
             return;
         }
         await StorePaymentMethodAndAmount();
-     
+        
         NavigationManager.NavigateTo("/pago");
     }
 }

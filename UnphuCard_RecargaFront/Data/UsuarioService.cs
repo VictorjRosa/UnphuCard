@@ -29,6 +29,21 @@ namespace UnphuCard_RecargaFront.Data
                 throw new ApplicationException($"Error al obtener información del estudiante: {errorMessage}");
             }
         }
+
+        public async Task<string?> GetInfoByMatriculaAsync(string matricula)
+        {
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<Usuario>($"api/MostrarUsuNombreConNombre/{matricula}");
+                var usuNombre = $"{response?.UsuNombre} {response?.UsuApellido}";
+                return usuNombre;
+            }
+            catch (HttpRequestException)
+            {
+                return null;
+            }
+        }
+
     }
 
 }
