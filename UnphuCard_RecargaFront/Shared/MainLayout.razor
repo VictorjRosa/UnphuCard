@@ -1,7 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
-@inject Blazored.SessionStorage.ISessionStorageService sesionStorage
+
 <PageTitle>UnphuCard_RecargaFront</PageTitle>
 
 <div>
@@ -49,12 +49,14 @@
 
     protected override async Task OnInitializedAsync()
     {
-        rolId = await sesionStorage.GetItemAsync<int>("rolId");
+        rolId = await localStorage.GetItemAsync<int>("rolId");
     }
 
     private void Logout()
     {
         localStorage.RemoveItemAsync("authToken");
+        localStorage.RemoveItemAsync("rolId");
+        localStorage.SetItemAsync("salio", 0);
         NavigationManager.NavigateTo("/");
     }
 }

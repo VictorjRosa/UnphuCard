@@ -165,9 +165,9 @@ namespace UnphuCard_Api.Controllers
 </head>
 <body>
     <div class=""header"">
-        <img src=""https://www.unphu.edu.do/images/logo-unphu.png"" alt=""UNPHU"">
-        <h1>Comprobante de Transacción</h1>
+        <img src=""https://fotosunphucard.blob.core.windows.net/fotos/LogoUnphu.png"" alt=""UNPHU"">
     </div>
+        <h1>Comprobante de Transacción</h1>
     <div class=""content"">
         <p><strong>{usuario.UsuNombre + " " + usuario.UsuApellido}</strong></p>
         <p>Matrícula: {usuario.UsuMatricula}</p>

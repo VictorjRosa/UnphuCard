@@ -4,7 +4,6 @@
 @inject AuthService AuthService
 @inject NavigationManager NavigationManager
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
-@inject Blazored.SessionStorage.ISessionStorageService sesionStorage
 @layout SecondaryLayout
 
 <div class="login-container">
@@ -46,21 +45,79 @@
                 <div class="alert alert-danger">@errorMessage</div>
             }
         </div>
-
     </div>
 </div>
 
+@if (showVerificationModal)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-title">Verificación de dos factores</h3>
+            <p class="modal-description">Por favor, ingrese el código de verificación enviado a su correo electrónico.</p>
 
+            <input type="text"
+                   class="verification-input"
+                   @bind="verificationCode"
+                   @bind:event="oninput"
+                   placeholder="Código de verificación"
+                   maxlength="6"
+                   pattern="[0-9]*"
+                   inputmode="numeric"
+                   @onkeypress="HandleKeyPress" />
+
+            <button class="verify-button"
+                    @onclick="HandleVerification"
+                    disabled="@(!IsValidVerificationCode())">
+                @if (isVerifying)
+                {
+                    <span class="spinner"></span>
+                }
+                else
+                {
+                    <span>Verificar</span>
+                }
+            </button>
+
+            @if (!string.IsNullOrEmpty(errorMessageVerificacion))
+            {
+                <div class="error-message">
+                    <span class="error-icon">⚠️</span>
+                    @errorMessageVerificacion
+                </div>
+            }
+        </div>
+    </div>
+}
 @code {
     private bool isAuthenticated;
-
+    private bool showVerificationModal = false;
     private string errorMessage;
+    private string errorMessageVerificacion;
     private LoginModel LoginModel = new LoginModel();
     private bool showPassword = false;
     private int rolId;
+    private string verificationCode;
+    private string authToken;
+    private bool isVerifying = false;
+
+    private bool IsValidVerificationCode()
+    {
+        return !string.IsNullOrWhiteSpace(verificationCode) &&
+               verificationCode.Length == 6 &&
+               verificationCode.All(char.IsDigit);
+    }
+
     private void TogglePasswordVisibility()
     {
         showPassword = !showPassword;
+    }
+
+    private void HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && IsValidVerificationCode())
+        {
+            HandleVerification();
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -71,8 +128,9 @@
             {
                 var token = await localStorage.GetItemAsync<string>("authToken");
                 isAuthenticated = !string.IsNullOrEmpty(token);
-                await sesionStorage.GetItemAsync<int>("rolId");
-                if (rolId == 1)
+                rolId = await localStorage.GetItemAsync<int>("rolId");
+                var salio = await localStorage.GetItemAsync<int>("salio");
+                if (rolId == 1 && salio == 1)
                 {
                     if (isAuthenticated)
                     {
@@ -99,22 +157,22 @@
         }
     }
 
-
     private async Task HandleLogin()
     {
         try
         {
             errorMessage = null;
-            var rolId = await AuthService.Login(LoginModel);
-            await sesionStorage.SetItemAsync("rolId", rolId);
+            rolId = await AuthService.Login(LoginModel);
+            authToken = await localStorage.GetItemAsync<string>("authToken");
+            await localStorage.SetItemAsync("rolId", rolId);
 
             if (rolId == 1)
             {
-                NavigationManager.NavigateTo("/index");
+                showVerificationModal = true;
             }
             else if (rolId == 3)
             {
-                NavigationManager.NavigateTo("/IndexCajero");
+                await CompleteLogin();
             }
 
         }
@@ -129,4 +187,37 @@
         }
     }
 
+    private async Task HandleVerification()
+    {
+        try
+        {
+            var isVerified = await AuthService.VerifyCode(verificationCode);
+            if (isVerified)
+            {
+                await CompleteLogin();
+            }
+            else
+            {
+                errorMessageVerificacion = "Código de verificación incorrecto. Por favor, intente nuevamente.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessageVerificacion = "Error al verificar el código. Por favor, intente nuevamente.";
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private async Task CompleteLogin()
+    {
+        await localStorage.SetItemAsync("authToken", authToken);
+        if (rolId == 1)
+        {
+            NavigationManager.NavigateTo("/index");
+        }
+        else if (rolId == 3)
+        {
+            NavigationManager.NavigateTo("/IndexCajero");
+        }
+    }
 }

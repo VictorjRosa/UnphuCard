@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -224,10 +225,61 @@ namespace UnphuCard_Api.Controllers
                         .Select(u => new { u.UsuCorreo, u.UsuNombre, u.UsuApellido })
                         .FirstOrDefaultAsync();
                     string mensaje = $@"
-                <h2>Notificación de Tarjeta No Devuelta</h2>
-                <p>La tarjeta provisional número {tarjeta.TarjProvCodigo} asignada a {usuario.UsuNombre + " " + usuario.UsuApellido} ha expirado el {tarjeta.TarjProvFechaExpiracion} y no ha sido devuelta.</p>
-                <p>Por favor, devuelva la tarjeta a la brevedad posible.</p>
-            ";
+<!DOCTYPE html>
+<html lang='es'>
+<head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Notificación de Tarjeta No Devuelta - UNPHU</title>
+</head>
+<body style='margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;'>
+    <table role='presentation' cellspacing='0' cellpadding='0' border='0' align='center' width='100%' 
+           style='max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
+        
+        <!-- Header with Logo -->
+        <tr>
+            <td style='padding: 40px 0; text-align: center; background-color: #006838; border-radius: 8px 8px 0 0;'>
+                <img src='https://fotosunphucard.blob.core.windows.net/fotos/LogoUnphu.png' 
+                     alt='UNPHU Logo' style='width: 200px; height: auto;'>
+            </td>
+        </tr>
+        
+        <!-- Main Content -->
+        <tr>
+            <td style='padding: 40px 30px;'>
+                <h1 style='color: #006838; margin: 0 0 20px 0; font-size: 24px; font-weight: bold; text-align: center;'>
+                    Notificación de Tarjeta No Devuelta
+                </h1>
+                
+                <div style='background-color: #fff8e1; border-left: 4px solid #ffa000; padding: 15px; margin: 0 0 30px 0;'>
+                    <p style='color: #666666; font-size: 16px; line-height: 1.5; margin: 0;'>
+                        <strong>Atención:</strong> La tarjeta provisional número <span style='color: #006838; font-weight: bold;'>{tarjeta.TarjProvCodigo}</span> 
+                        asignada a <span style='color: #006838; font-weight: bold;'>{usuario.UsuNombre} {usuario.UsuApellido}</span> 
+                        ha expirado el <span style='color: #006838; font-weight: bold;'>{tarjeta.TarjProvFechaExpiracion:dd/MM/yyyy}</span> y no ha sido devuelta.
+                    </p>
+                </div>
+                
+                <p style='color: #555555; font-size: 16px; line-height: 1.5; margin: 0 0 20px 0; text-align: center;'>
+                    <strong>Por favor, devuelva la tarjeta a la brevedad posible.</strong>
+                </p>                
+            </td>
+        </tr>
+        
+        <!-- Footer -->
+        <tr>
+            <td style='padding: 30px; background-color: #00A650; border-radius: 0 0 8px 8px; text-align: center;'>
+                <p style='color: #ffffff; font-size: 14px; margin: 0;'>
+                    © {fechaEnRD} Universidad Nacional Pedro Henríquez Ureña
+                </p>
+                <p style='color: #ffffff; font-size: 12px; margin: 10px 0 0 0;'>
+                    Ave. John F. Kennedy Km. 7 1/2, Santo Domingo, República Dominicana
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>";
+
                     await _emailService.SendEmailAsync(usuario.UsuCorreo, "Tarjeta No Devuelta", mensaje);
                     await _emailService.SendEmailAsync("vr19-1028@unphu.edu.do", "Tarjeta No Devuelta", mensaje);
                 }
