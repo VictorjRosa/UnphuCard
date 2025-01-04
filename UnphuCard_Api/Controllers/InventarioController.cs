@@ -208,6 +208,22 @@ namespace UnphuCard_Api.Controllers
                 return StatusCode(500, $"Error interno del servidor: {ex.Message}");
             }
         }
+
+        [HttpGet("api/Inventario/DisponibilidadOtrasCafeterias/{idProducto}")]
+        public async Task<IActionResult> GetDisponibilidadEnOtrasCafeterias(int idProducto)
+        {
+            var disponibilidad = await _context.VwInventarioEstablecimientos
+                .Where(i => i.IdDelProducto == idProducto && i.CantidadEnElInventario > 0)
+                .Select(i => new DisponibilidadModel
+                {
+                    NombreDelEstablecimiento = i.NombreDelEstablecimiento,
+                    CantidadEnElInventario = i.CantidadEnElInventario,
+                })
+                .ToListAsync();
+            return Ok(disponibilidad);
+
+
+        }
         private bool InventarioExists(int id)
         {
             return _context.Inventarios.Any(i => i.InvId == id);

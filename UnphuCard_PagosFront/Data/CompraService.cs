@@ -1,6 +1,7 @@
 ﻿using Blazored.LocalStorage;
 using System.Net.Http;
 using UnphuCard_Api.DTOS;
+using UnphuCard_Api.Models;
 
 namespace UnphuCard_PagosFront.Data
 {
@@ -45,6 +46,11 @@ namespace UnphuCard_PagosFront.Data
                 throw new ApplicationException(errorMessage);
             }
 
+        }
+
+        public async Task<List<VwInventarioEstablecimiento>> GetEstablecimientoporCategoria(int idProducto)
+        {
+            return await _httpClient.GetFromJsonAsync<List<VwInventarioEstablecimiento>>($"api/Inventario/DisponibilidadOtrasCafeterias/{idProducto}");
         }
     }
 }

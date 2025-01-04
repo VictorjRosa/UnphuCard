@@ -47,10 +47,10 @@
                         {
                                 <EditForm Model="@productosInv">
                                 <DataAnnotationsValidator />
-                                <div class="form-group">
+                               @*  <div class="form-group">
                                         <label for="@($"name-{productosInv.Id}")">Nombre</label>
                                         <InputText id="@($"name-{productosInv.Id}")" @bind-Value="productosInv.NombreDelProducto" />
-                                </div>
+                                </div> *@
                                 <div class="form-group">
 
                                  <label for="@($"price-{productosInv.Id}")">Precio</label>
@@ -62,10 +62,12 @@
                                         <InputNumber id="@($"quantity-{productosInv.Id}")" @bind-Value="productosInv.CantidadEnElInventario" />
 
                                 </div>
-                                <div class="form-group">
+                               @*  <div class="form-group">
+
+
                                         <label for="@($"image-{productosInv.Id}")">URL de la imagen</label>
                                         <InputText id="@($"image-{productosInv.Id}")" @bind-Value="productosInv.ImagenDelProducto" />
-                                </div>
+                                </div> *@
                                 <div class="form-actions">
                                         <button type="button" class="button button-secondary" @onclick="() => ToggleProductEdit(productosInv.Id)">Cancelar</button>
                                         <button @onclick="() => HandleEditProduct(productosInv.Id)" type="submit" class="button button-primary">Guardar</button>

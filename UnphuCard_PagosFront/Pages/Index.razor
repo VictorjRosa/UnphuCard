@@ -6,6 +6,7 @@
 @inject SesionService Sesion 
 @inject AuthService AuthService
 @inject Blazored.SessionStorage.ISessionStorageService SessionStorageService
+@inject ISessionStorageService sessionStorage
 
 <div class="min-h-screen bg-gray-50 flex flex-col">
 
@@ -35,6 +36,8 @@
         int userId = await AuthService.GetUserIdFromTokenAsync();
 
         var estIdResult = await AuthService.GetEstIdByUserIdAsync(userId);
+        await sessionStorage.SetItemAsync("estId", estIdResult);
+
 
         if (!estIdResult.HasValue)
         {

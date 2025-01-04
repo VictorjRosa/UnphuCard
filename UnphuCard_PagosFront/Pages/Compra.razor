@@ -1,5 +1,6 @@
 ﻿@page "/compras"
 @inject IJSRuntime JSRuntime
+@using Blazored.SessionStorage
 @using UnphuCard_Api.DTOS
 @using UnphuCard_Api.Models
 @using static UnphuCard_PagosFront.Data.CartService
@@ -7,6 +8,8 @@
 @inject ProductosService Producto
 @inject NavigationManager NavigationManager
 @inject CartService CartService
+@inject CompraService CompraService
+@inject ISessionStorageService sessionStorage
 
 <div class="min-h-screen bg-gray-50 flex flex-col">
     <header class="bg-green-700 text-white p-4 flex justify-between items-center">
@@ -60,22 +63,44 @@
     @if (selectedProduct != null)
     {
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div class="bg-white p-4 rounded-md max-w-md w-full">
+            <div class="bg-white p-4 rounded-md max-w-md w-full relative">
                 <h2 class="text-xl font-bold mb-4">@selectedProduct.NombreDelProducto</h2>
                 <img src="@selectedProduct.ImagenDelProducto" alt="@selectedProduct.NombreDelProducto" width="200" height="200" class="mb-4 rounded-md mx-auto" />
                 <p class="text-lg font-semibold mb-4">Precio: $@(selectedProduct.PrecioDelProducto?.ToString("F2") ?? "0.00")</p>
+
+                @if (disponibilidad?.Any() == true)
+                {
+                    <div>
+                        <h3 class="text-md font-bold mb-2">Disponible en:</h3>
+                        <ul>
+                            @foreach (var establecimiento in disponibilidad)
+                            {
+                                <li>
+                                    <span class="font-semibold">@establecimiento.NombreDelEstablecimiento</span>
+                                    (Stock: @establecimiento.CantidadEnElInventario)
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+                else if (disponibilidad != null)
+                {
+                    <p class="text-red-500">Lo sentimos, no se encontró disponibilidad para este producto.</p>
+                }
+
                 <div class="flex items-center justify-center space-x-4 mb-4">
-                    <button class="p-2 border rounded-md" @onclick="() => quantity = Math.Max(1, quantity - 1)">-</button>
-                    <input type="number" @bind="quantity" class="w-20 text-center p-2 border rounded-md" />
-                    <button class="p-2 border rounded-md" @onclick="() => quantity++">+</button>
+                    <button class="p-2 border rounded-md" @onclick="() => quantity = Math.Max(1, quantity - 1)" disabled="@(!disponibilidad?.Any() ?? true)">-</button>
+                    <input type="number" @bind="quantity" class="w-20 text-center p-2 border rounded-md" disabled="@(!disponibilidad?.Any() ?? true)" />
+                    <button class="p-2 border rounded-md" @onclick="() => quantity++" disabled="@(!disponibilidad?.Any() ?? true)">+</button>
                 </div>
                 <div class="flex justify-end">
-                    <button class="bg-green-600 text-white p-2 rounded-md" @onclick="AddToCartAsync">Agregar al Carrito</button>
+                    <button class="bg-green-600 text-white p-2 rounded-md" @onclick="AddToCartAsync" disabled="@(!disponibilidad?.Any() ?? true)">Agregar al Carrito</button>
                 </div>
                 <button class="absolute top-2 right-2 text-gray-500" @onclick="CloseProductDialog">&times;</button>
             </div>
         </div>
     }
+
 
     @if (showCart)
     {
@@ -97,23 +122,8 @@
                                     <p class="font-semibold">@item.NombreDelProducto</p>
                                     <p class="text-sm text-gray-600">$@(item.PrecioDelProducto?.ToString("F2") ?? "0.00")</p>
                                 </div>
-                                @* <button class="text-blue-500 text-sm" @onclick="() => ConsultarDisponibilidad(item.IdDelProducto)">Ver disponibilidad</button>
-                                @if (disponibilidad?.Any() == true)
-                                {
-                                    <div >
-                                        <h3 class="text-md font-bold mb-2">Disponible en:</h3>
-                                        <ul>
-                                            @foreach (var establecimiento in disponibilidad)
-                                            {
-                                                <li>
-                                                    <span class="font-semibold">@establecimiento.NombreDelEstablecimiento</span>
-                                                    (Stock: @establecimiento.CantidadEnElInventario)
-                                                </li>
-                                            }
-                                        </ul>
-                                    </div>
-                                }
- *@
+                              
+
                             </div>
                             <div class="flex items-center">
                                 <button class="p-1 border rounded-md" @onclick="() => UpdateCartItemQuantityAsync(item.IdDelProducto, item.Quantity - 1)">-</button>
@@ -145,6 +155,7 @@
     {
         try
         {
+            int idCafeteriaActual = await sessionStorage.GetItemAsync<int>("estId");
             await CartService.InitializeCartAsync();
             categorias = await Categoria.GetCategoriasProductosAsync();
             productos = await Producto.TodoProducto();
@@ -187,10 +198,14 @@
         }
     }
 
-    private void OpenProductDialog(VwProducto producto)
+    private async Task OpenProductDialog(VwProducto producto)
     {
         selectedProduct = producto;
         quantity = 1;
+        disponibilidad = null; 
+        disponibilidad = await CompraService.GetEstablecimientoporCategoria(producto.IdDelProducto);
+        StateHasChanged();
+
     }
 
     private void CloseProductDialog()
@@ -215,11 +230,7 @@
         }
     }
 
-    // private async Task ConsultarDisponibilidad(int idDelProducto)
-    // {
-    //     disponibilidad = await );
-    //     StateHasChanged();
-    // }
+    
     private async Task UpdateCartItemQuantityAsync(int id, int newQuantity)
     {
         await CartService.UpdateCartItemQuantityAsync(id, newQuantity);
