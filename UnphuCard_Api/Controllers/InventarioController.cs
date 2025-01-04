@@ -141,7 +141,7 @@ namespace UnphuCard_Api.Controllers
             }
         }
             
-        [HttpPut("api/EditarInventario")]
+        [HttpPut("api/EditarInventario/{id}")]
         public async Task<IActionResult> PutInventario(int id, [FromBody] UpdateInventario updateInventario)
         {
             if (!ModelState.IsValid)
