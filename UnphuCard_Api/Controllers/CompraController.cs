@@ -165,7 +165,7 @@ namespace UnphuCard_Api.Controllers
 </head>
 <body>
     <div class=""header"">
-        <img src=""https://fotosunphucard.blob.core.windows.net/fotos/LogoUnphu.png"" alt=""UNPHU"">
+        <img src=""https://fotosunphucard.blob.core.windows.net/fotos/LogoUnphuBlanco.png"" alt=""UNPHU"">
     </div>
         <h1>Comprobante de Transacción</h1>
     <div class=""content"">

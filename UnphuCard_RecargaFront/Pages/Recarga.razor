@@ -81,6 +81,17 @@
     </main>
 </div>
 
+@if (modalPagoEnProceso)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-title">Pago En Proceso</h3>
+            <p class="modal-description">Realizar el pago con el veriphone</p>
+            <button @onclick="ClosePagoExitosoModal" class="modal-button">Cerrar</button>
+        </div>
+    </div>
+}
+
 @if (modalPago)
 {
     <div class="modal-overlay">
@@ -103,6 +114,7 @@
     private string usuMatricula;
     private bool modalPago = false;
     private PagoRequest paymentRequest = new PagoRequest();
+    private bool modalPagoEnProceso = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -175,8 +187,7 @@
         }
         else if (PaymentMethod == 3)  // Si el pago es con tarjeta
         {
-            // Lógica para pago con tarjeta (en espera)
-            // Después, se podría cambiar el estado del modal a pago exitoso después de un proceso adicional
+
             modalPago = true;
         }
     }

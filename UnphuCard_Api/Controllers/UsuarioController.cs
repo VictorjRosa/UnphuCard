@@ -142,7 +142,7 @@ namespace UnphuCard_Api.Controllers
         <!-- Header with Logo -->
         <tr>
             <td style='padding: 40px 0; text-align: center; background-color: #006838; border-radius: 8px 8px 0 0;'>
-                <img src='https://fotosunphucard.blob.core.windows.net/fotos/LogoUnphu.png' 
+                <img src='https://fotosunphucard.blob.core.windows.net/fotos/LogoUnphuBlanco.png' 
                      alt='UNPHU Logo' style='width: 200px; height: auto;'>
             </td>
         </tr>
