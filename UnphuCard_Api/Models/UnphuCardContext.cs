@@ -219,15 +219,17 @@ public partial class UnphuCardContext : DbContext
                 .HasMaxLength(3)
                 .IsUnicode(false)
                 .HasColumnName("InfoTarj_CVV");
-            entity.Property(e => e.InfoTarjFechaExpira).HasColumnName("InfoTarj_FechaExpira");
+            entity.Property(e => e.InfoTarjFechaExpira)
+                .HasMaxLength(5)
+                .IsUnicode(false)
+                .HasColumnName("InfoTarj_FechaExpira");
             entity.Property(e => e.InfoTarjNumTarjeta)
                 .HasMaxLength(16)
                 .IsUnicode(false)
                 .HasColumnName("InfoTarj_NumTarjeta");
-            entity.Property(e => e.InfoTarjTitular)
-                .HasMaxLength(50)
-                .IsUnicode(false)
-                .HasColumnName("InfoTarj_Titular");
+            entity.Property(e => e.InfoTarjSaldo)
+                .HasColumnType("decimal(9, 2)")
+                .HasColumnName("InfoTarj_Saldo");
             entity.Property(e => e.InfoTarjUltNumTarjeta)
                 .HasMaxLength(4)
                 .IsUnicode(false)
