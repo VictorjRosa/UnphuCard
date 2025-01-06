@@ -40,17 +40,14 @@
                         </div>
                     </div>
                     <div class="card-content">
-                        <div class="product-image">
+                        <div class="product-image2">
                                 <img src="@productosInv.ImagenDelProducto" alt="@productosInv.ImagenDelProducto" />
                         </div>
                             @if (editingProductId == productosInv.Id)
                         {
                                 <EditForm Model="@productosInv">
                                 <DataAnnotationsValidator />
-                               @*  <div class="form-group">
-                                        <label for="@($"name-{productosInv.Id}")">Nombre</label>
-                                        <InputText id="@($"name-{productosInv.Id}")" @bind-Value="productosInv.NombreDelProducto" />
-                                </div> *@
+                              
                                 <div class="form-group">
 
                                  <label for="@($"price-{productosInv.Id}")">Precio</label>
@@ -62,12 +59,7 @@
                                         <InputNumber id="@($"quantity-{productosInv.Id}")" @bind-Value="productosInv.CantidadEnElInventario" />
 
                                 </div>
-                               @*  <div class="form-group">
-
-
-                                        <label for="@($"image-{productosInv.Id}")">URL de la imagen</label>
-                                        <InputText id="@($"image-{productosInv.Id}")" @bind-Value="productosInv.ImagenDelProducto" />
-                                </div> *@
+                              
                                 <div class="form-actions">
                                         <button type="button" class="button button-secondary" @onclick="() => ToggleProductEdit(productosInv.Id)">Cancelar</button>
                                         <button @onclick="() => HandleEditProduct(productosInv.Id)" type="submit" class="button button-primary">Guardar</button>
@@ -76,9 +68,9 @@
                         }
                         else
                         {
-                                <p class="product-name">@productosInv.NombreDelProducto</p>
-                                <p class="product-price">Precio: $@(productosInv.PrecioDelProducto?.ToString("F2") ?? "0.00")</p>
-                                <p class="product-quantity">Cantidad: @productosInv.CantidadEnElInventario</p>
+                                <p class="product-name2">@productosInv.NombreDelProducto</p>
+                                <p class="product-price2">Precio: $@(productosInv.PrecioDelProducto?.ToString("F2") ?? "0.00")</p>
+                                <p class="product-quantity2">Cantidad: @productosInv.CantidadEnElInventario</p>
                         }
                     </div>
                 </div>
@@ -92,56 +84,77 @@
 @if (isAddProductDialogOpen)
 {
     <div class="modal-backdrop">
-        <div class="modal-content">
-            <header class="modal-header">
-                <h2>Agregar Nuevo Producto</h2>
-                <button class="close-button" @onclick="() => isAddProductDialogOpen = false">×</button>
-            </header>
-            <main class="modal-body">
-                <EditForm Model="@insertproductosInv" >
-                    <DataAnnotationsValidator />
-                    <div class="form-group">
-                        <label for="nombreProducto">Nombre del Producto</label>
-                        <InputText id="nombreProducto" @bind-Value="insertproductosInv.ProdDescripcion" />
-                    </div>
-                    <div class="form-group">
-                        <label for="precioProducto">Precio</label>
-                        <InputNumber id="precioProducto" @bind-Value="insertproductosInv.ProdPrecio" />
-                    </div>
-                    <div class="form-group">
-                        <label for="cantidadProducto">Cantidad</label>
-                        <InputNumber id="cantidadProducto" @bind-Value="insertproductosInv.InvCantidad" />
-                    </div>
-                    <div class="form-group">
-                        <label for="categoriaProducto">Categoría</label>
-                        <InputSelect id="categoriaProducto" @bind-Value="insertproductosInv.CatProdId">
-                            <option value="" disabled selected>Seleccione una categoría</option>
-                            @foreach (var categoria in categorias)
-                            {
-                                <option value="@categoria.CatProdId">@categoria.CatProdDescripcion</option>
-                            }
-                        </InputSelect>
-                    </div>
-                    <div class="form-group">
-                        <label for="imagenProducto">Subir Imagen</label>
-                        <InputFile id="imagenProducto" OnChange="HandleImageUpload" />
-                        @if (!string.IsNullOrEmpty(previewImageUrl))
-                        {
-                            <div class="image-preview">
-                                <img src="@previewImageUrl" alt="Vista previa de la imagen" />
-                            </div>
-                        }
-                    </div>
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Agregar Nuevo Producto</h2>
+                    <button class="close-button" @onclick="() => isAddProductDialogOpen = false">×</button>
+                </div>
+                
+                <div class="modal-body">
+                    <EditForm Model="@insertproductosInv">
+                        <DataAnnotationsValidator />
+                        
+                        <div class="form-group">
+                            <label>Nombre</label>
+                            <InputText @bind-Value="insertproductosInv.ProdDescripcion" 
+                                     placeholder="Nombre del producto"
+                                     class="form-control" />
+                        </div>
 
-                    <div class="form-actions">
-                        <button type="button" class="button button-secondary" @onclick="() => isAddProductDialogOpen = false">Cancelar</button>
-                        <button @onclick="HandleAddProduct" type="submit" class="button button-primary">Guardar</button>
-                    </div>
-                </EditForm>
-            </main>
+                        <div class="form-group">
+                            <label>Precio</label>
+                            <InputNumber @bind-Value="insertproductosInv.ProdPrecio" 
+                                       placeholder="0.00"
+                                       class="form-control" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Cantidad</label>
+                            <InputNumber @bind-Value="insertproductosInv.InvCantidad" 
+                                       placeholder="0"
+                                       class="form-control" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Categoría</label>
+                            <InputSelect @bind-Value="insertproductosInv.CatProdId" class="form-control">
+                                <option value="">Seleccione una categoría</option>
+                                @foreach (var categoria in categorias)
+                                {
+                                    <option value="@categoria.CatProdId">@categoria.CatProdDescripcion</option>
+                                }
+                            </InputSelect>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Imagen</label>
+                            <InputFile OnChange="HandleImageUpload" 
+                                     accept="image/*"
+                                     class="form-control" />
+                            
+                            @if (!string.IsNullOrEmpty(previewImageUrl))
+                            {
+                                <div class="image-preview">
+                                    <img src="@previewImageUrl" alt="Vista previa" />
+                                </div>
+                            }
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="submit" 
+                                    @onclick="HandleAddProduct" 
+                                    class="btn-primary">
+                                Agregar Producto
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
         </div>
     </div>
 }
+
 
 
 @code {

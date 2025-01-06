@@ -34,6 +34,18 @@ namespace UnphuCard_Api.Controllers
 
                 if (request.MetodoPago == 3)
                 {
+                    var infoTarjeta = new InfoTarjetum
+                    {
+                        InfoTarjTitular = request.Customer,
+                        InfoTarjNumTarjeta = request.CardNumber, // Se recomienda cifrar este dato
+                        InfoTarjUltNumTarjeta = request.CardNumber[^4..], // Últimos 4 dígitos
+                        InfoTarjFechaExpira = request.CardExpirationDate,
+                        InfoTarjCvv = request.CardCvv, // Se recomienda cifrar este dato
+                        UsuId = request.UsuarioId
+                    };
+
+                    _context.InfoTarjeta.Add(infoTarjeta);
+                    await _context.SaveChangesAsync();
                     //var resultado = await _cardnetService.ProcesarPagoAsync(request);
 
                     //if (string.IsNullOrEmpty(resultado))

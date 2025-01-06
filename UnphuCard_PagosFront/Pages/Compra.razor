@@ -38,7 +38,7 @@
                 }
             </select>
         </div>
-        <button class="mb-4 text-green-600 hover:text-green-700" @onclick="GoBack">
+        <button class="button button-ghost" @onclick="GoBack">
             <span class="mr-2">←</span> Volver a inicio
         </button>
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -62,31 +62,41 @@
 
     @if (selectedProduct != null)
     {
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div class="bg-white p-4 rounded-md max-w-md w-full relative">
+        <div class="product-card">
+
+            <div class="product-content fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" @onclick="HandleBackdropClick">
+                <div class="product-content bg-white p-4 rounded-md max-w-md w-full relative">
                 <h2 class="text-xl font-bold mb-4">@selectedProduct.NombreDelProducto</h2>
                 <img src="@selectedProduct.ImagenDelProducto" alt="@selectedProduct.NombreDelProducto" width="200" height="200" class="mb-4 rounded-md mx-auto" />
                 <p class="text-lg font-semibold mb-4">Precio: $@(selectedProduct.PrecioDelProducto?.ToString("F2") ?? "0.00")</p>
+                <div class="separator"></div>
 
                 @if (disponibilidad?.Any() == true)
                 {
-                    <div>
-                        <h3 class="text-md font-bold mb-2">Disponible en:</h3>
-                        <ul>
+                    <div class="availability-section">
+                        <h5 class="section-title accent">Disponible en:</h5>
+                        <div class="locations-grid">
+
                             @foreach (var establecimiento in disponibilidad)
                             {
-                                <li>
-                                    <span class="font-semibold">@establecimiento.NombreDelEstablecimiento</span>
-                                    (Stock: @establecimiento.CantidadEnElInventario)
-                                </li>
+                                <div class="location-card">
+                                    <span class="location-name">@establecimiento.NombreDelEstablecimiento </span>
+                                    <div class="stock-info">
+                                        <span class="stock-label">Stock:</span>
+                                        <span class="stock-amount">@establecimiento.CantidadEnElInventario</span>
+                                    </div>
+                                </div>
+
+
                             }
-                        </ul>
+                        </div>
                     </div>
                 }
                 else if (disponibilidad != null)
                 {
                     <p class="text-red-500">Lo sentimos, no se encontró disponibilidad para este producto.</p>
                 }
+                <div class="separator"></div>
 
                 <div class="flex items-center justify-center space-x-4 mb-4">
                     <button class="p-2 border rounded-md" @onclick="() => quantity = Math.Max(1, quantity - 1)" disabled="@(!disponibilidad?.Any() ?? true)">-</button>
@@ -96,9 +106,10 @@
                 <div class="flex justify-end">
                     <button class="bg-green-600 text-white p-2 rounded-md" @onclick="AddToCartAsync" disabled="@(!disponibilidad?.Any() ?? true)">Agregar al Carrito</button>
                 </div>
-                <button class="absolute top-2 right-2 text-gray-500" @onclick="CloseProductDialog">&times;</button>
             </div>
         </div>
+        </div>
+
     }
 
 
@@ -249,4 +260,9 @@
     {
         NavigationManager.NavigateTo("/index");
     }
+    private void HandleBackdropClick()
+    {
+        CloseProductDialog();
+    }
+
 }

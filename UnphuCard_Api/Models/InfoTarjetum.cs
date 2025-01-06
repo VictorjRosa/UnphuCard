@@ -13,7 +13,7 @@ public partial class InfoTarjetum
 
     public string? InfoTarjUltNumTarjeta { get; set; }
 
-    public DateOnly? InfoTarjFechaExpira { get; set; }
+    public string? InfoTarjFechaExpira { get; set; }
 
     public string? InfoTarjCvv { get; set; }
 

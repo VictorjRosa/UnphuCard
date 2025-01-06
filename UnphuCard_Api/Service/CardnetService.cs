@@ -64,7 +64,7 @@ public class CardnetService
             currency = "DOP",
             orderNumber = pagoRequest.OrderNumber,
             description = pagoRequest.Description,
-            customerEmail = pagoRequest.CustomerEmail
+            customerEmail = pagoRequest.Customer
         };
 
         var jsonContent = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");

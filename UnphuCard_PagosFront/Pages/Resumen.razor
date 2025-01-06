@@ -16,9 +16,9 @@
         <h1 class="text-2xl font-bold">Tienda UNPHU</h1>
     </header>
 
-    <main class="flex-grow p-4">
-        <button class="mb-4 text-green-600 hover:text-green-700" @onclick="GoBack">
-            <span class="mr-2">←</span> Volver a la tienda
+    <main class="cart-main">
+        <button class="button button-ghost" @onclick="GoBack">
+            <span class="back-icon">←</span> Volver a la tienda
         </button>
 
         <div class="card w-full max-w-2xl mx-auto">
@@ -45,8 +45,13 @@
                     <p class="text-xl font-bold">$@(CartService.GetTotal().ToString("F2"))</p>
                 </div>
             </div>
-            <div class="card-footer flex flex-col items-stretch">
-                <h3 class="text-lg font-semibold mb-2">Método de Pago</h3>
+            <div class="card-footer flex flex-col items-stretch payment-methods ">
+                <div class="payment-card__header">
+                    <h4 class="payment-card__title">Método de Pago</h4>
+                </div>   
+                <div class="payment-card__content">
+                <div class="payment-options">
+
                 <InputRadioGroup @bind-Value="selectedPaymentMethod" name="metodoPago">
 
                     @foreach (var metodo in MetodosPago)
@@ -74,14 +79,17 @@
                         }
                     }
                 </InputRadioGroup>
-                
-                <button class="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded" @onclick="HandleCheckout">
+
+                        <button class="payment-buttonn" @onclick="HandleCheckout">
                     Iniciar Pago
                 </button>
+                            </div>
+                </div>
+
             </div>
         </div>
     </main>
-
+   
     @if (isScanning)
     {
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
