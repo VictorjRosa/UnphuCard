@@ -30,17 +30,30 @@ namespace UnphuCard_RecargaFront.Data
             }
         }
 
-        public async Task<string?> GetInfoByMatriculaAsync(string matricula)
+        public async Task<string?> GetUsuNombreByMatriculaAsync(string matricula)
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<Usuario>($"api/MostrarUsuNombreConNombre/{matricula}");
+                var response = await _httpClient.GetFromJsonAsync<Usuario>($"api/MostrarUsuNombreConMatricula/{matricula}");
                 var usuNombre = $"{response?.UsuNombre} {response?.UsuApellido}";
                 return usuNombre;
             }
             catch (HttpRequestException)
             {
                 return null;
+            }
+        }
+
+        public async Task<int> GetUsuIdByMatriculaAsync(string matricula)
+        {
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<int>($"api/MostrarUsuIdConMatricula/{matricula}");
+                return response;
+            }
+            catch (HttpRequestException)
+            {
+                return 0;
             }
         }
 

@@ -1,9 +1,13 @@
 ﻿@page "/recarga"
 @inject NavigationManager NavigationManager
+@inject Pago pago
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
 @using UnphuCard_Api.Models
+@using UnphuCard_Api.DTOS
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject Blazored.SessionStorage.ISessionStorageService sesionStorage
+@inject UsuarioService usuarioService
 
 
 
@@ -37,14 +41,30 @@
                     <div class="radio-group">
                         <InputRadioGroup @bind-Value="PaymentMethod" name="metodoPago">
 
-                            @foreach (var metodo in MetodosPago)
+                            @if (rolId == 1)
                             {
-                                if (@metodo.MetPagId != 1 && @metodo.MetPagId != 2)
+                                @foreach (var metodo in MetodosPago)
                                 {
-                                    <div class="flex items-center space-x-2">
-                                        <InputRadio TValue="int" value="@metodo.MetPagId" id="@metodo.MetPagId" />
-                                        <label  for="@metodo.MetPagId">@metodo.MetPagDescripcion</label>
-                                    </div>
+                                    if (@metodo.MetPagId != 1 && @metodo.MetPagId != 2)
+                                    {
+                                        <div class="flex items-center space-x-2">
+                                            <InputRadio TValue="int" value="@metodo.MetPagId" id="@metodo.MetPagId" />
+                                            <label for="@metodo.MetPagId">@metodo.MetPagDescripcion</label>
+                                        </div>
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                @foreach (var metodo in MetodosPago)
+                                {
+                                    if (@metodo.MetPagId != 1 && @metodo.MetPagId != 5)
+                                    {
+                                        <div class="flex items-center space-x-2">
+                                            <InputRadio TValue="int" value="@metodo.MetPagId" id="@metodo.MetPagId" />
+                                            <label for="@metodo.MetPagId">@metodo.MetPagDescripcion</label>
+                                        </div>
+                                    }
                                 }
                             }
                         </InputRadioGroup>
@@ -59,9 +79,30 @@
             </div>
         </div>
     </main>
-
-
 </div>
+
+@if (modalPagoEnProceso)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-title">Pago En Proceso</h3>
+            <p class="modal-description">Realizar el pago con el veriphone</p>
+            <button @onclick="ClosePagoExitosoModal" class="modal-button">Cerrar</button>
+        </div>
+    </div>
+}
+
+@if (modalPago)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-title">Pago Exitoso</h3>
+            <p class="modal-description">El pago ha sido realizado con éxito. ¡Gracias por su compra!</p>
+            <button @onclick="ClosePagoExitosoModal" class="modal-button">Cerrar</button>
+        </div>
+    </div>
+}
+
 @code {
 
     private int PaymentMethod { get; set; }
@@ -69,14 +110,21 @@
     private List<int> QuickAmounts { get; set; } = new List<int> { 100, 200, 300, 500 };
     private List<MetodoPago> MetodosPago { get; set; } = new List<MetodoPago>();
     private int rolId;
+    private int usuId;
+    private string usuMatricula;
+    private bool modalPago = false;
+    private PagoRequest paymentRequest = new PagoRequest();
+    private bool modalPagoEnProceso = false;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             MetodosPago = new List<MetodoPago>();
-
             MetodosPago = await Http.GetFromJsonAsync<List<MetodoPago>>("api/MostrarMetodoPago"); 
+            rolId = await localStorage.GetItemAsync<int>("rolId");
+            usuMatricula = await sesionStorage.GetItemAsync<string>("usuMatricula");
+
         }
         catch (Exception ex)
         {
@@ -84,7 +132,7 @@
         }
 
     }
-  
+
 
     private async Task StorePaymentMethodAndAmount()
     {
@@ -104,7 +152,7 @@
         Amount = amount;
     }
 
-  
+
     private async Task GoBack()
     {
         rolId = await localStorage.GetItemAsync<int>("rolId");
@@ -127,8 +175,53 @@
             return;
         }
         await StorePaymentMethodAndAmount();
-        
-        NavigationManager.NavigateTo("/pago");
+        rolId = await localStorage.GetItemAsync<int>("rolId");
+        if (rolId == 1)
+        {
+            NavigationManager.NavigateTo("/pago");
+        }
+        if (PaymentMethod == 2)  // Si el pago es en efectivo
+        {
+            await ProcesarPago();
+            modalPago = true;  // Mostrar el modal de pago exitoso
+        }
+        else if (PaymentMethod == 3)  // Si el pago es con tarjeta
+        {
+
+            modalPago = true;
+        }
+    }
+
+    private async Task ProcesarPago()
+    {
+        try
+        {
+            if (PaymentMethod != 0)
+            {
+                paymentRequest.MetodoPago = PaymentMethod;
+            }
+            usuId = await usuarioService.GetUsuIdByMatriculaAsync(usuMatricula);
+            if (usuId != 0)
+            {
+                paymentRequest.UsuarioId = usuId;
+            }
+            if (Amount != 0)
+            {
+                paymentRequest.Amount = Amount;
+            }
+            
+            await pago.PagoRequest(paymentRequest);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al procesar el pago: {ex.Message}");
+        }
+    }
+
+    private void ClosePagoExitosoModal()
+    {
+        modalPago = false;
+        NavigationManager.NavigateTo("/indexCajero");  // Redirigir después de cerrar el modal
     }
 }
 

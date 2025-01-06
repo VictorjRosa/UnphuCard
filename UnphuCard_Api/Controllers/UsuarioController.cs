@@ -55,11 +55,22 @@ namespace UnphuCard_Api.Controllers
             return Ok(usuario);
         }
 
-        [HttpGet("api/MostrarUsuNombreConNombre/{matricula}")]
+        [HttpGet("api/MostrarUsuNombreConMatricula/{matricula}")]
         public async Task<ActionResult<Usuario>> GetUsuarioNombre(string matricula)
         {
             var usuario = await _context.Usuarios.Where(u => u.UsuMatricula == matricula).Select(u => new{u.UsuNombre, u.UsuApellido}).FirstOrDefaultAsync();
             if (usuario == null)
+            {
+                return BadRequest("Usuario no encontrado");
+            }
+            return Ok(usuario);
+        }
+
+        [HttpGet("api/MostrarUsuIdConMatricula/{matricula}")]
+        public async Task<ActionResult<Usuario>> GetUsuarioId(string matricula)
+        {
+            var usuario = await _context.Usuarios.Where(u => u.UsuMatricula == matricula).Select(u => u.UsuId).FirstOrDefaultAsync();
+            if (usuario == 0)
             {
                 return BadRequest("Usuario no encontrado");
             }
@@ -131,7 +142,7 @@ namespace UnphuCard_Api.Controllers
         <!-- Header with Logo -->
         <tr>
             <td style='padding: 40px 0; text-align: center; background-color: #006838; border-radius: 8px 8px 0 0;'>
-                <img src='https://fotosunphucard.blob.core.windows.net/fotos/LogoUnphu.png' 
+                <img src='https://fotosunphucard.blob.core.windows.net/fotos/LogoUnphuBlanco.png' 
                      alt='UNPHU Logo' style='width: 200px; height: auto;'>
             </td>
         </tr>

@@ -76,6 +76,15 @@ namespace UnphuCard_Api.Controllers
                 DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
                 var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.UsuId == request.UsuarioId);
                 var metodoPago = await _context.MetodoPagos.Where(mp => mp.MetPagId == request.MetodoPago).Select(mp => mp.MetPagDescripcion).FirstOrDefaultAsync();
+                var recarga = new Recarga
+                {
+                    RecMonto = request.Amount,
+                    RecFecha = fechaEnRD,
+                    UsuId = request.UsuarioId,
+                    MetPagId = request.MetodoPago,
+                };
+                _context.Recargas.Add(recarga);
+                await _context.SaveChangesAsync();
                 string mensaje = $@"
 <!DOCTYPE html>
 <html lang=""es"">
@@ -124,13 +133,13 @@ namespace UnphuCard_Api.Controllers
 </head>
 <body>
     <div class=""header"">
-        <img src=""https://www.unphu.edu.do/images/logo-unphu.png"" alt=""UNPHU"">
-        <h1>Comprobante de Recarga</h1>
+        <img src=""https://fotosunphucard.blob.core.windows.net/fotos/LogoUnphuBlanco.png"" alt=""UNPHU"">
     </div>
+        <h1>Comprobante de Recarga</h1>
     <div class=""content"">
         <p><strong>{usuario.UsuNombre + " " + usuario.UsuApellido}</strong></p>
         <p>Matrícula: {usuario.UsuMatricula}</p>
-        <p>Número de recibo: {request.OrderNumber}</p>
+        <p>Número de recibo: {recarga.RecId}</p>
         <p>RNC: {usuario.UsuDocIdentidad}</p>
         <p>Fecha de Recarga: {fechaEnRD:dd/MM/yyyy HH:mm:ss}</p>
 
@@ -146,7 +155,7 @@ namespace UnphuCard_Api.Controllers
                 <tr>
                     <td>Recarga de UNPHUCard</td>
                     <td>RD$ {request.Amount:N2}</td>
-                    <td>{(metodoPago == "EF" ? "Efectivo" : "Tarjeta")}</td>
+                    <td>{metodoPago}</td>
                 </tr>
             </tbody>
         </table>
@@ -158,7 +167,6 @@ namespace UnphuCard_Api.Controllers
 ";
 
                 await _emailService.SendEmailAsync(usuario.UsuCorreo, "Comprobante de Recarga - UNPHUCard", mensaje);
-
                 return Ok("Pago procesado y saldo actualizado.");
             }
             catch (Exception ex)
@@ -227,6 +235,3 @@ namespace UnphuCard_Api.Controllers
         }
     }
 }
-
-
-
