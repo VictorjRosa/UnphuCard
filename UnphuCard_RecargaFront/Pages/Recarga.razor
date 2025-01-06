@@ -185,7 +185,7 @@
             await ProcesarPago();
             modalPago = true;  // Mostrar el modal de pago exitoso
         }
-        else if (PaymentMethod == 3)  // Si el pago es con tarjeta
+        else if (PaymentMethod == 3 && rolId != 1)  // Si el pago es con tarjeta
         {
 
             modalPago = true;
@@ -223,5 +223,7 @@
         modalPago = false;
         NavigationManager.NavigateTo("/indexCajero");  // Redirigir después de cerrar el modal
     }
+
+
 }
 

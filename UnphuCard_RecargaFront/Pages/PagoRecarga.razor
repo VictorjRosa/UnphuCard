@@ -5,14 +5,17 @@
 @inject Pago pago
 @inject IJSRuntime JSRuntime
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject AuthService AuthService
+@inject ISessionStorageService sessionStorage
+@using Blazored.SessionStorage
 
 
 <div class="min-h-screen bg-gray-100 flex flex-col">
     
 
     <main class="flex-1 container mx-auto px-4 py-6">
-        <button class="mb-4 text-green-600 hover:text-green-700" @onclick="GoBack">
-            <span class="mr-2">←</span> Volver
+        <button class="button button-ghost" @onclick="GoBack">
+            <span class="icon">←</span> Volver
         </button>
 
         <div class="card w-full max-w-md mx-auto">
@@ -95,11 +98,12 @@
         </div>
     </main>
 
- 
+   
 
+ 
     @if (ShowSuccessModal)
     {
-        <div class="modal">
+        <div class="modal-overlay" @onclick="HandleBackdropClick">
             <div class="modal-content">
                 <h2 class="modal-title text-green-600">
                     <span class="icon-check-circle"></span>
@@ -108,16 +112,14 @@
                 <p class="modal-description">
                     Su pago ha sido procesado correctamente. La recarga se reflejará en su cuenta en breve.
                 </p>
-                <div class="flex justify-center mt-4">
-                    <button class="button" @onclick="() => ShowSuccessModal = false">Cerrar</button>
-                </div>
+               
             </div>
         </div>
     }
 
     @if (ShowFailureModal)
     {
-        <div class="modal">
+        <div class="modal-overlay" @onclick="HandleBackdropClick">
             <div class="modal-content">
                 <h2 class="modal-title text-red-600">
                     <span class="icon-x-circle"></span>
@@ -154,7 +156,7 @@
         Method = method;
     }
 
-  
+
     // protected override void OnInitialized()
     // {
     //     var uri = new Uri(NavigationManager.Uri);
@@ -177,26 +179,33 @@
             {
                 paymentRequest.MetodoPago = method;
             }
-            var token = await ObtenerTokenDePago();
+            // // var token = await ObtenerTokenDePago();
+            paymentRequest.Amount = Amount;
+            int userId = await sessionStorage.GetItemAsync<int>("userID");
+            paymentRequest.UsuarioId = userId;
 
-            if (!string.IsNullOrEmpty(token))
-            {
-                paymentRequest.Token = token; 
+            var response = await pago.PagoRequest(paymentRequest);
+            ShowSuccessModal = true;
 
-                var response = await pago.PagoRequest(paymentRequest);
-            }
+            // if (!string.IsNullOrEmpty(token))
+            // {
+            //     paymentRequest.Token = token; 
+
+            //     var response = await pago.PagoRequest(paymentRequest);
+            // }
         }
         catch (Exception ex)
         {
+            ShowFailureModal = true;
             Console.WriteLine($"Error al procesar el pago: {ex.Message}");
         }
     }
 
-    private async Task<string> ObtenerTokenDePago()
-    {
-        var token = await JSRuntime.InvokeAsync<string>("cardnetTokenizar", paymentRequest.CardNumber, paymentRequest.CardExpirationDate, paymentRequest.CardCvv);
-        return token;
-    }
+    // private async Task<string> ObtenerTokenDePago()
+    // {
+    //     var token = await JSRuntime.InvokeAsync<string>("cardnetTokenizar", paymentRequest.CardNumber, paymentRequest.CardExpirationDate, paymentRequest.CardCvv);
+    //     return token;
+    // }
 
     private void HandleCardNumberInput(ChangeEventArgs e)
     {
@@ -238,6 +247,14 @@
         return Regex.Replace(value, @"\D", "");
     }
 
+    private void HandleBackdropClick()
+    {
+        ShowSuccessModal = false;
+        ShowFailureModal = false;
+
+        NavigationManager.NavigateTo("/index");
+
+    }
 
  
    

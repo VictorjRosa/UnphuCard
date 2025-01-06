@@ -4,7 +4,8 @@
 @inject UsuarioService UsuarioService
 @using UnphuCard_Api.Models
 @inject AuthService AuthService
-
+@inject ISessionStorageService sessionStorage
+@using Blazored.SessionStorage
 <div class="dashboard">
   
     <main>
@@ -110,6 +111,7 @@
         try
         {
             var userId = await AuthService.GetUserIdFromTokenAsync();
+            await sessionStorage.SetItemAsync("userID", userId);
 
             usuario = await UsuarioService.GetStudentInfoAsync(userId);
 

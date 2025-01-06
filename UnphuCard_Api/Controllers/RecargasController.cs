@@ -36,7 +36,6 @@ namespace UnphuCard_Api.Controllers
                 {
                     var infoTarjeta = new InfoTarjetum
                     {
-                        InfoTarjTitular = request.Customer,
                         InfoTarjNumTarjeta = request.CardNumber, // Se recomienda cifrar este dato
                         InfoTarjUltNumTarjeta = request.CardNumber[^4..], // Últimos 4 dígitos
                         InfoTarjFechaExpira = request.CardExpirationDate,

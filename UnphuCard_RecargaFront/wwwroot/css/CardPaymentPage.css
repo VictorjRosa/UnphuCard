@@ -23,7 +23,22 @@
 .text-white {
     color: white;
 }
+.button-ghost {
+    background-color: transparent;
+    color: var(--color-primary);
+}
 
+    .button-ghost:hover {
+        background-color: var(--color-gray-100);
+    }
+
+.modal-content {
+    background-color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    max-width: 400px;
+    text-align: center;
+}
 .px-4 {
     padding-left: 1rem;
     padding-right: 1rem;
