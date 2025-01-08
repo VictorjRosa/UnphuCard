@@ -11,86 +11,86 @@
 @inject SesionService Sesion
 @inject Blazored.SessionStorage.ISessionStorageService SessionStorageService
 
-<div class="min-h-screen bg-gray-50 flex flex-col">
-    <header class="bg-green-700 text-white p-4 flex justify-between items-center">
-        <Header></Header>
+<div class="cart-container">
+    <header class="main-header">
+        <Header />
     </header>
 
     <main class="cart-main">
-        <button class="button button-ghost" @onclick="GoBack">
-            <span class="back-icon">←</span> Volver a la tienda
+        <button class="back-button" @onclick="GoBack">
+            <span class="back-icon">←</span>
+            <span>Volver a la tienda</span>
         </button>
 
-        <div class="card w-full max-w-2xl mx-auto">
-            <div class="card-header">
-                <h2 class="text-2xl font-bold">Resumen del Carrito</h2>
+        <div class="cart-card">
+            <div class="cart-header">
+                <h2>Resumen del Carrito</h2>
             </div>
-            <div class="card-content">
+
+            <div class="cart-content">
                 @foreach (var item in CartService.GetCartItems())
                 {
-                    <div class="flex items-center justify-between mb-4 pb-4 border-b">
-                        <div class="flex items-center">
-                            <img src="@item.ImagenDelProducto" alt="@item.NombreDelProducto" width="50" height="50" class="rounded-md mr-4" />
-                            <div>
-                                <p class="font-semibold">@item.NombreDelProducto</p>
-                                <p class="text-sm text-gray-600">Cantidad: @item.Quantity</p>
+                    <div class="cart-item">
+                        <div class="item-details">
+                            <div class="item-image-container">
+                                <img src="@item.ImagenDelProducto" alt="@item.NombreDelProducto" class="item-image" />
+                            </div>
+                            <div class="item-info">
+                                <h3>@item.NombreDelProducto</h3>
+                                <p>Cantidad: @item.Quantity</p>
                             </div>
                         </div>
-               <p class="font-semibold">$@((item.PrecioDelProducto.GetValueOrDefault() * item.Quantity).ToString("F2"))</p>
-
+                        <div class="item-price">
+                            $@((item.PrecioDelProducto.GetValueOrDefault() * item.Quantity).ToString("F2"))
+                        </div>
                     </div>
                 }
-                <div class="flex justify-between items-center mt-6 pt-6 border-t">
-                    <p class="text-xl font-bold">Total:</p>
-                    <p class="text-xl font-bold">$@(CartService.GetTotal().ToString("F2"))</p>
+
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <span>$@(CartService.GetTotal().ToString("F2"))</span>
                 </div>
             </div>
-            <div class="card-footer flex flex-col items-stretch payment-methods ">
-                <div class="payment-card__header">
-                    <h4 class="payment-card__title">Método de Pago</h4>
-                </div>   
-                <div class="payment-card__content">
+
+            <div class="payment-section">
+                <h3>Método de Pago</h3>
+
                 <div class="payment-options">
-
-                <InputRadioGroup @bind-Value="selectedPaymentMethod" name="metodoPago">
-
-                    @foreach (var metodo in MetodosPago)
-                    {
-                        if (metodo.MetPagId != 5)
+                    <InputRadioGroup @bind-Value="selectedPaymentMethod" Name="metodoPago">
+                        @foreach (var metodo in MetodosPago.Where(m => m.MetPagId != 5))
                         {
-                            <div class="flex items-center space-x-2">
-                                <InputRadio TValue="int" value="@metodo.MetPagId" id="@metodo.MetPagId" />
-                                <label for="@metodo.MetPagId" class="flex items-center space-x-2">
-                                    @if (metodo.MetPagId == 1)
-                                    {
-                                        <span class="mr-2">💳</span>
-                                    }
-                                    else if (metodo.MetPagId == 2)
-                                    {
-                                        <span class="mr-2">👛</span>
-                                    }
-                                    else if (metodo.MetPagId == 3)
-                                    {
-                                        <span class="mr-2">💵</span>
-                                    }
-                                    @metodo.MetPagDescripcion
+                            <div class="payment-option">
+                                <label class="payment-label">
+                                    <InputRadio class="payment-radio" TValue="int" Value="@metodo.MetPagId" />
+                                    <span class="payment-icon">
+                                        @switch (metodo.MetPagId)
+                                        {
+                                            case 1:
+                                                <span>💳</span>
+                                                break;
+                                            case 2:
+                                                <span>👛</span>
+                                                break;
+                                            case 3:
+                                                <span>💵</span>
+                                                break;
+                                        }
+                                    </span>
+                                    <span class="payment-text">@metodo.MetPagDescripcion</span>
+                                    <span class="radio-indicator"></span>
                                 </label>
                             </div>
                         }
-                    }
-                </InputRadioGroup>
+                    </InputRadioGroup>
 
-                        <button class="payment-buttonn" @onclick="HandleCheckout">
-                    Iniciar Pago
-                </button>
-                            </div>
+                    <button class="checkout-button" @onclick="HandleCheckout">
+                        Iniciar Pago
+                    </button>
                 </div>
-
             </div>
         </div>
     </main>
-   
-    @if (isScanning)
+</div>    @if (isScanning)
     {
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div class="bg-white p-4 rounded-md max-w-md w-full">
@@ -191,7 +191,6 @@
             <button class="absolute top-2 right-2 text-gray-500" @onclick="CloseDialog">&times;</button>
         </div>
     }
-</div>
 
 @code {
 
