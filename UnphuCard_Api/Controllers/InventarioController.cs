@@ -236,6 +236,7 @@ namespace UnphuCard_Api.Controllers
                 {
                     NombreDelEstablecimiento = i.NombreDelEstablecimiento,
                     CantidadEnElInventario = i.CantidadEnElInventario,
+                    IdDelEstablecimiento = i.IdDelEstablecimiento,
                 })
                 .ToListAsync();
             return Ok(disponibilidad);
