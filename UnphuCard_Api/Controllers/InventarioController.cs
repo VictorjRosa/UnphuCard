@@ -31,6 +31,24 @@ namespace UnphuCard_Api.Controllers
             return Ok(establecimiento);
         }
 
+        [HttpGet("api/ProductoNormalizado/{productoDescripcion}/{selectedCategory}")]
+        public async Task<ActionResult<string>> ProductoNormalizado(string productoDescripcion, int selectedCategory)
+        {
+            try
+            {
+                var result = await _productoService.ProductosNormalizados(productoDescripcion, selectedCategory);
+                if (string.IsNullOrEmpty(result))
+                {
+                    return NotFound("Producto no encontrado");
+                }
+                return Ok(result);
+            }
+            catch (Exception)
+            {
+                return BadRequest("Producto no encontrado");
+            }
+        }
+
         [HttpGet("api/ObtenerInvProducto/{id}")]
         public async Task<ActionResult<VwInventarioEstablecimiento>> GetInvProducto(int id)
         {

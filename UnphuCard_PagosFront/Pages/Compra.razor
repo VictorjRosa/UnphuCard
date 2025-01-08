@@ -7,28 +7,41 @@
 @inject Categoria Categoria
 @inject ProductosService Producto
 @inject NavigationManager NavigationManager
+@inject AuthService AuthService
 @inject CartService CartService
 @inject CompraService CompraService
 @inject ISessionStorageService sessionStorage
 
 <div class="min-h-screen bg-gray-50 flex flex-col">
     <header class="bg-green-700 text-white p-4 flex justify-between items-center">
-        <h1 class="text-2xl font-bold">Tienda UNPHU</h1>
+        <Header></Header>
         <button class="bg-white hover:bg-gray-100 text-black p-2 rounded-lg flex items-center gap-2 transition-colors duration-200 "
-                @onclick="() => showCart = true">
+        @onclick="() => showCart = true">
             <span class="text-xl">🛒</span>
             Ver Carrito (@CartService.GetCartItems().Sum(item => item.Quantity))
         </button>
     </header>
     <main class="flex-grow p-4">
         <div class="mb-4 flex space-x-4">
-            <div class="relative flex-grow">
-                <input type="text" placeholder="Buscar productos..." @bind="searchTerm" @bind:event="oninput"
-                       class="pl-10 w-full p-2 border rounded-md" />
-                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">&#128269;</span>
+            <div class="search-container">
+                <div class="search-icon">&#128269;</div>
+                <input type="text"
+                placeholder="Buscar productos..."
+                @bind="searchTerm"
+                @oninput="ClearProducts"
+                class="search-input" />
+
+                <!-- Botón de limpiar (ícono de la 'X') -->
+                <button class="clear-button" @onclick="ClearSearch">
+                    &#10005;
+                </button>
+
+                <button class="search-button" @onclick="BuscarProducto">
+                    <span class="mr-2">←</span> Buscar
+                </button>
             </div>
             <select @onchange="FiltrarProductosPorCategoria" class="w-[180px] p-2 border rounded-md">
-                <option value="Todas">Todas</option>
+                <option value="1000">Todas</option>
                 @if (categorias != null)
                 {
                     @foreach (var categoria in categorias)
@@ -71,43 +84,43 @@
                 <p class="text-lg font-semibold mb-4">Precio: $@(selectedProduct.PrecioDelProducto?.ToString("F2") ?? "0.00")</p>
                 <div class="separator"></div>
 
-                @if (disponibilidad?.Any() == true)
-                {
-                    <div class="availability-section">
-                        <h5 class="section-title accent">Disponible en:</h5>
-                        <div class="locations-grid">
+                    @if (disponibilidad?.Any() == true)
+                    {
+                        <div class="availability-section">
+                            <h5 class="section-title accent">Disponible en:</h5>
+                            <div class="locations-grid">
 
-                            @foreach (var establecimiento in disponibilidad)
-                            {
-                                <div class="location-card">
-                                    <span class="location-name">@establecimiento.NombreDelEstablecimiento </span>
-                                    <div class="stock-info">
-                                        <span class="stock-label">Stock:</span>
-                                        <span class="stock-amount">@establecimiento.CantidadEnElInventario</span>
+                                @foreach (var establecimiento in disponibilidad)
+                                {
+                                    <div class="location-card">
+                                        <span class="location-name">@establecimiento.NombreDelEstablecimiento </span>
+                                        <div class="stock-info">
+                                            <span class="stock-label">Stock:</span>
+                                            <span class="stock-amount">@establecimiento.CantidadEnElInventario</span>
+                                        </div>
                                     </div>
-                                </div>
 
 
-                            }
+                                }
+                            </div>
                         </div>
-                    </div>
-                }
-                else if (disponibilidad != null)
-                {
-                    <p class="text-red-500">Lo sentimos, no se encontró disponibilidad para este producto.</p>
-                }
-                <div class="separator"></div>
+                    }
+                    else if (disponibilidad != null)
+                    {
+                        <p class="text-red-500">Lo sentimos, no se encontró disponibilidad para este producto.</p>
+                    }
+                    <div class="separator"></div>
 
-                <div class="flex items-center justify-center space-x-4 mb-4">
-                    <button class="p-2 border rounded-md" @onclick="() => quantity = Math.Max(1, quantity - 1)" disabled="@(!disponibilidad?.Any() ?? true)">-</button>
-                    <input type="number" @bind="quantity" class="w-20 text-center p-2 border rounded-md" disabled="@(!disponibilidad?.Any() ?? true)" />
-                    <button class="p-2 border rounded-md" @onclick="() => quantity++" disabled="@(!disponibilidad?.Any() ?? true)">+</button>
-                </div>
-                <div class="flex justify-end">
-                    <button class="bg-green-600 text-white p-2 rounded-md" @onclick="AddToCartAsync" disabled="@(!disponibilidad?.Any() ?? true)">Agregar al Carrito</button>
+                    <div class="flex items-center justify-center space-x-4 mb-4">
+                        <button class="p-2 border rounded-md" @onclick="() => quantity = Math.Max(1, quantity - 1)" disabled="@(!disponibilidad?.Any() ?? true)">-</button>
+                        <input type="number" @bind="quantity" class="w-20 text-center p-2 border rounded-md" disabled="@(!disponibilidad?.Any() ?? true)" />
+                        <button class="p-2 border rounded-md" @onclick="() => quantity++" disabled="@(!disponibilidad?.Any() ?? true)">+</button>
+                    </div>
+                    <div class="flex justify-end">
+                        <button class="bg-green-600 text-white p-2 rounded-md" @onclick="AddToCartAsync" disabled="@(!disponibilidad?.Any() ?? true)">Agregar al Carrito</button>
+                    </div>
                 </div>
             </div>
-        </div>
         </div>
 
     }
@@ -133,7 +146,7 @@
                                     <p class="font-semibold">@item.NombreDelProducto</p>
                                     <p class="text-sm text-gray-600">$@(item.PrecioDelProducto?.ToString("F2") ?? "0.00")</p>
                                 </div>
-                              
+
 
                             </div>
                             <div class="flex items-center">
@@ -157,15 +170,21 @@
 @code {
     private string errorMessage;
     private List<VwInventarioEstablecimiento> disponibilidad;
-
     private List<CategoriaProducto> categorias;
     private List<VwProducto> productos = new List<VwProducto>();
     private List<VwProducto> filteredProducts = new List<VwProducto>();
+    private List<VwProducto> searchedProducts = new List<VwProducto>();
+    private string establishmentName = "";
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            int userId = await AuthService.GetUserIdFromTokenAsync();
+            var estNombreResult = await AuthService.GetEstNombreByUserIdAsync(userId);
+            establishmentName = estNombreResult ?? "Tienda";
+            await Task.CompletedTask;
+
             int idCafeteriaActual = await sessionStorage.GetItemAsync<int>("estId");
             await CartService.InitializeCartAsync();
             categorias = await Categoria.GetCategoriasProductosAsync();
@@ -180,33 +199,107 @@
     }
 
     private string searchTerm = "";
-    private string selectedCategory = "Todas";
+    private int selectedCategory = 1000;
     private VwProducto selectedProduct;
     private int quantity = 1;
     private bool showCart = false;
 
 
-
     private async Task FiltrarProductosPorCategoria(ChangeEventArgs e)
     {
+        searchedProducts.Clear();
         var categoriaIdString = e.Value?.ToString();
+        selectedCategory = Convert.ToInt16(categoriaIdString);
+        var busqueda = await Producto.ProductoNormalizado(searchTerm, selectedCategory);
 
-        if (string.IsNullOrEmpty(categoriaIdString) || categoriaIdString == "Todas")
+        if (string.IsNullOrEmpty(categoriaIdString) || categoriaIdString == "1000")
         {
             filteredProducts = productos;
         }
         else
         {
-            if (int.TryParse(categoriaIdString, out int categoriaId))
+            foreach (var item in productos)
             {
-                filteredProducts = await Producto.ProductoPorCategoria(categoriaId);
+                if (busqueda == item.NombreDelProducto)
+                {
+                    // Filtra los productos por nombre
+                    searchedProducts.Add(item);
+                }
+                else if (item.IdDeLaCategoríaDelProducto == selectedCategory && item.NombreDelProducto.ToLower().Contains(searchTerm.ToLower()))
+                {
+                    // Filtra los productos por nombre
+                    searchedProducts.Add(item);
+                }
+                // else if (item.IdDeLaCategoríaDelProducto == selectedCategory)
+                // {
+                //     // Filtra los productos por nombre
+                //     searchedProducts.Add(item);
+                // }
+                else
+                {
+                    Console.WriteLine("Error: El valor de categoría no es válido.");
+                    filteredProducts = new List<VwProducto>();
+                }
+            }
+            filteredProducts = searchedProducts;
+            // if (int.TryParse(categoriaIdString, out int categoriaId))
+            // {
+            //     filteredProducts = await Producto.ProductoPorCategoria(categoriaId);
+            // }
+            // else
+            // {
+            //     Console.WriteLine("Error: El valor de categoría no es válido.");
+            //     filteredProducts = new List<VwProducto>();
+            // }
+        }
+    }
+
+    private async Task BuscarProducto()
+    {
+        searchedProducts.Clear();
+        if (searchTerm != "")
+        {
+            var busqueda = await Producto.ProductoNormalizado(searchTerm, selectedCategory);
+            // Si no hay término de búsqueda, se muestran todos los productos
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                filteredProducts = productos;
             }
             else
             {
-                Console.WriteLine("Error: El valor de categoría no es válido.");
-                filteredProducts = new List<VwProducto>();
+                foreach (var item in productos)
+                {
+                    if (busqueda == item.NombreDelProducto)
+                    {
+                        // Filtra los productos por nombre
+                        searchedProducts.Add(item);
+                    }
+                    else if (item.NombreDelProducto != null && item.NombreDelProducto.ToLower().Contains(searchTerm.ToLower()) && item.IdDeLaCategoríaDelProducto == selectedCategory)
+                    {
+                        // Filtra los productos por nombre
+                        searchedProducts.Add(item);
+                    }
+                    else if (item.NombreDelProducto != null && item.NombreDelProducto.ToLower().Contains(searchTerm.ToLower()) && selectedCategory == 1000)
+                    {
+                        // Filtra los productos por nombre
+                        searchedProducts.Add(item);
+                    }
+                }
+                filteredProducts = searchedProducts;
             }
         }
+    }
+
+    private void ClearProducts()
+    {
+        searchedProducts.Clear();
+    }
+
+    private void ClearSearch()
+    {
+        searchTerm = ""; // Limpiar el campo de búsqueda
+        filteredProducts = productos; // Restablecer los productos a todos
+        searchedProducts.Clear();
     }
 
     private async Task OpenProductDialog(VwProducto producto)

@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MailKit.Search;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using UnphuCard_Api.Models;
 
 namespace UnphuCard_Api.Service
@@ -31,8 +33,33 @@ namespace UnphuCard_Api.Service
             return 0;
         }
 
+        public async Task<string> ProductosNormalizados(string productoDescripcion, int selectedCategory)
+        {
+            // Normalizamos la descripción del producto
+            List<Producto> producto = new List<Producto>();
+            // Realizamos la consulta en la base de datos y obtenemos el producto
+            if (selectedCategory == 1000)
+            {
+                producto = await _context.Productos.ToListAsync();
+            }
+            else
+            {
+                producto = await _context.Productos.Where(p => p.CatProdId == selectedCategory).ToListAsync();
+            }
+            string descripcionNormalizada;
+            foreach (var item in producto)
+            {
+                descripcionNormalizada = NormalizarDescripcion(item.ProdDescripcion ?? "skip");
+                if (descripcionNormalizada.Contains(productoDescripcion, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return item.ProdDescripcion ?? "";
+                }
+            }
+            return "";
+        }
+
         // Método para normalizar la descripción del producto
-        private string NormalizarDescripcion(string descripcion)
+        private static string NormalizarDescripcion(string descripcion)
         {
             // Reemplazamos las vocales acentuadas por las vocales sin acento
             descripcion = descripcion.Replace('á', 'a')

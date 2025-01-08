@@ -33,8 +33,6 @@ public partial class UnphuCardContext : DbContext
 
     public virtual DbSet<Horario> Horarios { get; set; }
 
-    public virtual DbSet<InfoTarjetum> InfoTarjeta { get; set; }
-
     public virtual DbSet<Inscripcione> Inscripciones { get; set; }
 
     public virtual DbSet<Inventario> Inventarios { get; set; }
@@ -207,33 +205,6 @@ public partial class UnphuCardContext : DbContext
             entity.Property(e => e.HorHoraFin).HasColumnName("Hor_HoraFin");
             entity.Property(e => e.HorHoraInicio).HasColumnName("Hor_HoraInicio");
             entity.Property(e => e.MatId).HasColumnName("Mat_ID");
-            entity.Property(e => e.UsuId).HasColumnName("Usu_ID");
-        });
-
-        modelBuilder.Entity<InfoTarjetum>(entity =>
-        {
-            entity.HasKey(e => e.InfoTarjId).HasName("PK__InfoTarj__37D5EAE3454A5BE0");
-
-            entity.Property(e => e.InfoTarjId).HasColumnName("InfoTarj_ID");
-            entity.Property(e => e.InfoTarjCvv)
-                .HasMaxLength(3)
-                .IsUnicode(false)
-                .HasColumnName("InfoTarj_CVV");
-            entity.Property(e => e.InfoTarjFechaExpira)
-                .HasMaxLength(5)
-                .IsUnicode(false)
-                .HasColumnName("InfoTarj_FechaExpira");
-            entity.Property(e => e.InfoTarjNumTarjeta)
-                .HasMaxLength(16)
-                .IsUnicode(false)
-                .HasColumnName("InfoTarj_NumTarjeta");
-            entity.Property(e => e.InfoTarjSaldo)
-                .HasColumnType("decimal(9, 2)")
-                .HasColumnName("InfoTarj_Saldo");
-            entity.Property(e => e.InfoTarjUltNumTarjeta)
-                .HasMaxLength(4)
-                .IsUnicode(false)
-                .HasColumnName("InfoTarj_UltNumTarjeta");
             entity.Property(e => e.UsuId).HasColumnName("Usu_ID");
         });
 
