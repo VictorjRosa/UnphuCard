@@ -47,8 +47,15 @@ namespace UnphuCard_Api.Controllers
                     ProdId = insertDetalleCompra.ProdId,
                     SesionId = insertDetalleCompra.SesionId,
                 };
-
                 _context.DetallesCompras.Add(detalles);
+                await _context.SaveChangesAsync();
+
+                var inventario = await _context.Inventarios
+                    .Where(i => i.ProdId == insertDetalleCompra.ProdId && i.EstId == insertDetalleCompra.EstId)
+                    .Select(i => i.InvCantidad)
+                    .FirstOrDefaultAsync();
+                inventario =- insertDetalleCompra.DetCompCantidad;
+                _context.Entry(inventario).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
 
                 return Ok(new { id = detalles.DetCompId, detalles });

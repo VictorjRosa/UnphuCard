@@ -7,5 +7,6 @@
         public int? CompId { get; set; }
         public int? ProdId { get; set; }
         public int? SesionId { get; set; }
+        public int? EstId { get; set; }
     }
 }
