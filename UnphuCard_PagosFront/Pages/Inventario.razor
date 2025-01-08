@@ -83,12 +83,11 @@
 </div>
 @if (isAddProductDialogOpen)
 {
-    <div class="modal-backdrop">
+    <div class="modal-backdrop" @onclick="HandleBackdropClick">
         <div class="modal-dialog">
-            <div class="modal-content">
+            <div class="modal-content" @onclick:stopPropagation>
                 <div class="modal-header">
                     <h2>Agregar Nuevo Producto</h2>
-                    <button class="close-button" @onclick="() => isAddProductDialogOpen = false">×</button>
                 </div>
                 
                 <div class="modal-body">
@@ -331,6 +330,10 @@
     private void GoBack()
     {
         NavigationManager.NavigateTo("/index");
+    }
+    private void HandleBackdropClick()
+    {
+        isAddProductDialogOpen = false;
     }
 
    
