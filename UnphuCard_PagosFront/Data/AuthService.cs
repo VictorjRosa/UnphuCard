@@ -116,6 +116,31 @@ namespace UnphuCard_PagosFront.Data
             }
         }
 
+        public async Task<string?> GetEstNombreByUserIdAsync(int userId)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/MostrarSoloNombre/{userId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (string.IsNullOrWhiteSpace(content))
+                    {
+                        return "Error: respuesta vacía";
+                    }
+                    return content;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return "Error: Excepción durante la solicitud";
+            }
+        }
 
         public async Task<Usuario> GetStudentInfoAsync(int id)
         {

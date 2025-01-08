@@ -53,7 +53,17 @@ namespace UnphuCard_Api.Controllers
             return Ok(new { estId, estNombre });
         }
 
-      
+        [HttpGet("api/MostrarSoloNombre/{id}")]
+        public async Task<ActionResult<Establecimiento>> GetSoloNombreEst(int id)
+        {
+            var estId = await _context.Usuarios.Where(u => u.UsuId == id).Select(u => u.EstId).FirstOrDefaultAsync();
+            var estNombre = await _context.Establecimientos.Where(e => e.EstId == estId).Select(e => e.EstDescripcion).FirstOrDefaultAsync();
+            if (estNombre == null)
+            {
+                return BadRequest("Establecimiento no encontrado");
+            }
+            return Ok(estNombre);
+        }
 
     }
 }

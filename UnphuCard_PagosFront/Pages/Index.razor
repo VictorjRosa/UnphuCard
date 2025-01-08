@@ -13,18 +13,25 @@
     <main class="flex-grow flex items-center justify-center p-4">
         <div class="card w-full max-w-md">
             <div class="card-content p-6 space-y-6">
-                <button class="button inventory-button w-full h-20 text-xl flex items-center justify-center space-x-4" @onclick="HandleInventoryClick">
-                    <span class="icon"><i class="store-icon"></i></span>
+                <button class="button inventory-button w-full h-20 text-xl flex items-center justify-center space-x-4 bg-[#1B4965] hover:bg-[#1B4965]/90 text-white rounded-lg transition-colors" @onclick="HandleInventoryClick">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.91 8.84 8.56 2.23a1.93 1.93 0 0 0-1.81 0L3.1 4.13a2.12 2.12 0 0 0-.05 3.69l12.22 6.93a2 2 0 0 0 1.94 0L21 12.51a2.12 2.12 0 0 0-.09-3.67Z" />
+                        <path d="m3.09 8.84 12.35-6.61a1.93 1.93 0 0 1 1.81 0l3.65 1.9a2.12 2.12 0 0 1 .1 3.69L8.73 14.75a2 2 0 0 1-1.94 0L3 12.51a2.12 2.12 0 0 1 .09-3.67Z" />
+                        <line x1="12" y1="22" x2="12" y2="13" />
+                    </svg>
                     <span>Gestionar Inventario</span>
                 </button>
-                <button class="button sale-button w-full h-20 text-xl flex items-center justify-center space-x-4" @onclick="HandleSaleClick">
-                    <span class="icon"><i class="shopping-cart-icon"></i></span>
+                <button class="button sale-button w-full h-20 text-xl flex items-center justify-center space-x-4 bg-black hover:bg-black/90 text-white rounded-lg transition-colors" @onclick="HandleSaleClick">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="8" cy="21" r="1" />
+                        <circle cx="19" cy="21" r="1" />
+                        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                    </svg>
                     <span>Realizar Venta</span>
                 </button>
             </div>
         </div>
     </main>
-
 </div>
 
 @code {

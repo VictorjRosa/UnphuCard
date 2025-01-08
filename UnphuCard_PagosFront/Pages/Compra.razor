@@ -7,13 +7,14 @@
 @inject Categoria Categoria
 @inject ProductosService Producto
 @inject NavigationManager NavigationManager
+@inject AuthService AuthService
 @inject CartService CartService
 @inject CompraService CompraService
 @inject ISessionStorageService sessionStorage
 
 <div class="min-h-screen bg-gray-50 flex flex-col">
     <header class="bg-green-700 text-white p-4 flex justify-between items-center">
-        <h1 class="text-2xl font-bold">Tienda UNPHU</h1>
+        <Header></Header>
         <button class="bg-white hover:bg-gray-100 text-black p-2 rounded-lg flex items-center gap-2 transition-colors duration-200 "
         @onclick="() => showCart = true">
             <span class="text-xl">🛒</span>
@@ -173,11 +174,17 @@
     private List<VwProducto> productos = new List<VwProducto>();
     private List<VwProducto> filteredProducts = new List<VwProducto>();
     private List<VwProducto> searchedProducts = new List<VwProducto>();
+    private string establishmentName = "";
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            int userId = await AuthService.GetUserIdFromTokenAsync();
+            var estNombreResult = await AuthService.GetEstNombreByUserIdAsync(userId);
+            establishmentName = estNombreResult ?? "Tienda";
+            await Task.CompletedTask;
+
             int idCafeteriaActual = await sessionStorage.GetItemAsync<int>("estId");
             await CartService.InitializeCartAsync();
             categorias = await Categoria.GetCategoriasProductosAsync();
