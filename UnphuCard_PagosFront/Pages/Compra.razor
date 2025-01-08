@@ -27,7 +27,7 @@
                 <input type="text"
                 placeholder="Buscar productos..."
                 @bind="searchTerm"
-                       @oninput="ClearProducts"
+                @oninput="ClearProducts"
                 class="search-input" />
 
                 <!-- Botón de limpiar (ícono de la 'X') -->
@@ -200,28 +200,56 @@
 
     private async Task FiltrarProductosPorCategoria(ChangeEventArgs e)
     {
+        searchedProducts.Clear();
         var categoriaIdString = e.Value?.ToString();
+        selectedCategory = Convert.ToInt16(categoriaIdString);
+        var busqueda = await Producto.ProductoNormalizado(searchTerm, selectedCategory);
 
-        if (string.IsNullOrEmpty(categoriaIdString) || categoriaIdString == "Todas")
+        if (string.IsNullOrEmpty(categoriaIdString) || categoriaIdString == "1000")
         {
             filteredProducts = productos;
         }
         else
         {
-            if (int.TryParse(categoriaIdString, out int categoriaId))
+            foreach (var item in productos)
             {
-                filteredProducts = await Producto.ProductoPorCategoria(categoriaId);
+                if (busqueda == item.NombreDelProducto)
+                {
+                    // Filtra los productos por nombre
+                    searchedProducts.Add(item);
+                }
+                else if (item.IdDeLaCategoríaDelProducto == selectedCategory && item.NombreDelProducto.ToLower().Contains(searchTerm.ToLower()))
+                {
+                    // Filtra los productos por nombre
+                    searchedProducts.Add(item);
+                }
+                // else if (item.IdDeLaCategoríaDelProducto == selectedCategory)
+                // {
+                //     // Filtra los productos por nombre
+                //     searchedProducts.Add(item);
+                // }
+                else
+                {
+                    Console.WriteLine("Error: El valor de categoría no es válido.");
+                    filteredProducts = new List<VwProducto>();
+                }
             }
-            else
-            {
-                Console.WriteLine("Error: El valor de categoría no es válido.");
-                filteredProducts = new List<VwProducto>();
-            }
+            filteredProducts = searchedProducts;
+            // if (int.TryParse(categoriaIdString, out int categoriaId))
+            // {
+            //     filteredProducts = await Producto.ProductoPorCategoria(categoriaId);
+            // }
+            // else
+            // {
+            //     Console.WriteLine("Error: El valor de categoría no es válido.");
+            //     filteredProducts = new List<VwProducto>();
+            // }
         }
     }
 
     private async Task BuscarProducto()
     {
+        searchedProducts.Clear();
         if (searchTerm != "")
         {
             var busqueda = await Producto.ProductoNormalizado(searchTerm, selectedCategory);
@@ -239,7 +267,12 @@
                         // Filtra los productos por nombre
                         searchedProducts.Add(item);
                     }
-                    else if (item.NombreDelProducto != null && item.NombreDelProducto.ToLower().Contains(searchTerm.ToLower()))
+                    else if (item.NombreDelProducto != null && item.NombreDelProducto.ToLower().Contains(searchTerm.ToLower()) && item.IdDeLaCategoríaDelProducto == selectedCategory)
+                    {
+                        // Filtra los productos por nombre
+                        searchedProducts.Add(item);
+                    }
+                    else if (item.NombreDelProducto != null && item.NombreDelProducto.ToLower().Contains(searchTerm.ToLower()) && selectedCategory == 1000)
                     {
                         // Filtra los productos por nombre
                         searchedProducts.Add(item);
@@ -252,7 +285,6 @@
 
     private void ClearProducts()
     {
-        filteredProducts = productos; // Restablecer los productos a todos
         searchedProducts.Clear();
     }
 
