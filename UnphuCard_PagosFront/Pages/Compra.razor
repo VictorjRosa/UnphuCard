@@ -84,7 +84,11 @@
                 <p class="text-lg font-semibold mb-4">Precio: $@(selectedProduct.PrecioDelProducto?.ToString("F2") ?? "0.00")</p>
                     @if (disponibilidadActual != null && disponibilidadActual.All(d => d.CantidadEnElInventario == 0) && disponibilidad?.Any() == true && disponibilidad.Any(d => d.CantidadEnElInventario > 0))
                     {
-                    <p class="text-red-500">No se encontró disponibilidad en esta cafeteria.</p>
+                        <div class="disponibilidad">
+
+                        <p>No se encontró disponibilidad en esta cafeteria.</p>
+                     </div>
+
                     }
                 
                 <div class="separator"></div>
@@ -113,7 +117,10 @@
                     }
                     else if (disponibilidad != null && disponibilidad.All(d => d.CantidadEnElInventario == 0))
                     {
-                        <p class="text-red-500">No se encontró disponibilidad para este producto.</p>
+                        <div class="disponibilidad">
+
+                            <p>No se encontró disponibilidad para este producto.</p>
+                        </div>
                     }
                     
                     <div class="separator"></div>
