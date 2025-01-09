@@ -112,8 +112,8 @@ namespace UnphuCard_Api.Controllers
             }
         }
 
-        [HttpPut("api/DesactivarTarjetaProv/{id}/{usuId}")]
-        public async Task<IActionResult> DesactivarTarjetaProv(int id, int usuId)
+        [HttpPut("api/DesactivarTarjetaProv/{usuId}")]
+        public async Task<IActionResult> DesactivarTarjetaProv(int usuId)
         {
             if (!ModelState.IsValid)
             {
@@ -121,12 +121,12 @@ namespace UnphuCard_Api.Controllers
             }
             try
             {
-                var revision = await _context.TarjetasProvisionales.Where(tp => tp.TarjProvId == id).Select(tp => tp.UsuId).FirstOrDefaultAsync();
-                if (revision != usuId)
+                var tarjProvId = await _context.TarjetasProvisionales.Where(tp => tp.UsuId == usuId).Select(tp => tp.TarjProvId).FirstOrDefaultAsync();
+                if (tarjProvId == 0)
                 {
                     return BadRequest("El usuario no tiene una tarjeta provisional asignada");
                 }
-                var tarjeta = await _context.TarjetasProvisionales.FirstOrDefaultAsync(t => t.TarjProvId == id);
+                var tarjeta = await _context.TarjetasProvisionales.FirstOrDefaultAsync(t => t.TarjProvId == tarjProvId);
                 if (tarjeta == null)
                 {
                     return NotFound("Tarjeta provisional no encontrada");
@@ -141,7 +141,7 @@ namespace UnphuCard_Api.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (TarjetaProvExists(id))
+                if (TarjetaProvExists(usuId))
                 {
                     return NotFound("Tarjeta provisional no encontrada");
                 }
@@ -336,7 +336,7 @@ namespace UnphuCard_Api.Controllers
 
         private bool TarjetaProvExists(int id)
         {
-            return _context.TarjetasProvisionales.Any(p => p.TarjProvId == id);
+            return _context.TarjetasProvisionales.Any(p => p.UsuId == id);
         }
     }
 }

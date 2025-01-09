@@ -492,7 +492,7 @@
                 if (errorMessageReturn == null)
                 {
                     conteo = 0;
-                    var tarjProvCod = await tarjetasProvs.DesactivarTarjetaProv(tarjProvId, usuId);
+                    var tarjProvCod = await tarjetasProvs.DesactivarTarjetaProv(usuId);
                     TarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
                     filteredTarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
                     estadoNombres.Clear();
@@ -515,7 +515,7 @@
             if (errorMessageReturn == null)
             {
                 conteo = 0;
-                var tarjProvCod = await tarjetasProvs.DesactivarTarjetaProv(tarjProvId, usuId);
+                var tarjProvCod = await tarjetasProvs.DesactivarTarjetaProv(usuId);
                 TarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
                 filteredTarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
                 estadoNombres.Clear();

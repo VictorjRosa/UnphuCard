@@ -33,9 +33,9 @@ namespace UnphuCard_AccesoFront.Data
             }
         }
 
-        public async Task<string> DesactivarTarjetaProv(int tarjProvId, int usuId)
+        public async Task<string> DesactivarTarjetaProv(int usuId)
         {
-            var response = await _httpClient.PutAsJsonAsync($"api/DesactivarTarjetaProv/{tarjProvId}/{usuId}", tarjProvId);
+            var response = await _httpClient.PutAsJsonAsync($"api/DesactivarTarjetaProv/{usuId}", usuId);
 
             if (response.IsSuccessStatusCode)
             {
