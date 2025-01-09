@@ -225,7 +225,7 @@ namespace UnphuCard_Api.Controllers
                 // Convertir la fecha a la zona horaria de República Dominicana
                 DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
                 var usuarioPendiente = await _context.TarjetasProvisionales
-                    .Where(tp => tp.TarjProvFechaExpiracion <= fechaEnRD && tp.TarjProvFechaExpiracion.HasValue && tp.StatusId == 3)
+                    .Where(tp => tp.TarjProvFechaExpiracion <= fechaEnRD && tp.TarjProvFechaExpiracion.HasValue)
                     .Select(tp => new { tp.TarjProvId, tp.UsuId, tp.StatusId, tp.TarjProvFechaExpiracion, tp.TarjProvCodigo })
                     .ToListAsync();
                 if (usuarioPendiente.Count == 0)
@@ -234,6 +234,15 @@ namespace UnphuCard_Api.Controllers
                 }
                 foreach (var tarjeta in usuarioPendiente)
                 {
+                    var tarjProv = await _context.TarjetasProvisionales.FirstOrDefaultAsync(t => t.TarjProvId == tarjeta.TarjProvId);
+                    if (tarjProv == null)
+                    {
+                        return NotFound("Tarjeta provisional no encontrada");
+                    }
+                    tarjProv.StatusId = 4;
+
+                    _context.Entry(tarjProv).State = EntityState.Modified;
+                    await _context.SaveChangesAsync();
                     var usuario = await _context.Usuarios
                         .Where(u => u.UsuId == tarjeta.UsuId)
                         .Select(u => new { u.UsuCorreo, u.UsuNombre, u.UsuApellido })
