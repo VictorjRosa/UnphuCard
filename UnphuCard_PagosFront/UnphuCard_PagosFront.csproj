@@ -7,10 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="appsettings.Development.json" />
+    <Content Remove="appsettings.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <_ContentIncludedByDefault Remove="wwwroot\css\Inventario.css" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="appsettings.Development.json" />
+    <None Include="appsettings.json" />
     <None Include="wwwroot\css\Productos.css" />
   </ItemGroup>
 
