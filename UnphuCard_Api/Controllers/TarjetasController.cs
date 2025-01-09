@@ -218,6 +218,10 @@ namespace UnphuCard_Api.Controllers
                     .Where(tp => tp.TarjProvFechaExpiracion < fechaEnRD && tp.TarjProvFechaExpiracion.HasValue && tp.StatusId == 3)
                     .Select(tp => new { tp.TarjProvId, tp.UsuId, tp.StatusId, tp.TarjProvFechaExpiracion, tp.TarjProvCodigo })
                     .ToListAsync();
+                if (usuarioPendiente == null)
+                {
+                    return Ok("No hay usuarios pendientes");
+                }
                 foreach (var tarjeta in usuarioPendiente)
                 {
                     var usuario = await _context.Usuarios
