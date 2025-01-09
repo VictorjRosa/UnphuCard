@@ -20,7 +20,6 @@ builder.Services.AddScoped(sp =>
     new HttpClient
     {
         BaseAddress = new Uri("https://unphucard.azurewebsites.net/"),
-
     });
 var app = builder.Build();
 

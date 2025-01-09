@@ -355,7 +355,7 @@
     {
         try
         {
-            var usuId = await tarjetasProvs.GetUsuId(tarjProvId) ?? 0;
+            var usuId = await tarjetasProvs.GetUsuId(TarjPAssign.UsuDocIdentidad) ?? 0;
             errorMessageAssign = null;
             if (idType == "cedula")
             {
@@ -458,7 +458,7 @@
         try
         {
             errorMessageReturn = null;
-            var usuId = await tarjetasProvs.GetUsuId(tarjProvId) ?? 0;
+            var usuId = await tarjetasProvs.GetUsuId(TarjPReturn.UsuDocIdentidad) ?? 0;
             if (idType == "cedula")
             {
                 var verificacionCedula = await tarjetasProvs.VerificarCedula(TarjPReturn.UsuDocIdentidad);

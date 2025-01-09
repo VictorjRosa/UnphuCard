@@ -56,10 +56,11 @@ namespace UnphuCard_Api.Controllers
             return tarjetaProv;
         }
 
-        [HttpGet("api/ObtenerUsuIdAsignado/{id}")]
-        public async Task<ActionResult<TarjetasProvisionale>> GetUsuIdAsignado(int id)
+        [HttpGet("api/ObtenerUsuIdAsignado/{cedula}")]
+        public async Task<ActionResult<TarjetasProvisionale>> GetUsuIdAsignado(string cedula)
         {
-            var tarjetaProv = await _context.TarjetasProvisionales.Where(tp => tp.TarjProvId == id).Select(tp => tp.UsuId).FirstOrDefaultAsync();
+            var usuId = await _context.Usuarios.Where(u => u.UsuDocIdentidad == cedula).Select(u => u.UsuId).FirstOrDefaultAsync();
+            var tarjetaProv = await _context.TarjetasProvisionales.Where(tp => tp.UsuId == usuId).Select(tp => tp.UsuId).FirstOrDefaultAsync();
             if (tarjetaProv == null)
             {
                 return BadRequest("Tarjeta provisional no encontrada");
@@ -223,9 +224,8 @@ namespace UnphuCard_Api.Controllers
                 DateTime fechaActualUtc = DateTime.UtcNow;
                 // Convertir la fecha a la zona horaria de República Dominicana
                 DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
-                DateTime fechaExpiracion = new(fechaEnRD.Year, fechaEnRD.Month, fechaEnRD.Day, 23, 0, 0);
                 var usuarioPendiente = await _context.TarjetasProvisionales
-                    .Where(tp => tp.TarjProvFechaExpiracion < fechaEnRD && tp.TarjProvFechaExpiracion.HasValue && tp.StatusId == 3)
+                    .Where(tp => tp.TarjProvFechaExpiracion <= fechaEnRD && tp.TarjProvFechaExpiracion.HasValue && tp.StatusId == 3)
                     .Select(tp => new { tp.TarjProvId, tp.UsuId, tp.StatusId, tp.TarjProvFechaExpiracion, tp.TarjProvCodigo })
                     .ToListAsync();
                 if (usuarioPendiente.Count == 0)

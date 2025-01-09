@@ -49,11 +49,11 @@ namespace UnphuCard_AccesoFront.Data
             }
         }
 
-        public async Task<int?> GetUsuId(int id)
+        public async Task<int?> GetUsuId(string cedula)
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<int>($"api/ObtenerUsuIdAsignado/{id}");
+                var response = await _httpClient.GetFromJsonAsync<int>($"api/ObtenerUsuIdAsignado/{cedula}");
                 return response;
             }
             catch (HttpRequestException)
