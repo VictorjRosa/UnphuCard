@@ -63,7 +63,7 @@ namespace UnphuCard_Api.Controllers
             var tarjetaProv = await _context.TarjetasProvisionales.Where(tp => tp.UsuId == usuId).Select(tp => tp.UsuId).FirstOrDefaultAsync();
             if (tarjetaProv == null)
             {
-                return BadRequest("Tarjeta provisional no encontrada");
+                return Ok(usuId);
             }
             return Ok(tarjetaProv);
         }
