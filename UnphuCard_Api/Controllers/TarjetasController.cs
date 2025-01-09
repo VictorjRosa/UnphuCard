@@ -56,6 +56,17 @@ namespace UnphuCard_Api.Controllers
             return tarjetaProv;
         }
 
+        [HttpGet("api/ObtenerUsuIdAsignado/{id}")]
+        public async Task<ActionResult<TarjetasProvisionale>> GetUsuIdAsignado(int id)
+        {
+            var tarjetaProv = await _context.TarjetasProvisionales.Where(tp => tp.TarjProvId == id).Select(tp => tp.UsuId).FirstOrDefaultAsync();
+            if (tarjetaProv == null)
+            {
+                return BadRequest("Tarjeta provisional no encontrada");
+            }
+            return Ok(tarjetaProv);
+        }
+
         [HttpPut("api/EditarTarjeta/{id}")]
         public async Task<IActionResult> PutTarjeta(int id, [FromBody] UpdateTarjeta updateTarjeta)
         {
@@ -100,8 +111,8 @@ namespace UnphuCard_Api.Controllers
             }
         }
 
-        [HttpPut("api/DesactivarTarjetaProv/{id}")]
-        public async Task<IActionResult> DesactivarTarjetaProv(int id)
+        [HttpPut("api/DesactivarTarjetaProv/{id}/{usuId}")]
+        public async Task<IActionResult> DesactivarTarjetaProv(int id, int usuId)
         {
             if (!ModelState.IsValid)
             {
@@ -110,7 +121,7 @@ namespace UnphuCard_Api.Controllers
             try
             {
                 var revision = await _context.TarjetasProvisionales.Where(tp => tp.TarjProvId == id).Select(tp => tp.UsuId).FirstOrDefaultAsync();
-                if (revision == null)
+                if (revision != usuId)
                 {
                     return BadRequest("El usuario no tiene una tarjeta provisional asignada");
                 }
@@ -144,8 +155,8 @@ namespace UnphuCard_Api.Controllers
             }
         }
 
-        [HttpPut("api/ActivarTarjetaProv/{id}")]
-        public async Task<IActionResult> ActivarTarjetaProv(int id, [FromBody] UpdateTarjetaProv updateTarjetaProv)
+        [HttpPut("api/ActivarTarjetaProv/{id}/{usuId}")]
+        public async Task<IActionResult> ActivarTarjetaProv(int id, int usuId, [FromBody] UpdateTarjetaProv updateTarjetaProv)
         {
             if (!ModelState.IsValid)
             {
@@ -153,15 +164,15 @@ namespace UnphuCard_Api.Controllers
             }
             try
             {
-                var usuario = await _context.Usuarios.Where(u => u.UsuDocIdentidad == updateTarjetaProv.UsuDocIdentidad).Select(u => u.UsuId).FirstOrDefaultAsync();
-                if (usuario == 0)
-                {
-                    return BadRequest("Usuario no encontrado");
-                }
-                var revision = await _context.TarjetasProvisionales.Where(tp => tp.UsuId == usuario).Select(tp => tp.UsuId).FirstOrDefaultAsync();
-                if (revision != null)
+                var revisionUsuAsignado = await _context.TarjetasProvisionales.Where(tp => tp.UsuId == usuId).Select(tp => tp.TarjProvCodigo).FirstOrDefaultAsync();
+                if (revisionUsuAsignado != null)
                 {
                     return BadRequest("El usuario ya tiene una tarjeta provisional asignada");
+                }
+                var revisionTarjAsignado = await _context.TarjetasProvisionales.Where(tp => tp.TarjProvId == id).Select(tp => tp.UsuId).FirstOrDefaultAsync();
+                if (revisionTarjAsignado != 0 && revisionTarjAsignado != null)
+                {
+                    return BadRequest("La tarjeta provisional ya tiene un usuario asignado");
                 }
                 // Obtener la zona horaria de República Dominicana (GMT-4)
                 TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
@@ -175,7 +186,6 @@ namespace UnphuCard_Api.Controllers
                 {
                     return NotFound("Tarjeta provisional no encontrada");
                 }
-                var usuId = await _context.Usuarios.Where(u => u.UsuDocIdentidad == updateTarjetaProv.UsuDocIdentidad).Select(u => u.UsuId).FirstOrDefaultAsync();
                 tarjetaProv.TarjProvFecha = fechaEnRD;
                 tarjetaProv.StatusId = 3;
                 tarjetaProv.UsuId = usuId;

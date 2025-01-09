@@ -17,9 +17,9 @@ namespace UnphuCard_AccesoFront.Data
             return await _httpClient.GetFromJsonAsync<List<TarjetasProvisionale>>("api/ObtenerTarjetasProvs");
         }
 
-        public async Task<string> ActivarTarjetaProv(int tarjProvId, UpdateTarjetaProv updateTarjetaProv)
+        public async Task<string> ActivarTarjetaProv(int tarjProvId, int usuId, UpdateTarjetaProv updateTarjetaProv)
         {
-            var response = await _httpClient.PutAsJsonAsync($"api/ActivarTarjetaProv/{tarjProvId}", updateTarjetaProv);
+            var response = await _httpClient.PutAsJsonAsync($"api/ActivarTarjetaProv/{tarjProvId}/{usuId}", updateTarjetaProv);
 
             if (response.IsSuccessStatusCode)
             {
@@ -33,9 +33,9 @@ namespace UnphuCard_AccesoFront.Data
             }
         }
 
-        public async Task<string> DesactivarTarjetaProv(int tarjProvId)
+        public async Task<string> DesactivarTarjetaProv(int tarjProvId, int usuId)
         {
-            var response = await _httpClient.PutAsJsonAsync($"api/DesactivarTarjetaProv/{tarjProvId}", tarjProvId);
+            var response = await _httpClient.PutAsJsonAsync($"api/DesactivarTarjetaProv/{tarjProvId}/{usuId}", tarjProvId);
 
             if (response.IsSuccessStatusCode)
             {
@@ -46,6 +46,19 @@ namespace UnphuCard_AccesoFront.Data
             {
                 var errorMessage = await response.Content.ReadAsStringAsync();
                 throw new ApplicationException(errorMessage);
+            }
+        }
+
+        public async Task<int?> GetUsuId(int id)
+        {
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<int>($"api/ObtenerUsuIdAsignado/{id}");
+                return response;
+            }
+            catch (HttpRequestException)
+            {
+                return null;
             }
         }
 

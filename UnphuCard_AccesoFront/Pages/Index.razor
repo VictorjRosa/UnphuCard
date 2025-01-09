@@ -355,6 +355,7 @@
     {
         try
         {
+            var usuId = await tarjetasProvs.GetUsuId(tarjProvId) ?? 0;
             errorMessageAssign = null;
             if (idType == "cedula")
             {
@@ -389,7 +390,7 @@
                 if (errorMessageAssign == null)
                 {
                     conteo = 0;
-                    var tarjProvCod = await tarjetasProvs.ActivarTarjetaProv(tarjProvId, TarjPAssign);
+                    var tarjProvCod = await tarjetasProvs.ActivarTarjetaProv(tarjProvId, usuId, TarjPAssign);
                     TarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
                     filteredTarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
                     estadoNombres.Clear();
@@ -411,7 +412,7 @@
             if (errorMessageAssign == null)
             {
                 conteo = 0;
-                var tarjProvCod = await tarjetasProvs.ActivarTarjetaProv(tarjProvId, TarjPAssign);
+                var tarjProvCod = await tarjetasProvs.ActivarTarjetaProv(tarjProvId, usuId, TarjPAssign);
                 TarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
                 filteredTarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
                 estadoNombres.Clear();
@@ -441,7 +442,7 @@
         }
 
     }
-    
+
     protected void CloseAssignSuccessModal()
     {
         ShowAssignSuccessModal = false;
@@ -457,6 +458,7 @@
         try
         {
             errorMessageReturn = null;
+            var usuId = await tarjetasProvs.GetUsuId(tarjProvId) ?? 0;
             if (idType == "cedula")
             {
                 var verificacionCedula = await tarjetasProvs.VerificarCedula(TarjPReturn.UsuDocIdentidad);
@@ -490,7 +492,7 @@
                 if (errorMessageReturn == null)
                 {
                     conteo = 0;
-                    var tarjProvCod = await tarjetasProvs.DesactivarTarjetaProv(tarjProvId);
+                    var tarjProvCod = await tarjetasProvs.DesactivarTarjetaProv(tarjProvId, usuId);
                     TarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
                     filteredTarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
                     estadoNombres.Clear();
@@ -513,7 +515,7 @@
             if (errorMessageReturn == null)
             {
                 conteo = 0;
-                var tarjProvCod = await tarjetasProvs.DesactivarTarjetaProv(tarjProvId);
+                var tarjProvCod = await tarjetasProvs.DesactivarTarjetaProv(tarjProvId, usuId);
                 TarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
                 filteredTarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
                 estadoNombres.Clear();
