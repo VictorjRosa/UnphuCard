@@ -108,16 +108,36 @@ namespace UnphuCard_Api.Controllers
                 _context.Compras.Add(compra);
                 await _context.SaveChangesAsync();
 
-                var itemsDetalleProd = await _context.DetallesCompras.Where(dc => dc.SesionId == compra.SesionId).ToListAsync();
-                List<InfoCarritoProducto> infoProducto = new List<InfoCarritoProducto>();
-                foreach (var item in itemsDetalleProd)
-                {
-                    var producto = await _context.Productos.Where(p => p.ProdId == item.ProdId).Select(p => new { p.ProdDescripcion, p.ProdPrecio, item.DetCompCantidad }).FirstOrDefaultAsync();
-                    infoProducto.Add(new InfoCarritoProducto { ProdDescripcion = producto.ProdDescripcion, ProdPrecio = producto.ProdPrecio, ProdCantidad = producto.DetCompCantidad });
-                }
-                List<InfoCarritoProducto> infoProductoNoDuplicados = infoProducto.Distinct().ToList();
-                // Construir el mensaje del correo
-                string mensaje = $@"
+                return Ok(compra.CompId);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        [HttpGet("api/MandarCorreoCompra/{UsuCodigo}/{SesionId}/{CompId}")]
+        public async Task<ActionResult> MandarCorreoCompra(int UsuCodigo, int SesionId, int CompId)
+        {
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.UsuCodigo == UsuCodigo);
+            // Obtener la zona horaria de República Dominicana (GMT-4)
+            TimeZoneInfo zonaHorariaRD = TimeZoneInfo.FindSystemTimeZoneById("SA Western Standard Time");
+            // Obtener la fecha y hora actual en UTC
+            DateTime fechaActualUtc = DateTime.UtcNow;
+            // Convertir la fecha a la zona horaria de República Dominicana
+            DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
+            var itemsDetalleProd = await _context.DetallesCompras.Where(dc => dc.SesionId == SesionId).ToListAsync();
+            List<InfoCarritoProducto> infoProducto = new List<InfoCarritoProducto>();
+            decimal montoTotal = 0;
+            foreach (var item in itemsDetalleProd)
+            {
+                var producto = await _context.Productos.Where(p => p.ProdId == item.ProdId).Select(p => new { p.ProdDescripcion, p.ProdPrecio, item.DetCompCantidad }).FirstOrDefaultAsync();
+                infoProducto.Add(new InfoCarritoProducto { ProdDescripcion = producto.ProdDescripcion, ProdPrecio = producto.ProdPrecio, ProdCantidad = producto.DetCompCantidad });
+                montoTotal =+ (producto.ProdPrecio*producto.DetCompCantidad) ?? 0;
+            }
+            List<InfoCarritoProducto> infoProductoNoDuplicados = infoProducto.Distinct().ToList();
+            // Construir el mensaje del correo
+            string mensaje = $@"
 <!DOCTYPE html>
 <html lang=""es"">
 <head>
@@ -171,9 +191,9 @@ namespace UnphuCard_Api.Controllers
     <div class=""content"">
         <p><strong>{usuario.UsuNombre + " " + usuario.UsuApellido}</strong></p>
         <p>Matrícula: {usuario.UsuMatricula}</p>
-        <p>Número de recibo: {insertCompra.CompId}</p>
+        <p>Número de recibo: {CompId}</p>
         <p>RNC: {usuario.UsuDocIdentidad}</p>
-        <p>Fecha Válida: {compra.CompFecha:dd/MM/yyyy HH:mm:ss}</p>
+        <p>Fecha Válida: {fechaEnRD:dd/MM/yyyy HH:mm:ss}</p>
 
         <table class=""table"">
             <thead>
@@ -195,21 +215,15 @@ namespace UnphuCard_Api.Controllers
             </tbody>
         </table>
 
-        <p class=""total"">Total pagado: RD$ {insertCompra.CompMonto:N2}</p>
+        <p class=""total"">Total pagado: RD$ {montoTotal:N2}</p>
     </div>
 </body>
 </html>
 ";
 
-                // Enviar el correo
-                await _emailService.SendEmailAsync(usuario.UsuCorreo, "Factura de Compra", mensaje);
-
-                return Ok("Transacción exitosa.");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
-            }
+            // Enviar el correo
+            await _emailService.SendEmailAsync(usuario.UsuCorreo, "Factura de Compra", mensaje);
+            return Ok("Correo Enviado");
         }
     }
 }

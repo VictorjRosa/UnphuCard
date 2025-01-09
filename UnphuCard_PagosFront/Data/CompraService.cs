@@ -32,13 +32,20 @@ namespace UnphuCard_PagosFront.Data
 
         }
 
-        public async Task<bool> Pagar(InsertCompra insertCompra)
+        public async Task<bool> EnviarCorreo(int? UsuCodigo, int? SesionId, int CompId)
+        {
+            var response = await _httpClient.GetAsync($"api/MandarCorreoCompra/{UsuCodigo}/{SesionId}/{CompId}");
+            return true;
+        }
+
+        public async Task<int> Pagar(InsertCompra insertCompra)
         {
             var response = await _httpClient.PostAsJsonAsync("api/PagarCompra", insertCompra);
 
             if (response.IsSuccessStatusCode)
             {
-                return true;
+                var compId = await response.Content.ReadFromJsonAsync<int>();
+                return compId;
             }
             else
             {

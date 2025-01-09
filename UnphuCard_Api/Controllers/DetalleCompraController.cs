@@ -51,10 +51,8 @@ namespace UnphuCard_Api.Controllers
                 await _context.SaveChangesAsync();
 
                 var inventario = await _context.Inventarios
-                    .Where(i => i.ProdId == insertDetalleCompra.ProdId && i.EstId == insertDetalleCompra.EstId)
-                    .Select(i => i.InvCantidad)
-                    .FirstOrDefaultAsync();
-                inventario =- insertDetalleCompra.DetCompCantidad;
+                    .FirstOrDefaultAsync(i => i.ProdId == insertDetalleCompra.ProdId && i.EstId == insertDetalleCompra.EstId);
+                inventario.InvCantidad =- insertDetalleCompra.DetCompCantidad;
                 _context.Entry(inventario).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
 

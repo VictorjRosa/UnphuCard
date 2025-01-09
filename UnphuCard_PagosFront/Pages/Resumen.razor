@@ -307,10 +307,16 @@
 
             compra.MetPagId = selectedPaymentMethod;
             compra.SesionId = sesionid;
-            compra.EstId = await SessionStorageService.GetItemAsync<int>("EstId");
+            compra.EstId = await SessionStorageService.GetItemAsync<int>("estId");
             compra.UsuCodigo = usercodigo;
             compra.CompMonto = CartService.GetTotal();
             errorMessage = null;
+
+            var result2 = await Compra.Pagar(compra);
+            if (result2 == 0)
+            {
+                throw new ApplicationException("Error al procesar el pago.");
+            }
 
             foreach (var item in CartService.GetCartItems())
             {
@@ -319,7 +325,9 @@
                         DetCompCantidad = item.Quantity,
                         DetCompPrecio = item.PrecioDelProducto.GetValueOrDefault() * item.Quantity,
                         ProdId = item.IdDelProducto,
-                        SesionId = sesionid
+                        SesionId = sesionid,
+                        EstId = compra.EstId,
+                        CompId = result2,
                     };
 
                 var detalleResponse = await Compra.RegistrarDetalleCompra(detalleCompra);
@@ -329,12 +337,7 @@
                 }
             }
 
-            var result2 = await Compra.Pagar(compra);
-            if (!result2)
-            {
-                throw new ApplicationException("Error al procesar el pago.");
-            }
-
+            await Compra.EnviarCorreo(compra.UsuCodigo, compra.SesionId, result2);
 
             scanResult = "payment_success";
             StateHasChanged();
