@@ -247,6 +247,7 @@
                     InvCantidad = producto.CantidadEnElInventario,
                     EstId = estId,
                     ProdId = producto.Id,
+                    ProdPrecio = producto.PrecioDelProducto,
                 };
 
             var isSuccessful = await InventarioService.EditarProducto(id, updateInventario);
@@ -272,27 +273,6 @@
             errorMessage = $"Error inesperado: {ex.Message}";
         }
     }
-
-
-    // private async Task HandleDelete(int id)
-    // {
-    //     try
-    //     {
-    //         var response = await InventarioService.EliminarProducto(id);
-    //         if (response.IsSuccessStatusCode)
-    //         {
-    //             productosInv.RemoveAll(p => p.Id == id);
-    //         }
-    //         else
-    //         {
-    //             Console.WriteLine($"Error al eliminar el producto con ID {id}: {response.ReasonPhrase}");
-    //         }
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         Console.WriteLine($"Error: {ex.Message}");
-    //     }
-    // }
 
 
     private async Task HandleAddProduct()
@@ -333,7 +313,7 @@
     }
     private void HandleBackdropClick()
     {
-        insertproductosInv = null;
+        insertproductosInv = new InsertInventario();
         isAddProductDialogOpen = false;
         previewImageUrl = null;
     }

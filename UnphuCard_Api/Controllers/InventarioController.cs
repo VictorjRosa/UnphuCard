@@ -204,7 +204,7 @@ namespace UnphuCard_Api.Controllers
                 {
                     producto.ProdPrecio = updateInventario.ProdPrecio;
                 }
-                _context.Entry(producto.ProdPrecio).State = EntityState.Modified;
+                _context.Entry(producto).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
 
                 return Ok(new { inventario, producto });
