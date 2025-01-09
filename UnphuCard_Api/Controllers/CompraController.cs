@@ -100,7 +100,7 @@ namespace UnphuCard_Api.Controllers
                 {
                     CompMonto = insertCompra.CompMonto,
                     CompFecha = fechaEnRD,
-                    UsuId = insertCompra.UsuCodigo,
+                    UsuId = usuario.UsuId,
                     EstId = insertCompra.EstId,
                     MetPagId = insertCompra.MetPagId,
                     SesionId = insertCompra.SesionId,
