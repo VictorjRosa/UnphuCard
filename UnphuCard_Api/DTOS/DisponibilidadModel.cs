@@ -4,5 +4,6 @@
     {
         public string NombreDelEstablecimiento { get; set; }
         public int? CantidadEnElInventario { get; set; }
+        public int? IdDelEstablecimiento { get; set; }
     }
 }

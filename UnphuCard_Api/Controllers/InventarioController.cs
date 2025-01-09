@@ -204,7 +204,7 @@ namespace UnphuCard_Api.Controllers
                 {
                     producto.ProdPrecio = updateInventario.ProdPrecio;
                 }
-                _context.Entry(producto.ProdPrecio).State = EntityState.Modified;
+                _context.Entry(producto).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
 
                 return Ok(new { inventario, producto });
@@ -236,6 +236,7 @@ namespace UnphuCard_Api.Controllers
                 {
                     NombreDelEstablecimiento = i.NombreDelEstablecimiento,
                     CantidadEnElInventario = i.CantidadEnElInventario,
+                    IdDelEstablecimiento = i.IdDelEstablecimiento,
                 })
                 .ToListAsync();
             return Ok(disponibilidad);

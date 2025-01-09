@@ -90,10 +90,11 @@
             </div>
         </div>
     </main>
-</div>    @if (isScanning)
+</div> 
+@if (isScanning)
     {
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div class="bg-white p-4 rounded-md max-w-md w-full">
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" @onclick="HandleBackdropClick">
+        <div class="bg-white p-4 rounded-md max-w-md w-full" @onclick:stopPropagation>
                 <h2 class="text-xl font-bold mb-4">
                     @if (scanResult == "scanning")
                     {
@@ -188,7 +189,6 @@
                     </button>
                 } *@
             </div>
-            <button class="absolute top-2 right-2 text-gray-500" @onclick="CloseDialog">&times;</button>
         </div>
     }
 
@@ -385,8 +385,12 @@
             Console.WriteLine($"Error al cargar los métodos de pago: {ex.Message}");
         }
 
+       
     }
-   
+    private void HandleBackdropClick()
+        {
+            CloseDialog();
+        }
 
 
     
