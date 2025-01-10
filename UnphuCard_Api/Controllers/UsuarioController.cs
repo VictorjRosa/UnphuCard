@@ -113,7 +113,7 @@ namespace UnphuCard_Api.Controllers
                     }
                 }
                 // Verifica si el usuario existe en la base de datos
-                var Usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.UsuUsuario == login.Usuario && u.RolId == login.RolId);
+                var Usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.UsuUsuario == login.Usuario && u.RolId == login.RolId && u.UsuContraseña == login.Contraseña);
                 if (Usuario == null || Usuario.RolId != login.RolId)
                 {
                     return Unauthorized("Credenciales inválidas.");
