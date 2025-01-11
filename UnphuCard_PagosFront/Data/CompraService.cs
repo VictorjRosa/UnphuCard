@@ -2,6 +2,7 @@
 using System.Net.Http;
 using UnphuCard_Api.DTOS;
 using UnphuCard_Api.Models;
+using UnphuCard_PagosFront.Pages;
 
 namespace UnphuCard_PagosFront.Data
 {
@@ -36,6 +37,22 @@ namespace UnphuCard_PagosFront.Data
         {
             var response = await _httpClient.GetAsync($"api/MandarCorreoCompra/{UsuCodigo}/{SesionId}/{CompId}");
             return true;
+        }
+
+        public async Task<int> ObtenerInvCantidad(int prodId, int estId)
+        {
+            var compId = await _httpClient.GetFromJsonAsync<int>($"api/ObtenerInvCantidad/{prodId}/{estId}");
+
+            if (compId != 0)
+            {
+                return compId;
+            }
+            else
+            {
+                var errorMessage = "La cantidad es mayor a la que existe";
+                throw new ApplicationException(errorMessage);
+            }
+
         }
 
         public async Task<int> Pagar(InsertCompra insertCompra)

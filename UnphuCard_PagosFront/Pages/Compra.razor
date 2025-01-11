@@ -79,19 +79,19 @@
 
             <div class="product-content fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" @onclick="HandleBackdropClick">
                 <div class="product-content bg-white p-4 rounded-md max-w-md w-full relative" @onclick:stopPropagation>
-                <h2 class="text-xl font-bold mb-4">@selectedProduct.NombreDelProducto</h2>
-                <img src="@selectedProduct.ImagenDelProducto" alt="@selectedProduct.NombreDelProducto" width="200" height="200" class="mb-4 rounded-md mx-auto" />
-                <p class="text-lg font-semibold mb-4">Precio: $@(selectedProduct.PrecioDelProducto?.ToString("F2") ?? "0.00")</p>
+                    <h2 class="text-xl font-bold mb-4">@selectedProduct.NombreDelProducto</h2>
+                    <img src="@selectedProduct.ImagenDelProducto" alt="@selectedProduct.NombreDelProducto" width="200" height="200" class="mb-4 rounded-md mx-auto" />
+                    <p class="text-lg font-semibold mb-4">Precio: $@(selectedProduct.PrecioDelProducto?.ToString("F2") ?? "0.00")</p>
                     @if (disponibilidadActual != null && disponibilidadActual.All(d => d.CantidadEnElInventario == 0) && disponibilidad?.Any() == true && disponibilidad.Any(d => d.CantidadEnElInventario > 0))
                     {
                         <div class="disponibilidad">
 
-                        <p>No se encontró disponibilidad en esta cafeteria.</p>
-                     </div>
+                            <p>No se encontró disponibilidad en esta cafeteria.</p>
+                        </div>
 
                     }
-                
-                <div class="separator"></div>
+
+                    <div class="separator"></div>
 
                     @if (disponibilidad?.Any() == true && disponibilidad.Any(d => d.CantidadEnElInventario > 0))
                     {
@@ -113,7 +113,7 @@
                                 }
                             </div>
                         </div>
-                   
+
                     }
                     else if (disponibilidad != null && disponibilidad.All(d => d.CantidadEnElInventario == 0))
                     {
@@ -122,7 +122,7 @@
                             <p>No se encontró disponibilidad para este producto.</p>
                         </div>
                     }
-                    
+
                     <div class="separator"></div>
 
                     <div class="flex items-center justify-center space-x-4 mb-4">
@@ -130,7 +130,15 @@
                         <input type="number" @bind="quantity" class="w-20 text-center p-2 border rounded-md" disabled="@((disponibilidad?.Any() ?? false) == false || disponibilidadActual == null || !disponibilidadActual.Any())" />
                         <button class="p-2 border rounded-md" @onclick="() => quantity++" disabled="@((disponibilidad?.Any() ?? false) == false || disponibilidadActual == null || !disponibilidadActual.Any())">+</button>
                     </div>
-
+                    <div class ="flex items-center justify-center space-x-4 mb-4">
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="floating-alert">
+                                @errorMessage
+                                <span class="floating-alert-close">&times;</span>
+                            </div>
+                        }
+                    </div>
                     <div class="flex justify-end">
                         <button class="search-button" @onclick="AddToCartAsync" disabled="@((disponibilidad?.Any() ?? false) == false || disponibilidadActual == null || !disponibilidadActual.Any())">Agregar al Carrito</button>
                     </div>
@@ -171,6 +179,15 @@
                                 <button class="ml-2 text-red-500" @onclick="() => RemoveFromCartAsync(item.IdDelProducto)">&#128465;</button>
                             </div>
                         </div>
+                        <div class="flex items-center justify-center space-x-4 mb-4">
+                            @if (!string.IsNullOrEmpty(errorMessage))
+                            {
+                                <div class="floating-alert">
+                                    @errorMessage
+                                    <span class="floating-alert-close">&times;</span>
+                                </div>
+                            }
+                        </div>
                     }
                 }
                 <div class="flex justify-between mt-4">
@@ -196,6 +213,7 @@
     {
         try
         {
+            errorMessage = "";
             int userId = await AuthService.GetUserIdFromTokenAsync();
             var estNombreResult = await AuthService.GetEstNombreByUserIdAsync(userId);
             establishmentName = estNombreResult ?? "Tienda";
@@ -334,30 +352,59 @@
 
     private void CloseProductDialog()
     {
+        errorMessage = "";
         selectedProduct = null;
         quantity = 1;
     }
 
     private async Task AddToCartAsync()
     {
+        errorMessage = "";
         if (selectedProduct != null)
         {
-            await CartService.AddToCartAsync(new CartService.CartItem
-                {
-                    IdDelProducto = selectedProduct.IdDelProducto,
-                    NombreDelProducto = selectedProduct.NombreDelProducto,
-                    PrecioDelProducto = selectedProduct.PrecioDelProducto,
-                    ImagenDelProducto = selectedProduct.ImagenDelProducto,
-                    Quantity = quantity
-                });
-            CloseProductDialog();
+            int idCafeteriaActual = await sessionStorage.GetItemAsync<int>("estId");
+            var cantidad = await CompraService.ObtenerInvCantidad(selectedProduct.IdDelProducto, idCafeteriaActual);
+            if (quantity < 0)
+            {
+                errorMessage = "No puede elegir un valor negativo.";
+            }
+            else if (quantity == 0)
+            {
+                errorMessage = "No elegió una cantidad.";
+            }
+            else if (quantity <= cantidad)
+            {
+                await CartService.AddToCartAsync(new CartService.CartItem
+                    {
+                        IdDelProducto = selectedProduct.IdDelProducto,
+                        NombreDelProducto = selectedProduct.NombreDelProducto,
+                        PrecioDelProducto = selectedProduct.PrecioDelProducto,
+                        ImagenDelProducto = selectedProduct.ImagenDelProducto,
+                        Quantity = quantity
+                    });
+                CloseProductDialog();
+            }
+            else
+            {
+                errorMessage = "No puede exceder el límite.";
+            }
         }
     }
 
 
     private async Task UpdateCartItemQuantityAsync(int id, int newQuantity)
     {
-        await CartService.UpdateCartItemQuantityAsync(id, newQuantity);
+        errorMessage = "";
+        int idCafeteriaActual = await sessionStorage.GetItemAsync<int>("estId");
+        var cantidad = await CompraService.ObtenerInvCantidad(id, idCafeteriaActual);
+        if (newQuantity <= cantidad)
+        {
+            await CartService.UpdateCartItemQuantityAsync(id, newQuantity);
+        }
+        else
+        {
+            errorMessage = "No puede exceder el límite.";
+        }
     }
 
     private async Task RemoveFromCartAsync(int id)

@@ -31,6 +31,17 @@ namespace UnphuCard_Api.Controllers
             return Ok(establecimiento);
         }
 
+        [HttpGet("api/ObtenerInvCantidad/{prodId}/{estId}")]
+        public async Task<ActionResult<VwInventarioEstablecimiento>> GetInvCantidad(int prodId, int estId)
+        {
+            int invCantidad = await _context.Inventarios.Where(i => i.ProdId == prodId && i.EstId == estId).Select(i => i.InvCantidad).FirstOrDefaultAsync() ?? 0;
+            if (invCantidad == 0)
+            {
+                return BadRequest("Cantidad no encontrada");
+            }
+            return Ok(invCantidad);
+        }
+
         [HttpGet("api/ProductoNormalizado/{productoDescripcion}/{selectedCategory}")]
         public async Task<ActionResult<string>> ProductoNormalizado(string productoDescripcion, int selectedCategory)
         {
