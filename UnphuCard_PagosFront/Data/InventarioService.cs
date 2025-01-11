@@ -52,7 +52,7 @@ public class InventarioService
         }
         catch (Exception ex)
         {
-            throw new ApplicationException($"Error al registrar el inventario: {ex.Message}");
+            throw new ApplicationException(ex.Message);
         }
     }
 

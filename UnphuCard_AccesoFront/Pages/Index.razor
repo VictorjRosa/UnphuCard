@@ -153,7 +153,7 @@
     </main>
 
     <footer class="footer">
-        <p>&copy; 2023 UNPHU - Plataforma de Acceso. Todos los derechos reservados.</p>
+        <p>&copy; @anoActual UNPHU - Plataforma de Acceso. Todos los derechos reservados.</p>
     </footer>
 </div>
 
@@ -228,12 +228,14 @@
     private bool isReturnModalOpen = false;
     private bool ShowAssignSuccessModal = false;
     private bool ShowReturnSuccessModal = false;
+    private int anoActual;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             conteo = 0;
+            anoActual = DateTime.Today.Year;
             TarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
             filteredTarjProv = await tarjetasProvs.GetTarjetasProvsAsync();
             foreach (var card in filteredTarjProv)

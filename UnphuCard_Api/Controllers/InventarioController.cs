@@ -190,7 +190,7 @@ namespace UnphuCard_Api.Controllers
                 {
                     return NotFound("Inventario no encontrado");
                 }
-                if (updateInventario.InvCantidad.HasValue && updateInventario.InvCantidad != 0)
+                if (updateInventario.InvCantidad.HasValue && updateInventario.InvCantidad >= 0)
                 {
                     inventario.InvCantidad = updateInventario.InvCantidad;
                 }

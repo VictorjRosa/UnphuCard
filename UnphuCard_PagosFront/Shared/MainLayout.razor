@@ -8,16 +8,18 @@
     @Body
     <footer>
         <footer class="bg-green-800 text-white text-center p-4">
-            <p>&copy; 2023 UNPHU - Plataforma de Compra. Todos los derechos reservados.</p>
+            <p>&copy; @anoActual UNPHU - Plataforma de Compra. Todos los derechos reservados.</p>
         </footer>
     </footer>
 </div>
 @code {
     private string establishmentName = "";
+    private int anoActual;
 
     protected override async Task OnInitializedAsync()
     {
         // Simular la obtención del nombre del establecimiento
+        anoActual = DateTime.Today.Year;
         establishmentName = "Tienda UNPHU";
         await Task.CompletedTask;
     }

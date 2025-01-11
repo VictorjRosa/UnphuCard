@@ -23,7 +23,7 @@ builder.Services.AddBlazoredSessionStorage();
 builder.Services.AddScoped(sp =>
     new HttpClient
     {
-        BaseAddress = new Uri("https://localhost:7192/"),
+        BaseAddress = new Uri("https://plataforma-de-pago.azurewebsites.net/"),
 
     });
 var app = builder.Build();

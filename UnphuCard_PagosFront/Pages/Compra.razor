@@ -180,7 +180,7 @@
                             </div>
                         </div>
                         <div class="flex items-center justify-center space-x-4 mb-4">
-                            @if (!string.IsNullOrEmpty(errorMessage))
+                            @if (!string.IsNullOrEmpty(errorMessage) && item.NombreDelProducto == nombreProducto)
                             {
                                 <div class="floating-alert">
                                     @errorMessage
@@ -208,7 +208,7 @@
     private List<VwProducto> searchedProducts = new List<VwProducto>();
     private string establishmentName = "";
     private List<VwInventarioEstablecimiento> disponibilidadActual;
-
+    private string nombreProducto = "";
     protected override async Task OnInitializedAsync()
     {
         try
@@ -386,7 +386,7 @@
             }
             else
             {
-                errorMessage = "No puede exceder el límite.";
+                errorMessage = $"No hay más {selectedProduct.NombreDelProducto} disponible.";
             }
         }
     }
@@ -403,7 +403,8 @@
         }
         else
         {
-            errorMessage = "No puede exceder el límite.";
+            nombreProducto = productos.Where(p => p.IdDelProducto == id).Select(p => p.NombreDelProducto).FirstOrDefault();
+            errorMessage = $"No hay más {nombreProducto} disponible.";
         }
     }
 
@@ -423,8 +424,9 @@
             Console.WriteLine("El carrito está vacío, no se puede proceder al pago.");
         }
     }
-    private void GoBack()
+    private async Task GoBack()
     {
+        await CartService.ClearCart();
         NavigationManager.NavigateTo("/index");
     }
     private void HandleBackdropClick()

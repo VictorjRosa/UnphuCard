@@ -26,60 +26,76 @@
             @if (productosInv != null)
             {
                 @foreach (var productosInv in productosInv)
-            {
-                <div class="card">
-                    <div class="card-header">
+                {
+                    <div class="card">
+                        <div class="card-header">
                             <h3>@productosInv.NombreDelProducto</h3>
-                        <div class="card-actions">
-                            <button class="button button-icon" @onclick="() => ToggleProductEdit(productosInv.Id)">
-                                <span class="icon edit-icon">✎</span>
-                            </button>
-                               @*  <button class="button button-icon" @onclick="() => HandleDelete(productosInv.Id)">
+                            <div class="card-actions">
+                                <button class="button button-icon" @onclick="() => ToggleProductEdit(productosInv.Id)">
+                                    <span class="icon edit-icon">✎</span>
+                                </button>
+                                @*  <button class="button button-icon" @onclick="() => HandleDelete(productosInv.Id)">
                                 <span class="icon delete-icon">🗑</span>
                             </button> *@
+                            </div>
                         </div>
-                    </div>
-                    <div class="card-content">
-                        <div class="product-image2">
+                        <div class="card-content">
+                            <div class="product-image2">
                                 <img src="@productosInv.ImagenDelProducto" alt="@productosInv.ImagenDelProducto" />
-                        </div>
+                            </div>
                             @if (editingProductId == productosInv.Id)
-                        {
+                            {
                                 <EditForm Model="@productosInv">
-                                <DataAnnotationsValidator />
-                              
-                                <div class="form-group">
+                                    <DataAnnotationsValidator />
 
-                                 <label for="@($"price-{productosInv.Id}")">Precio</label>
-                                 <InputNumber id="@($"price-{productosInv.Id}")" @bind-Value="productosInv.PrecioDelProducto" />
+                                    <div class="form-group">
 
-                                </div>
-                                <div class="form-group">
+                                        <label for="@($"price-{productosInv.Id}")">Precio</label>
+                                        <InputNumber id="@($"price-{productosInv.Id}")" @bind-Value="productosInv.PrecioDelProducto"
+                                        min="0"/>
+                                        @if (productosInv.PrecioDelProducto < 0)
+                                        {
+                                            <div class="floating-alert">
+                                                Inserte un valor válido
+                                                <span class="floating-alert-close">&times;</span>
+                                            </div>
+                                        }
+
+                                    </div>
+                                    <div class="form-group">
                                         <label for="@($"quantity-{productosInv.Id}")">Cantidad</label>
-                                        <InputNumber id="@($"quantity-{productosInv.Id}")" @bind-Value="productosInv.CantidadEnElInventario" />
+                                        <InputNumber id="@($"quantity-{productosInv.Id}")" @bind-Value="productosInv.CantidadEnElInventario"
+                                        min="0"/>
+                                        @if (productosInv.CantidadEnElInventario < 0)
+                                        {
+                                            <div class="floating-alert">
+                                                Inserte un valor válido
+                                                <span class="floating-alert-close">&times;</span>
+                                            </div>
+                                        }
 
-                                </div>
-                              
-                                <div class="form-actions">
-                                        <button type="button" class="button button-secondary" @onclick="() => ToggleProductEdit(productosInv.Id)">Cancelar</button>
+                                    </div>
+
+                                    <div class="form-actions">
+                                        <button type="button" class="button button-secondary" @onclick="() => BotonCancelar(productosInv.Id)">Cancelar</button>
                                         <button @onclick="() => HandleEditProduct(productosInv.Id)" type="submit" class="button button-primary">Guardar</button>
-                                </div>
-                            </EditForm>
-                        }
-                        else
-                        {
+                                    </div>
+                                </EditForm>
+                            }
+                            else
+                            {
                                 <p class="product-name2">@productosInv.NombreDelProducto</p>
                                 <p class="product-price2">Precio: $@(productosInv.PrecioDelProducto?.ToString("F2") ?? "0.00")</p>
                                 <p class="product-quantity2">Cantidad: @productosInv.CantidadEnElInventario</p>
-                        }
+                            }
+                        </div>
                     </div>
-                </div>
-            }
+                }
             }
         </div>
     </main>
 
- 
+
 </div>
 @if (isAddProductDialogOpen)
 {
@@ -89,35 +105,51 @@
                 <div class="modal-header">
                     <h2>Agregar Nuevo Producto</h2>
                 </div>
-                
+
                 <div class="modal-body">
                     <EditForm Model="@insertproductosInv">
                         <DataAnnotationsValidator />
-                        
+
                         <div class="form-group">
                             <label>Nombre</label>
                             <InputText @bind-Value="insertproductosInv.ProdDescripcion" 
-                                     placeholder="Nombre del producto"
-                                     class="form-control" />
+                            placeholder="Nombre del producto"
+                            class="form-control" />
                         </div>
 
                         <div class="form-group">
                             <label>Precio</label>
                             <InputNumber @bind-Value="insertproductosInv.ProdPrecio" 
-                                       placeholder="0.00"
-                                       class="form-control" />
+                            placeholder="0.00"
+                            class="form-control"
+                            min="0"/>
+                            @if (insertproductosInv.ProdPrecio < 0)
+                            {
+                                <div class="floating-alert">
+                                    Inserte un valor válido
+                                    <span class="floating-alert-close">&times;</span>
+                                </div>
+                            }
                         </div>
 
                         <div class="form-group">
                             <label>Cantidad</label>
                             <InputNumber @bind-Value="insertproductosInv.InvCantidad" 
-                                       placeholder="0"
-                                       class="form-control" />
+                            placeholder="0"
+                            class="form-control"
+                            min="0"/>
+                            @if (insertproductosInv.InvCantidad < 0)
+                            {
+                                <div class="floating-alert">
+                                    Inserte un valor válido
+                                    <span class="floating-alert-close">&times;</span>
+                                </div>
+                            }
                         </div>
 
                         <div class="form-group">
                             <label>Categoría</label>
-                            <InputSelect @bind-Value="insertproductosInv.CatProdId" class="form-control">
+                            <InputSelect @bind-Value="insertproductosInv.CatProdId" class="form-control" required>
                                 <option value="">Seleccione una categoría</option>
                                 @foreach (var categoria in categorias)
                                 {
@@ -129,9 +161,16 @@
                         <div class="form-group">
                             <label>Imagen</label>
                             <InputFile OnChange="HandleImageUpload" 
-                                     accept="image/*"
-                                     class="form-control" />
-                            
+                            accept="image/*"
+                            class="form-control" required/>
+                            @if (insertproductosInv.ProdPrecio < 0)
+                            {
+                                <div class="floating-alert">
+                                    Inserte un valor válido
+                                    <span class="floating-alert-close">&times;</span>
+                                </div>
+                            }
+
                             @if (!string.IsNullOrEmpty(previewImageUrl))
                             {
                                 <div class="image-preview">
@@ -139,11 +178,18 @@
                                 </div>
                             }
                         </div>
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="floating-alert">
+                                @errorMessage
+                                <span class="floating-alert-close">&times;</span>
+                            </div>
+                        }
 
                         <div class="modal-footer">
                             <button type="submit" 
-                                    @onclick="HandleAddProduct" 
-                                    class="btn-primary">
+                            @onclick="HandleAddProduct" 
+                            class="btn-primary">
                                 Agregar Producto
                             </button>
                         </div>
@@ -224,13 +270,23 @@
     {
         if (editingProductId == id)
         {
-            editingProductId = null; 
+            editingProductId = null;
         }
         else
         {
-            editingProductId = id; 
+            editingProductId = id;
         }
     }
+
+    private async Task BotonCancelar(int id)
+    {
+        if (editingProductId == id)
+        {
+            productosInv = await InventarioService.GetInventarioEstablecimientoAsync(estId);
+            editingProductId = null;
+        }
+    }
+
     private async Task HandleEditProduct(int id)
     {
         try
@@ -303,7 +359,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            errorMessage = ex.Message;
         }
     }
 

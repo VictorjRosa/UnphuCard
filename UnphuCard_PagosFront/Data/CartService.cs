@@ -28,8 +28,10 @@ namespace UnphuCard_PagosFront.Data
                 cart.AddRange(items);
             }
         }
-        public void ClearCart()
+        public async Task ClearCart()
         {
+            var serializedCart = JsonSerializer.Serialize(cart);
+            await jsRuntime.InvokeVoidAsync("sessionStorage.removeItem", StorageKey, serializedCart);
             cart.Clear();
         }
         public class CartItem : VwProducto
