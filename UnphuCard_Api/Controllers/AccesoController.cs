@@ -81,35 +81,46 @@ namespace UnphuCard_Api.Controllers
                 var AulaId = await _context.Aulas.Where(a => a.AulaSensor == validarAcceso.AulaSensor).Select(a => a.AulaId).FirstOrDefaultAsync();
                 var tarjeta = await _context.Tarjetas.FirstOrDefaultAsync(t => t.TarjCodigo == validarAcceso.TarjCodigo);
                 var usuarioTarjeta = await _context.Tarjetas.Where(t => t.TarjCodigo == validarAcceso.TarjCodigo).Select(u => u.UsuId).FirstOrDefaultAsync();
-                var inscrito = await _context.Inscripciones.FirstOrDefaultAsync(i => i.UsuId == tarjeta.UsuId && i.StatusId == 5);
-                var materiaInscrito = await _context.Inscripciones.Where(i => i.UsuId == usuarioTarjeta).Select(i => i.MatId).FirstOrDefaultAsync();
-                var usuarioMatProfesor = await _context.Materias.Where(m => m.MatId == Convert.ToInt16(materiaInscrito)).Select(m => new { m.UsuId, m.MatId }).FirstOrDefaultAsync();
-                var usuarioHorProfesor = await _context.Horarios.Where(h => h.AulaId == AulaId && h.MatId == Convert.ToInt16(materiaInscrito)).Select(h => h.UsuId).FirstOrDefaultAsync();
-                if (usuarioMatProfesor == null)
+                var rolId = await _context.Usuarios.Where(u => u.UsuId == usuarioTarjeta).Select(u => u.RolId).FirstOrDefaultAsync();
+                Inscripcione inscrito = new Inscripcione();
+                int materiaInscrito = 0;
+                int usuIdMatProfesor = 0;
+                int matIdProfesor = 0;
+                int usuarioHorProfesor = 0;
+                if (rolId == 1)
                 {
-                    return BadRequest();
+                    inscrito = await _context.Inscripciones.FirstOrDefaultAsync(i => i.UsuId == tarjeta.UsuId && i.StatusId == 5);
+                    materiaInscrito = await _context.Inscripciones.Where(i => i.UsuId == usuarioTarjeta).Select(i => i.MatId).FirstOrDefaultAsync() ?? 0;
+                    usuIdMatProfesor = await _context.Materias.Where(m => m.MatId == Convert.ToInt16(materiaInscrito)).Select(m => m.UsuId).FirstOrDefaultAsync() ?? 0;
+                    matIdProfesor = await _context.Materias.Where(m => m.MatId == Convert.ToInt16(materiaInscrito)).Select(m => m.MatId).FirstOrDefaultAsync();
+                    usuarioHorProfesor = await _context.Horarios.Where(h => h.AulaId == AulaId && h.MatId == Convert.ToInt16(materiaInscrito)).Select(h => h.UsuId).FirstOrDefaultAsync() ?? 0;
                 }
-                if (usuarioHorProfesor == null)
+                else if(rolId == 2)
                 {
-                    return BadRequest();
+                    usuIdMatProfesor = await _context.Materias.Where(m => m.UsuId == usuarioTarjeta).Select(m => m.UsuId).FirstOrDefaultAsync() ?? 0;
+                    matIdProfesor = await _context.Materias.Where(m => m.UsuId == usuarioTarjeta).Select(m => m.MatId).FirstOrDefaultAsync();
+                    usuarioHorProfesor = await _context.Horarios.Where(h => h.AulaId == AulaId && h.MatId == matIdProfesor).Select(h => h.UsuId).FirstOrDefaultAsync() ?? 0;
                 }
-                if (materiaInscrito == null)
-                {
-                    return BadRequest();
-                }
-                var horarioAccesoEstu = await _context.Horarios.FirstOrDefaultAsync(h => h.AulaId == AulaId && h.MatId == Convert.ToInt16(materiaInscrito) &&
-                                                                        h.HorDia == fechaEnRD.DayOfWeek.ToString() &&
-                                                                        h.HorHoraInicio <= horaInicioFinal &&
-                                                                        h.HorHoraFin <= horaInicioFinal);
-                var horarioAccesoProf = await _context.Horarios.FirstOrDefaultAsync(h => h.AulaId == AulaId && h.MatId == Convert.ToInt16(usuarioMatProfesor.MatId) &&
-                                                                        h.HorDia == fechaEnRD.DayOfWeek.ToString() &&
-                                                                        h.HorHoraInicio <= horaInicioFinal &&
-                                                                        h.HorHoraFin <= horaInicioFinal);
-                var profesorAcceso = await _context.Accesos.AnyAsync(a => usuarioMatProfesor.UsuId == usuarioHorProfesor && a.AulaId == AulaId && a.StatusId == 8 && a.AccesFecha == fechaEnRD);
+
+                var horarioAccesoEstu = await _context.Horarios
+                    .FirstOrDefaultAsync(h => h.AulaId == AulaId && h.MatId == Convert.ToInt16(materiaInscrito) &&
+                    h.HorDia == fechaEnRD.DayOfWeek.ToString() && h.HorHoraInicio <= horaInicioFinal && h.HorHoraFin >= horaInicioFinal);
+                var horarioAccesoProf = await _context.Horarios
+                    .FirstOrDefaultAsync(h => h.AulaId == AulaId && h.MatId == Convert.ToInt16(matIdProfesor) &&
+                    h.HorDia == fechaEnRD.DayOfWeek.ToString() && h.HorHoraInicio <= horaInicioFinal && h.HorHoraFin >= horaInicioFinal);
+                DateTime fechaAccesoProf = await _context.Accesos
+                    .Where(a => a.UsuId == usuIdMatProfesor && a.UsuId == usuarioHorProfesor)
+                    .OrderByDescending(a => a.AccesFecha)
+                    .Select(a => a.AccesFecha)
+                    .FirstOrDefaultAsync() ?? new DateTime(2000, 01, 01);
+                var profesorAcceso = await _context.Accesos
+                    .Where(a => usuIdMatProfesor == usuarioHorProfesor && a.AulaId == AulaId && a.StatusId == 8 && a.AccesFecha == fechaAccesoProf)
+                    .OrderByDescending(a => a.AccesFecha)
+                    .AnyAsync();
 
                 if (tarjeta != null)
                 {
-                    if (usuarioTarjeta == 1)
+                    if (rolId == 1)
                     {
                         if (tarjeta == null || tarjeta.StatusId == 4)
                         {
@@ -173,7 +184,7 @@ namespace UnphuCard_Api.Controllers
                         await PostAcceso(accesoAprobado);
                         return Ok("Acceso permitido. Tarjeta Estudiante.");
                     }
-                    else if (usuarioTarjeta == 2)
+                    else if (rolId == 2)
                     {
                         if (tarjeta == null || tarjeta.StatusId == 4)
                         {
@@ -210,7 +221,7 @@ namespace UnphuCard_Api.Controllers
                         await PostAcceso(accesoAprobado);
                         return Ok("Acceso permitido. Tarjeta Profesor.");
                     }
-                    else if (usuarioTarjeta == 5)
+                    else if (rolId == 5)
                     {
                         var accesoAprobado = new InsertAcceso()
                         {
@@ -237,34 +248,44 @@ namespace UnphuCard_Api.Controllers
                     var AulaIdProv = await _context.Aulas.Where(a => a.AulaSensor == validarAcceso.AulaSensor).Select(a => a.AulaId).FirstOrDefaultAsync();
                     var tarjetaProv = await _context.TarjetasProvisionales.FirstOrDefaultAsync(t => t.TarjProvCodigo == validarAcceso.TarjCodigo);
                     var usuarioTarjetaProv = await _context.TarjetasProvisionales.Where(u => u.TarjProvCodigo == validarAcceso.TarjCodigo).Select(u => u.UsuId).FirstOrDefaultAsync();
-                    var inscritoProv = await _context.Inscripciones.FirstOrDefaultAsync(i => i.UsuId == tarjetaProv.UsuId && i.StatusId == 5);
-                    var materiaInscritoProv = await _context.Inscripciones.Where(i => i.UsuId == usuarioTarjetaProv).Select(i => i.MatId).FirstOrDefaultAsync();
-                    var usuarioMatProfesorProv = await _context.Materias.Where(m => m.MatId == Convert.ToInt16(materiaInscritoProv)).Select(m => m.UsuId).FirstOrDefaultAsync();
-                    var usuarioHorProfesorProv = await _context.Horarios.Where(h => h.AulaId == AulaIdProv && h.MatId == Convert.ToInt16(materiaInscritoProv)).Select(h => h.UsuId).FirstOrDefaultAsync();
-                    var materiaProfesorProv = await _context.Materias.Where(i => i.UsuId == usuarioTarjetaProv).Select(i => i.MatId).FirstOrDefaultAsync();
-                    if (usuarioMatProfesorProv == null)
+                    var rolIdProv = await _context.Usuarios.Where(u => u.UsuId == usuarioTarjetaProv).Select(u => u.RolId).FirstOrDefaultAsync();
+                    Inscripcione inscritoProv = new Inscripcione();
+                    int materiaInscritoProv = 0;
+                    int usuIdMatProfesorProv = 0;
+                    int matIdProfesorProv = 0;
+                    int usuarioHorProfesorProv = 0;
+                    if (rolIdProv == 1)
                     {
-                        return BadRequest();
+                        inscritoProv = await _context.Inscripciones.FirstOrDefaultAsync(i => i.UsuId == tarjetaProv.UsuId && i.StatusId == 5);
+                        materiaInscritoProv = await _context.Inscripciones.Where(i => i.UsuId == usuarioTarjetaProv).Select(i => i.MatId).FirstOrDefaultAsync() ?? 0;
+                        usuIdMatProfesorProv = await _context.Materias.Where(m => m.MatId == Convert.ToInt16(materiaInscritoProv)).Select(m => m.UsuId).FirstOrDefaultAsync() ?? 0;
+                        matIdProfesorProv = await _context.Materias.Where(m => m.MatId == Convert.ToInt16(materiaInscritoProv)).Select(m => m.MatId).FirstOrDefaultAsync();
+                        usuarioHorProfesorProv = await _context.Horarios.Where(h => h.AulaId == AulaIdProv && h.MatId == Convert.ToInt16(materiaInscritoProv)).Select(h => h.UsuId).FirstOrDefaultAsync() ?? 0;
                     }
-                    if (usuarioHorProfesorProv == null)
+                    else if (rolIdProv == 2)
                     {
-                        return BadRequest();
+                        usuIdMatProfesorProv = await _context.Materias.Where(m => m.UsuId == usuarioTarjetaProv).Select(m => m.UsuId).FirstOrDefaultAsync() ?? 0;
+                        matIdProfesorProv = await _context.Materias.Where(m => m.UsuId == usuarioTarjetaProv).Select(m => m.MatId).FirstOrDefaultAsync();
+                        usuarioHorProfesorProv = await _context.Horarios.Where(h => h.AulaId == AulaIdProv && h.MatId == matIdProfesorProv).Select(h => h.UsuId).FirstOrDefaultAsync() ?? 0;
                     }
-                    if (materiaInscritoProv == null)
-                    {
-                        return BadRequest();
-                    }
-                    var horarioAccesoEstuProv = await _context.Horarios.FirstOrDefaultAsync(h => h.AulaId == AulaIdProv && h.MatId == Convert.ToInt16(materiaInscritoProv) &&
-                                                                            h.HorDia == fechaEnRD.DayOfWeek.ToString() &&
-                                                                        h.HorHoraInicio <= horaInicioFinal &&
-                                                                        h.HorHoraFin <= horaInicioFinal);
-                    var horarioAccesoProfProv = await _context.Horarios.FirstOrDefaultAsync(h => h.AulaId == AulaIdProv && h.MatId == Convert.ToInt16(materiaProfesorProv) &&
-                                                                            h.HorDia == fechaEnRD.DayOfWeek.ToString() &&
-                                                                        h.HorHoraInicio <= horaInicioFinal &&
-                                                                        h.HorHoraFin <= horaInicioFinal);
-                    var profesorAccesoProv = await _context.Accesos.AnyAsync(a => usuarioMatProfesorProv == usuarioHorProfesorProv && a.AulaId == AulaIdProv && a.StatusId == 8);
 
-                    if (usuarioTarjetaProv == 1)
+                    var horarioAccesoEstuProv = await _context.Horarios
+                        .FirstOrDefaultAsync(h => h.AulaId == AulaIdProv && h.MatId == Convert.ToInt16(materiaInscritoProv) &&
+                        h.HorDia == fechaEnRD.DayOfWeek.ToString() && h.HorHoraInicio <= horaInicioFinal && h.HorHoraFin >= horaInicioFinal);
+                    var horarioAccesoProfProv = await _context.Horarios
+                        .FirstOrDefaultAsync(h => h.AulaId == AulaId && h.MatId == Convert.ToInt16(matIdProfesorProv) &&
+                        h.HorDia == fechaEnRD.DayOfWeek.ToString() && h.HorHoraInicio <= horaInicioFinal && h.HorHoraFin >= horaInicioFinal);
+                    DateTime fechaAccesoProfProv = await _context.Accesos
+                        .Where(a => a.UsuId == usuIdMatProfesorProv && a.UsuId == usuarioHorProfesorProv)
+                        .OrderByDescending(a => a.AccesFecha)
+                        .Select(a => a.AccesFecha)
+                        .FirstOrDefaultAsync() ?? new DateTime(2000, 01, 01);
+                    var profesorAccesoProv = await _context.Accesos
+                        .Where(a => usuIdMatProfesorProv == usuarioHorProfesorProv && a.AulaId == AulaId && a.StatusId == 8 && a.AccesFecha == fechaAccesoProfProv)
+                        .OrderByDescending(a => a.AccesFecha)
+                        .AnyAsync();
+
+                    if (rolIdProv == 1)
                     {
                         if (tarjetaProv == null || tarjetaProv.StatusId == 4)
                         {
@@ -341,7 +362,7 @@ namespace UnphuCard_Api.Controllers
                         await PostAcceso(accesoAprobado);
                         return Ok("Acceso permitido. Tarjeta provisional Estudiante.");
                     }
-                    else if (usuarioTarjetaProv == 2)
+                    else if (rolIdProv == 2)
                     {
                         if (tarjetaProv == null || tarjetaProv.StatusId == 4)
                         {
@@ -391,7 +412,7 @@ namespace UnphuCard_Api.Controllers
                         await PostAcceso(accesoAprobado);
                         return Ok("Acceso permitido. Tarjeta provisional Profesor.");
                     }
-                    else if (usuarioTarjetaProv == 5)
+                    else if (rolIdProv == 5)
                     {
                         var accesoAprobado = new InsertAcceso()
                         {
