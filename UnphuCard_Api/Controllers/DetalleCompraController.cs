@@ -52,7 +52,7 @@ namespace UnphuCard_Api.Controllers
 
                 var inventario = await _context.Inventarios
                     .FirstOrDefaultAsync(i => i.ProdId == insertDetalleCompra.ProdId && i.EstId == insertDetalleCompra.EstId);
-                inventario.InvCantidad =- insertDetalleCompra.DetCompCantidad;
+                inventario.InvCantidad -= insertDetalleCompra.DetCompCantidad;
                 _context.Entry(inventario).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
 
