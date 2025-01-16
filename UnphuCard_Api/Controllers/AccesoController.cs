@@ -76,6 +76,7 @@ namespace UnphuCard_Api.Controllers
                 DateTime fechaActualUtc = DateTime.UtcNow;
                 // Convertir la fecha a la zona horaria de República Dominicana
                 DateTime fechaEnRD = TimeZoneInfo.ConvertTimeFromUtc(fechaActualUtc, zonaHorariaRD);
+                string diaDeLaSemana = fechaEnRD.ToString("dddd", new System.Globalization.CultureInfo("en-US"));
                 // Convertir la fecha a hora
                 TimeOnly horaInicioFinal = TimeOnly.FromDateTime(fechaEnRD);
                 var AulaId = await _context.Aulas.Where(a => a.AulaSensor == validarAcceso.AulaSensor).Select(a => a.AulaId).FirstOrDefaultAsync();
@@ -93,13 +94,17 @@ namespace UnphuCard_Api.Controllers
                     materiaInscrito = await _context.Inscripciones.Where(i => i.UsuId == usuarioTarjeta).Select(i => i.MatId).FirstOrDefaultAsync() ?? 0;
                     usuIdMatProfesor = await _context.Materias.Where(m => m.MatId == Convert.ToInt16(materiaInscrito)).Select(m => m.UsuId).FirstOrDefaultAsync() ?? 0;
                     matIdProfesor = await _context.Materias.Where(m => m.MatId == Convert.ToInt16(materiaInscrito)).Select(m => m.MatId).FirstOrDefaultAsync();
-                    usuarioHorProfesor = await _context.Horarios.Where(h => h.AulaId == AulaId && h.MatId == Convert.ToInt16(materiaInscrito)).Select(h => h.UsuId).FirstOrDefaultAsync() ?? 0;
+                    usuarioHorProfesor = await _context.Horarios
+                        .Where(h => h.AulaId == AulaId && h.MatId == Convert.ToInt16(materiaInscrito) && h.HorDia == diaDeLaSemana)
+                        .Select(h => h.UsuId).FirstOrDefaultAsync() ?? 0;
                 }
                 else if(rolId == 2)
                 {
                     usuIdMatProfesor = await _context.Materias.Where(m => m.UsuId == usuarioTarjeta).Select(m => m.UsuId).FirstOrDefaultAsync() ?? 0;
                     matIdProfesor = await _context.Materias.Where(m => m.UsuId == usuarioTarjeta).Select(m => m.MatId).FirstOrDefaultAsync();
-                    usuarioHorProfesor = await _context.Horarios.Where(h => h.AulaId == AulaId && h.MatId == matIdProfesor).Select(h => h.UsuId).FirstOrDefaultAsync() ?? 0;
+                    usuarioHorProfesor = await _context.Horarios
+                        .Where(h => h.AulaId == AulaId && h.MatId == matIdProfesor && h.HorDia == diaDeLaSemana)
+                        .Select(h => h.UsuId).FirstOrDefaultAsync() ?? 0;
                 }
 
                 var horarioAccesoEstu = await _context.Horarios
@@ -260,13 +265,17 @@ namespace UnphuCard_Api.Controllers
                         materiaInscritoProv = await _context.Inscripciones.Where(i => i.UsuId == usuarioTarjetaProv).Select(i => i.MatId).FirstOrDefaultAsync() ?? 0;
                         usuIdMatProfesorProv = await _context.Materias.Where(m => m.MatId == Convert.ToInt16(materiaInscritoProv)).Select(m => m.UsuId).FirstOrDefaultAsync() ?? 0;
                         matIdProfesorProv = await _context.Materias.Where(m => m.MatId == Convert.ToInt16(materiaInscritoProv)).Select(m => m.MatId).FirstOrDefaultAsync();
-                        usuarioHorProfesorProv = await _context.Horarios.Where(h => h.AulaId == AulaIdProv && h.MatId == Convert.ToInt16(materiaInscritoProv)).Select(h => h.UsuId).FirstOrDefaultAsync() ?? 0;
+                        usuarioHorProfesorProv = await _context.Horarios
+                            .Where(h => h.AulaId == AulaIdProv && h.MatId == Convert.ToInt16(materiaInscritoProv) && h.HorDia == diaDeLaSemana)
+                            .Select(h => h.UsuId).FirstOrDefaultAsync() ?? 0;
                     }
                     else if (rolIdProv == 2)
                     {
                         usuIdMatProfesorProv = await _context.Materias.Where(m => m.UsuId == usuarioTarjetaProv).Select(m => m.UsuId).FirstOrDefaultAsync() ?? 0;
                         matIdProfesorProv = await _context.Materias.Where(m => m.UsuId == usuarioTarjetaProv).Select(m => m.MatId).FirstOrDefaultAsync();
-                        usuarioHorProfesorProv = await _context.Horarios.Where(h => h.AulaId == AulaIdProv && h.MatId == matIdProfesorProv).Select(h => h.UsuId).FirstOrDefaultAsync() ?? 0;
+                        usuarioHorProfesorProv = await _context.Horarios
+                            .Where(h => h.AulaId == AulaIdProv && h.MatId == matIdProfesorProv && h.HorDia == diaDeLaSemana)
+                            .Select(h => h.UsuId).FirstOrDefaultAsync() ?? 0;
                     }
 
                     var horarioAccesoEstuProv = await _context.Horarios
