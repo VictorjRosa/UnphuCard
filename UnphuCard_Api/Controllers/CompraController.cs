@@ -133,7 +133,7 @@ namespace UnphuCard_Api.Controllers
             {
                 var producto = await _context.Productos.Where(p => p.ProdId == item.ProdId).Select(p => new { p.ProdDescripcion, p.ProdPrecio, item.DetCompCantidad }).FirstOrDefaultAsync();
                 infoProducto.Add(new InfoCarritoProducto { ProdDescripcion = producto.ProdDescripcion, ProdPrecio = producto.ProdPrecio, ProdCantidad = producto.DetCompCantidad });
-                montoTotal =+ (producto.ProdPrecio*producto.DetCompCantidad) ?? 0;
+                montoTotal += (producto.ProdPrecio*producto.DetCompCantidad) ?? 0;
             }
             List<InfoCarritoProducto> infoProductoNoDuplicados = infoProducto.Distinct().ToList();
             // Construir el mensaje del correo
