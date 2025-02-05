@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 
 public class BlobStorageService
 {
-    private readonly string connectionString = "DefaultEndpointsProtocol=https;AccountName=fotosunphucard;AccountKey=6kyQalosg1eI9DuPnjXMlwo6W8LkKP1ybRJlU/zjRP0auk2/cdQnz+P4bRqhWQlsS8m/qtiUIjmh+AStVb4NAA==;EndpointSuffix=core.windows.net";
-    private readonly string containerName = "fotos"; // El nombre de tu contenedor
+    private readonly string connectionString = "";
+    private readonly string containerName = ""; // El nombre de tu contenedor
 
     public async Task UploadFileAsync(string filePath, string fileName)
     {
